@@ -1,0 +1,25 @@
+{
+  "name": "moonshadow-wuxia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "月影传说 · 江湖长卷 — 无需登录的网页同人游戏",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "test": "node tests/validate-long-journey.mjs && node tests/validate-interface.mjs",
+    "test:http": "node tests/validate-hosting.mjs",
+    "deploy:check": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.130.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.4"
+    }
+  }
+}

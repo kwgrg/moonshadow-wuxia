@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b181b"><meta name="description" content="从凌绝峰开始，经历杨影枫的江湖旅程。主线任务、正邪分路、武学成长、支线寻访与多结局的网页同人重制。">
+  <title>月影传说 · 江湖长卷</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230e2427'/%3E%3Cpath d='M44 10A23 23 0 1 0 54 46 25 25 0 0 1 44 10' fill='%23d2b378'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main id="game" aria-label="月影传说游戏">
+  <canvas id="world" tabindex="0" aria-label="游戏场景。点击地面移动，WASD或方向键移动，J攻击，E交谈，空格轻功。"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="月影传说首页"><span class="brand-small">剑侠情缘外传</span><strong>月影传说</strong><span class="seal">江湖重逢</span></a>
+    <div class="chapter-top"><span id="chapter-number">第一回</span><span class="ornament">◇</span><span id="chapter-title">少年意气</span></div>
+    <div class="top-actions"><button id="sound-button" class="icon-button" title="开启环境音" aria-label="开启环境音">♫<span>音律</span></button><button id="settings-button" class="icon-button" title="游戏设置" aria-label="游戏设置">⚙<span>设置</span></button><button id="fullscreen-button" class="icon-button" title="全屏" aria-label="切换全屏">⛶<span>全屏</span></button></div>
+  </header>
+  <section class="hero-status" aria-label="角色状态">
+    <div class="portrait"><img id="hero-portrait" src="./assets/characters.png" alt="杨影枫"><span id="level">一</span></div>
+    <div class="hero-info"><div class="hero-name">杨影枫 <span id="hero-rank">初入江湖 · 壹级</span></div><div class="resource hp"><i id="hp-fill"></i><span>气血</span><b id="hp-value">300 / 300</b></div><div class="resource mp"><i id="mp-fill"></i><span>内力</span><b id="mp-value">180 / 180</b></div><div class="resource stamina"><i id="stamina-fill"></i><span>体力</span></div></div>
+  </section>
+  <aside class="quest-panel"><div class="eyebrow"><span class="gold-line"></span>江湖纪事</div><h1 id="quest-title">问剑武当</h1><p id="quest-description">前往洗剑池，与武当弟子交谈。</p><button id="track-button" class="text-button">寻路前往 <span>⌖</span></button><div class="quest-divider"></div><div class="region-weather"><span>☀</span><span id="weather">辰时 · 山岚初散</span></div></aside>
+  <aside class="map-panel"><button class="minimap" id="map-button" aria-label="打开江湖地图"><canvas id="mini-world" width="180" height="180"></canvas><span class="north">北</span><span class="map-open">展开地图 <kbd>M</kbd></span></button><div class="location"><span>◇</span><strong id="location-name">武当山 · 洗剑池</strong><small id="coordinates">510，650</small></div></aside>
+  <div id="scene-banner" class="scene-banner"><span>云起处，少年仗剑来</span><strong>武当山</strong><i>第一回 · 少年意气</i></div>
+  <div id="interaction" class="interaction" hidden><kbd>E</kbd><span>交谈</span></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="combat-message" class="combat-message"></div>
+  <footer class="bottom-hud">
+    <nav class="utility-nav" aria-label="江湖菜单"><button id="character-button"><span>人</span>人物 <kbd>C</kbd></button><button id="bag-button"><span>囊</span>行囊 <kbd>B</kbd></button><button id="journal-button"><span>卷</span>纪事 <kbd>L</kbd></button></nav>
+    <div class="combat-hud"><div class="skill-caption">剑随心动<span></span>意在江湖</div><div class="skillbar" aria-label="武学与丹药">
+      <button class="skill basic" data-skill="0" title="流云剑 · J / 鼠标点击敌人"><kbd>J</kbd><span class="skill-glyph">剑</span><span class="skill-name">流云剑</span><i class="cooldown"></i></button>
+      <button class="skill fire" data-skill="1" title="烈火情天 · 1 / A（经典操作）"><kbd>1</kbd><span class="skill-glyph">炎</span><span class="skill-name">烈火情天</span><i class="cooldown"></i></button>
+      <button class="skill moon" data-skill="2" title="月影流光 · 2 / S（经典操作）"><kbd>2</kbd><span class="skill-glyph">月</span><span class="skill-name">月影流光</span><i class="cooldown"></i></button>
+      <button class="skill heal" data-skill="3" title="清心咒 · 3 / D（经典操作）"><kbd>3</kbd><span class="skill-glyph">心</span><span class="skill-name">清心咒</span><i class="cooldown"></i></button>
+      <span class="skill-separator"></span><button class="skill potion" id="potion-button" title="金创药 · Q / Z"><kbd>Q</kbd><span class="skill-glyph">药</span><span class="skill-name">金创药</span><b id="potion-count">5</b></button>
+    </div></div>
+    <div class="right-actions"><button id="save-button"><span>◇</span> 存入江湖</button><span id="save-status">进度保存在本机</span></div>
+  </footer>
+  <div class="control-hint" id="control-hint"><span>鼠标点击 <b>行走 / 交互</b></span><span>W A S D <b>移动</b></span><span>空格 <b>轻功</b></span><span>E <b>交谈</b></span><button id="help-button">操作说明 <span>?</span></button></div>
+  <div class="mobile-controls"><div class="dpad"><button data-dir="up" aria-label="向上">↑</button><button data-dir="left" aria-label="向左">←</button><button data-dir="down" aria-label="向下">↓</button><button data-dir="right" aria-label="向右">→</button></div><div class="mobile-interact"><button id="mobile-talk">交谈</button><button id="mobile-dash">轻功</button></div></div>
+  <section id="dialogue" class="dialogue" aria-label="剧情对话" hidden><div class="dialogue-portrait"><img id="speaker-portrait" src="./assets/characters.png" alt=""></div><div class="dialogue-body"><div class="dialogue-heading"><span id="speaker-name"></span><small id="speaker-role"></small></div><p id="dialogue-text"></p><div id="choices" class="choices"></div><button id="dialogue-next" class="text-button">继续 <span>↵</span></button></div></section>
+  <dialog id="panel"><button class="close-panel" id="close-panel" aria-label="关闭">×</button><div id="panel-content"></div></dialog>
+  <div id="loading" class="loading"><span class="loading-moon">☾</span><h2>月影传说</h2><p id="loading-text">一卷江湖，正待展开</p><span class="loading-line"></span></div>
+</main>
+<script type="module" src="./journey.js"></script>
+</body>
+</html>
