@@ -42,7 +42,7 @@ npm test
 npm run deploy:check
 ```
 
-`npm test` 检查现有六条长线结局在两种难度下的推进、开局特殊结局、战斗、寻路、支线、存档恢复及界面逻辑。界面检查使用模拟 DOM，不等同于真实浏览器视觉验收。
+`npm test` 检查六条长线结局在两种难度下的推进、开局特殊结局、八层通天塔、分波战斗、限时搜索返岸、寻路、支线及存档恢复；还检查接受／拒绝对白不串线、战果不会提前播放、旧存档槽标题一致和机关重试不能重复领奖。界面检查使用模拟 DOM；真实浏览器抽查及未完成项目另记在 [质量复核记录](docs/quality-review.md)，不能以自动测试通过代替剧情还原或可玩性验收。
 
 保持 `npm run dev` 运行，在另一个终端检查匿名 HTTP 访问和资源加载：
 
@@ -65,10 +65,13 @@ public/                 直接部署的游戏源码与本地图片
   index.html            游戏入口
   journey.js            界面、控制、音效与本地存档
   runtime.mjs           游戏引擎
-  campaign.mjs          剧情与任务数据
+  campaign.mjs          剧情与任务数据、稳定任务 ID
+  *-revisions.mjs       经来源核对的事件修订
+  world.mjs             场景地形、碰撞、探索与进出位置
   renderer-v3.mjs       场景绘制
   style.css             样式
-  assets/               六张图片
+  assets/               本地环境、人物与道具图集
+docs/                   剧情、场景、素材与分轮复核记录
 tests/                  剧情、界面和匿名访问检查
 wrangler.jsonc          Cloudflare 部署配置
 package-lock.json       部署工具版本锁定
@@ -82,6 +85,8 @@ Wrangler 固定为 4.130.0。其本地运行工具 Miniflare 的 `sharp` 依赖�
 
 游戏源码由现有 Sites 项目的静态目录迁入，来源提交为 `326865190000af09e3e9e2334914145079df47bc`。本仓库使用独立本地 Git 历史，不保留 Sites 部署绑定。
 
-目前包含 135 个剧情事件、75 个地点名称、18 门武学和 7 个结局；场景使用五张环境图及一张人物图集。它是网页同人重制，并非原作全素材、逐句剧情及全部地图的一比一复刻。此次迁移保留现有游戏内容。
+目前包含 142 个剧情事件、75 个地点名称、18 门武学和 7 个结局。所有事件都经过本轮攻略事件核对并重写衔接对白；这表示审阅范围，不表示原版逐句一致。场景映射使用 11 张环境图，部分地点复用背景和布局；新增的探索物、道具及八类常见 NPC 属于网页重建设计。
+
+本轮补入分波试剑、真儿保护失去功力的影枫、夜路伏击、幻境战斗、捕兽夹交手、潜水返岸以及八层机关重试。仍存在被叙述压缩的护送往返和后段战斗，人物动画、原地图拓扑、原作逐字台词、音乐和精确数值也未复刻。因此它仍是网页同人重制，尚未达到用户要求的完整复刻。详见 [剧情审计](docs/story-audit.md)、[后段审计](docs/late-story-audit.md) 与 [场景审计](docs/scene-audit.md)。
 
 部署方式参考 Cloudflare 官方的 [静态站点指南](https://developers.cloudflare.com/workers/static-assets/get-started/)、[静态资源配置](https://developers.cloudflare.com/workers/static-assets/) 和 [响应头及缓存说明](https://developers.cloudflare.com/workers/static-assets/headers/)。

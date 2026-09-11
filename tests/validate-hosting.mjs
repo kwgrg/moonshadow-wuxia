@@ -1,21 +1,15 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const base = new URL(process.argv[2] ?? 'http://127.0.0.1:8787');
 assert.ok(['http:', 'https:'].includes(base.protocol), 'Use an HTTP or HTTPS URL.');
 assert.ok(!base.username && !base.password, 'The test URL must not contain credentials.');
 
 // index.html is served at /; static hosts may redirect its filename to this URL.
-const resources = [
-  ['/', ['text/html']],
-  ['/style.css', ['text/css']],
-  ['/journey.js', ['text/javascript', 'application/javascript']],
-  ['/runtime.mjs', ['text/javascript', 'application/javascript']],
-  ['/campaign.mjs', ['text/javascript', 'application/javascript']],
-  ['/renderer-v3.mjs', ['text/javascript', 'application/javascript']],
-  ...['characters', 'wudang', 'lake', 'town', 'forest', 'snow'].map(name => [
-    `/assets/${name}.png`, ['image/png'],
-  ]),
-];
+const assetRoot=new URL('../public/',import.meta.url);
+const mimeTypes={'.html':['text/html'],'.css':['text/css'],'.js':['text/javascript','application/javascript'],'.mjs':['text/javascript','application/javascript'],'.png':['image/png']};
+const resources=fs.readdirSync(assetRoot,{recursive:true}).filter(file=>mimeTypes[path.extname(file)]).map(file=>[file==='index.html'?'/':'/'+file.replaceAll('\\','/'),mimeTypes[path.extname(file)]]);
 
 async function anonymousGet(path) {
   const response = await fetch(new URL(path, base), {

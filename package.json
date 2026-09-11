@@ -9,10 +9,11 @@
   },
   "scripts": {
     "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
-    "test": "node tests/validate-long-journey.mjs && node tests/validate-interface.mjs",
+    "test": "node tests/validate-long-journey.mjs && node tests/validate-interface.mjs && node tests/validate-quality.mjs && node tests/validate-story-ui.mjs",
     "test:http": "node tests/validate-hosting.mjs",
     "deploy:check": "wrangler deploy --dry-run",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test:quality": "node tests/validate-quality.mjs"
   },
   "devDependencies": {
     "wrangler": "4.130.0"
