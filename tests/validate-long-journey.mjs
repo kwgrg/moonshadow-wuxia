@@ -10,6 +10,7 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
  while(!g.s.completed&&transitions++<1000){const q=g.q;
   if(g.s.map!==q.map){assert.equal(g.travel(q.map),true,q.id+' route open');for(let t=0;t<18000&&g.s.map!==q.map;t++)g.tick(.05);assert.equal(g.s.map,q.map,q.id+' walking route arrives');continue;}
   if(g.s.phase==='talk')g.beginObjective();if(g.s.phase==='staging'){for(let t=0;t<5000&&g.s.phase==='staging';t++)g.tick(.05);assert.notEqual(g.s.phase,'staging',q.id+' staging releases');continue;}
+  if(g.s.phase==='pursuit'){assert.equal(g.followPursuit(),true,q.id+' following starts through the pursuit action');for(let t=0;t<18000&&g.q.id===q.id&&g.s.phase==='pursuit';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,q.id+' pursuit must reach its real exit');continue;}
   if(g.s.phase==='training'){const opponent=g.markers.find(m=>m.kind==='master')||g.markers.find(m=>m.kind==='training'&&!m.defeated);assert.ok(opponent);g.interact(opponent);for(let n=0;n<1200&&g.s.phase==='training';n++)g.tick(.05);assert.equal(g.s.phase,'battle');}
   if(g.s.phase==='choice'){assert.equal(g.choose(option(g,outcome)),true);continue;}
   if(g.s.phase==='escape'){const marker=g.markers.find(m=>m.main);g.interact(marker);for(let t=0;t<1500&&g.q.id===q.id&&g.s.phase==='escape';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,'Timed escape must progress');continue;}

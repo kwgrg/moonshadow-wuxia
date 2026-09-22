@@ -1,3 +1,4 @@
+import {FORBIDDEN_STAGING} from './forbidden-staging.mjs';
 import {EVIL_DUNGEON_STAGING} from './evil-dungeon-staging.mjs';
 import {CULT_STAGED_QUESTS} from './cult-staging.mjs';
 /**
@@ -167,3 +168,5 @@ export const STAGED_QUESTS = {
   }
 };
 Object.assign(STAGED_QUESTS,EVIL_DUNGEON_STAGING);
+
+Object.assign(STAGED_QUESTS,FORBIDDEN_STAGING);

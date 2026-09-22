@@ -139,9 +139,8 @@ export const EVIL_DUNGEON_STAGING={
  },
  e06_night:{
   map:'r_evil_chamber',label:'在客房歇息',startPoint:{x:760,y:665},
-  actors:[zhen(1215,590,true)],
-  props:[{id:'night-lamp',kind:'solitaryLamp',x:625,y:460}],
-  finalActors:[zhen(1350,610,true)],finalCues:{evilNight:'awake',evilMorning:'day'},
+  actors:[],props:[{id:'night-lamp',kind:'solitaryLamp',x:625,y:460}],
+  finalActors:[],finalCues:{evilNight:'awake'},persistFor:['e06_night_visit'],
   steps:[
    {type:'move',actor:'hero',x:760,y:665,speed:95},
    {type:'pose',actor:'hero',pose:'sit',duration:.8},
@@ -150,27 +149,35 @@ export const EVIL_DUNGEON_STAGING={
    {type:'cue',key:'evilNight',value:'awake'},
    {type:'say',focus:'hero',lines:[
     ['杨影枫','又醒了。方才还在梦里，睁开眼却只听见自己的呼吸。',0],
-    ['杨影枫','只要闭上眼，我就会想起蔷薇倒下的样子。',0]
+    ['杨影枫','睡意全散了，不如出去走走。',0]
    ]},
    {type:'pose',actor:'hero',pose:'stand',duration:.5},
-   {type:'show',actor:'zhen'},
-   {type:'move',actor:'zhen',x:930,y:615,speed:100},
-   {type:'face',actor:'zhen',target:'hero'},
+   {type:'move',actor:'hero',x:1150,y:635,speed:95},
+   {type:'face',actor:'hero',direction:1},
+   {type:'release'}
+  ]
+ },
+ e06_night_visit:{
+  map:'m71',label:'在楼内寻找真儿',startPoint:{x:900,y:650},
+  actors:[zhen(965,585)],props:[],
+  finalActors:[zhen(965,585)],finalCues:{evilNight:'awake',evilMorning:'day'},
+  steps:[
+   {type:'cue',key:'evilNight',value:'awake'},
+   {type:'move',actor:'hero',x:900,y:650,speed:120},
    {type:'face',actor:'hero',target:'zhen'},
+   {type:'face',actor:'zhen',target:'hero'},
    {type:'say',focus:'zhen',lines:[
-    ['纳兰真','我听见你醒了。还是睡不着吗？',1],
-    ['杨影枫','一静下来，白日的事便全涌上来。',0],
+    ['杨影枫','真儿，这么晚了，你也还没歇息？',0],
+    ['纳兰真','你也睡不着么？',1],
+    ['杨影枫','嗯，想出来透透气。',0],
     ['纳兰真','明日离开这里吧。我想回忘忧岛。',1],
     ['杨影枫','好。我送你回去。',0]
    ]},
-   {type:'move',actor:'zhen',x:1215,y:590,speed:100},
-   {type:'move',actor:'zhen',x:1350,y:610,speed:100},
-   {type:'hide',actor:'zhen'},
-   {type:'pose',actor:'hero',pose:'sit',duration:.6},
-   {type:'wait',duration:1.6},
+   {type:'cue',key:'evilNight',value:'dark'},
+   {type:'wait',duration:2},
+   {type:'cue',key:'evilNight',value:'awake'},
    {type:'cue',key:'evilMorning',value:'day'},
-   {type:'wait',duration:1.2},
-   {type:'pose',actor:'hero',pose:'stand',duration:.6},
+   {type:'wait',duration:1.4},
    {type:'release'}
   ]
  },

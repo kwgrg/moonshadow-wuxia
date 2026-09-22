@@ -64,9 +64,10 @@ for(const route of ['good','evil'])for(const cultPath of [false,true])for(const 
 }
 
 
-const CHAIN=['e06','e06_kill','e06_refuse','e06_aftermath','e06_night','e06_escort','e06_ferry','e06_landing','e06_rest'];
-const MILESTONES=['evilQiangweiDecision','evilQiangweiDead','evilFamilyHeard','evilNightPassed','evilEscortStarted','evilFerryReady','evilIslandArrived','evilZhenMissing'];
-assert.equal(freshState().campaignRevision,5);
+const CHAIN=['e06','e06_kill','e06_refuse','e06_aftermath','e06_night','e06_night_visit','e06_escort','e06_ferry','e06_landing','e06_rest'];
+const MILESTONES=['evilQiangweiDecision','evilQiangweiDead','evilFamilyHeard','evilDreamEnded','evilNightPassed','evilEscortStarted','evilFerryReady','evilIslandArrived','evilZhenMissing'];
+const PURSUIT=['e07_village','e07_approach','e07_entry','e07_first','e07_second','e07_gate'];
+assert.equal(freshState().campaignRevision,6);
 let restoredSteps=0;
 function runScene(game){
  const id=game.q.id;let active=game,lastStep=-1,steps=0;
@@ -84,6 +85,7 @@ function runScene(game){
    active.completeQuest();assert.equal(active.q.id,id,'active staging cannot be manually completed');
   }
   const current=active;active.onEvent=type=>{if(type==='stagingDialogue')current.advanceStaging();};active.tick(.05);
+  if(id==='e06_night'&&active.s.sequence){assert.ok(!active.s.sequence.actors.some(actor=>actor.name==='纳兰真'),'Zhen does not visit the hero inside the bedroom or dream');assert.equal(active.companion,null,'the night dream cannot start tomorrow escort');assert.ok(!active.s.flags.evilNightPassed,'the dream alone cannot finish the subsequent night conversation');}
   if(id==='e06_rest'&&active.s.sequence?.actors.find(actor=>actor.id==='zhen')?.hidden){assert.equal(active.companion,null,'departed scene actor must not respawn as a follower before release');assert.equal(active.stagingActors().filter(actor=>actor.name==='纳兰真').length,0,'hidden Zhen-presenting actor remains offstage until rest releases');}
   if(id==='e06_rest'&&active.s.sequence&&!active.s.sequence.actors.find(actor=>actor.id==='zhen')?.hidden){assert.equal(active.companion,null,'onstage Zhen has no follower duplicate');assert.equal(active.stagingActors().filter(actor=>actor.name==='纳兰真').length,1);}
  }
@@ -102,9 +104,14 @@ for(const choice of [0,1]){
  game=runScene(game);assert.equal(game.q.id,'e06_aftermath');assert.equal(game.s.flags.evilQiangweiDead,true);assert.ok(!game.s.done.includes(other));
  let dead=game.stagingActors().filter(actor=>actor.name==='蔷薇');assert.equal(dead.length,1);assert.equal(dead[0].pose,'fallen');assert.equal(game.interact(dead[0]),false,'fallen Qiangwei never offers a new conversation');assert.ok(!game.stagingActors().some(actor=>actor.name==='紫轩'));
  if(choice===0){assert.equal(dead[0].x,744);assert.equal(dead[0].fallDirection,-1);}else assert.equal(dead[0].x,650);
- for(const id of ['e06_aftermath','e06_night','e06_escort','e06_ferry','e06_landing','e06_rest']){
+ for(const id of ['e06_aftermath','e06_night','e06_night_visit','e06_escort','e06_ferry','e06_landing','e06_rest']){
+  if(id==='e06_night_visit'){
+   assert.equal(game.s.map,'r_evil_chamber','the hero wakes in his room before looking for Zhen');assert.equal(game.s.flags.evilDreamEnded,true);assert.ok(!game.s.flags.evilNightPassed);assert.ok(!game.s.flags.evilEscortStarted);assert.equal(game.companion,null);
+   const bedroom=new GameEngine(restoreState(snapshot(game))),before=resources(bedroom);bedroom.beginObjective();bedroom.completeQuest();assert.equal(bedroom.q.id,id,'night conversation cannot complete from the bedroom');assert.ok(!bedroom.s.flags.evilNightPassed);assert.deepEqual(resources(bedroom),before);
+  }
   assert.equal(game.q.id,id);if(['e06_ferry','e06_landing','e06_rest'].includes(id)&&game.s.map!==game.q.map)assert.equal(game.companion?.name,'纳兰真','Zhen-presenting actor follows every escort leg before beach rest');const transitions=walkTo(game,game.q.map);
   if(['e06_ferry','e06_landing','e06_rest'].includes(id)){const zhenMarkers=game.markers.filter(marker=>marker.name==='纳兰真'&&!marker.hidden);assert.equal(zhenMarkers.length+(game.companion?.name==='纳兰真'?1:0),1,'destination renders exactly one Zhen-presenting actor');}
+  if(id==='e06_night_visit')assert.deepEqual(transitions,['r_evil_chamber','m71'],'the hero must walk out to seek Zhen before the night conversation');
   if(id==='e06_ferry')assert.deepEqual(transitions,['m71','r_evil_yitian','r_evil_ferry'],'escort physically walks mountain connector');
   if(id==='e06_landing')assert.deepEqual(transitions,['r_evil_ferry','m40'],'island landing follows boat portal');
   if(id==='e06_rest')assert.deepEqual(transitions,['m40','m34'],'island dock leads to beach rest');
@@ -112,9 +119,11 @@ for(const choice of [0,1]){
    const wrong=new GameEngine(restoreState(snapshot(game)));wrong.s.map='m71';wrong.s.phase='travel';wrong.beginObjective();wrong.completeQuest();assert.equal(wrong.q.id,id,'talk event cannot complete from a different map');
   }
   if(STAGED_QUESTS[id])game=runScene(game);else game.beginObjective();
+  if(id==='e06_night')assert.ok(!game.s.flags.evilNightPassed,'waking does not imply that the separate conversation has happened');
+  if(id==='e06_night_visit'){assert.equal(game.s.flags.evilNightPassed,true);assert.ok(!game.s.flags.evilEscortStarted,'agreement and actual next-day departure remain separate');}
   assert.notEqual(game.q.id,id);assert.deepEqual(resources(game),initial,'scene completion grants no battle drops or invented items');
  }
- assert.equal(game.q.id,'e07');assert.equal(game.s.flags.evilZhenMissing,true);assert.equal(game.s.flags.companion,null);assert.equal(game.companion,null);assert.equal(game.s.ending,null);
+ assert.equal(game.q.id,'e07_village','beach rest starts village pursuit, not the already-revealed chamber duel');assert.equal(game.s.flags.evilZhenMissing,true);assert.equal(game.s.flags.companion,null);assert.equal(game.companion,null);assert.equal(game.s.ending,null);assert.ok(!game.s.flags.evilGateOpened);assert.ok(!game.s.flags.staged_e07);
  assert.ok(!game.s.done.some(id=>id.startsWith('gCult_')));for(const key of MILESTONES)assert.equal(game.s.flags[key],true,key+' records its real completed event');
  const beforeReturn=resources(game);walkTo(game,'r_evil_dungeon');dead=game.stagingActors().filter(actor=>actor.name==='蔷薇');assert.equal(dead.length,1);assert.equal(dead[0].pose,'fallen');assert.equal(game.interact(dead[0]),false);assert.ok(!game.stagingActors().some(actor=>actor.name==='纳兰潜凛'));
  const reloaded=new GameEngine(restoreState(snapshot(game)));assert.equal(reloaded.stagingActors().find(actor=>actor.name==='蔷薇')?.pose,'fallen');
@@ -131,16 +140,18 @@ for(const id of CHAIN.filter(id=>QUESTS[index(id)].requiredFlags?.length)){
 const ferry=create('e06_landing',{evilFerryReady:true});ferry.s.map='r_evil_ferry';const voyage=ferry.exits().find(exit=>exit.to==='m40');assert.equal(voyage.transport,'boat');assert.match(voyage.travelLabel,/乘船/);
 
 let migrated=0;
-for(const [revision,ids] of [[1,campaign.LEGACY_QUEST_IDS],[2,campaign.REVISION_TWO_QUEST_IDS],[3,campaign.REVISION_THREE_QUEST_IDS],[4,campaign.REVISION_FOUR_QUEST_IDS]]){
+assert.equal(campaign.REVISION_FIVE_QUEST_IDS.length,161,'revision-five numeric identities remain frozen before pursuit insertion');
+for(const [revision,ids] of [[1,campaign.LEGACY_QUEST_IDS],[2,campaign.REVISION_TWO_QUEST_IDS],[3,campaign.REVISION_THREE_QUEST_IDS],[4,campaign.REVISION_FOUR_QUEST_IDS],[5,campaign.REVISION_FIVE_QUEST_IDS]]){
  for(const id of ['e05','e06','e07','e08']){
-  const game=create(id),raw=snapshot(game);delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);if(id==='e06'){raw.map='m71';raw.phase='choice';}
+  const game=create(id),raw=snapshot(game);delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);assert.ok(raw.quest>=0);if(id==='e06'&&revision<5){raw.map='m71';raw.phase='choice';}if(revision===5&&['e07','e08'].includes(id))raw.flags.evilZhenMissing=true;
   const restored=new GameEngine(restoreState(raw));assert.equal(restored.q.id,id,'old numeric index resolves to original stable ID');
-  if(id==='e06'){assert.equal(restored.s.phase,'travel');assert.ok(!restored.s.flags.evilQiangweiDead);assert.ok(!restored.s.flags.evilLegacyJourney);}
-  if(['e07','e08'].includes(id)){assert.equal(restored.s.flags.evilLegacyJourney,true);assert.equal(restored.s.flags.evilZhenMissing,true);assert.deepEqual(restored.s.inventory,raw.inventory);assert.equal(restored.s.coins,raw.coins);assert.equal(restored.s.hero.exp,raw.hero.exp);assert.ok(!restored.s.done.includes('e06_rest'),'legacy summary is not mislabeled newly played staging');}
+  assert.equal(restored.s.campaignRevision,6);
+  if(id==='e06'){if(revision<5)assert.equal(restored.s.phase,'travel');assert.ok(!restored.s.flags.evilQiangweiDead);assert.ok(!restored.s.flags.evilLegacyJourney);}
+  if(['e07','e08'].includes(id)){if(revision<5)assert.equal(restored.s.flags.evilLegacyJourney,true);assert.equal(restored.s.flags.evilZhenMissing,true);assert.equal(restored.s.flags.evilLegacyReveal,true);assert.equal(restored.s.flags.evilGateOpened,true);assert.deepEqual(restored.s.inventory,raw.inventory);assert.equal(restored.s.coins,raw.coins);assert.equal(restored.s.hero.exp,raw.hero.exp);assert.ok(!restored.s.done.includes('e06_rest'),'legacy summary is not mislabeled newly played staging');for(const added of [...PURSUIT,'e06_night_visit']){assert.ok(!restored.s.done.includes(added),'migration does not fabricate a played event');assert.ok(!restored.s.claimedRewards.includes(added),'migration does not fabricate a reward claim');assert.ok(!restored.s.flags['staged_'+added],'migration does not fabricate staging completion');}assert.ok(!restored.s.flags.staged_e07,'old reveal is represented by its explicit legacy flag');}
   const stable={...raw,quest:0,questId:id};assert.equal(QUESTS[restoreState(stable).quest].id,id,'stable ID overrides stale numeric index');migrated++;
  }
  const failed=create('e07'),raw=snapshot(failed);raw.campaignRevision=revision;raw.done=['e06'];raw.phase='failed';raw.hero.hp=0;raw.flags.refusal_e07=2;raw.failure={kind:'refusal',questId:'e07',hpBefore:75};const restored=new GameEngine(restoreState(raw));assert.equal(restored.q.id,'e07');assert.equal(restored.s.phase,'failed');assert.equal(restored.s.hero.hp,0);assert.equal(restored.refusalCount(),2,'migration preserves fatal reply rather than replaying new scenes');
 }
-const fresh=create('e07'),freshRestored=restoreState(snapshot(fresh));assert.ok(!freshRestored.flags.evilLegacyJourney);assert.ok(!freshRestored.flags.evilZhenMissing,'new revision does not grant free escort progress');
+const fresh=create('e07'),freshRestored=restoreState(snapshot(fresh));assert.ok(!freshRestored.flags.evilLegacyJourney);assert.ok(!freshRestored.flags.evilZhenMissing,'new revision does not grant free escort progress');assert.ok(!freshRestored.flags.evilGateOpened);assert.ok(!freshRestored.flags.evilLegacyReveal,'new revision cannot claim old revealed history');
 const good=create('e07',{route:'good'}),goodRaw=snapshot(good);goodRaw.campaignRevision=4;goodRaw.done=['e06'];assert.ok(!restoreState(goodRaw).flags.evilZhenMissing,'old wrong-route flag mixtures do not migrate evil progress');
-console.log(JSON.stringify({result:'PASS',pathChecks,restoredSteps,migratedIndices:migrated,outcomes,checks:'two consequence actions, persistent fallen actors, true walking and boat travel, no invented rewards, required flags, branch isolation and revisions 1–5'}));
+console.log(JSON.stringify({result:'PASS',pathChecks,restoredSteps,migratedIndices:migrated,outcomes,checks:'two consequence actions, persistent fallen actors, active night visit after waking, true walking and boat travel, no invented rewards, required flags, branch isolation and revisions 1–6'}));

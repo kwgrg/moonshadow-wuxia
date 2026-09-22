@@ -20,9 +20,9 @@ function restoreCues(raw,definition){
 }
 export function restoreStaging(raw,quest,state){
  const definition=STAGED_QUESTS[quest.id];
- if(!definition||state.map!==quest.map||state.flags[completeKey(quest.id)]||quest.requiredFlags?.some(key=>!state.flags[key]))return null;
+ if(!definition||state.map!==quest.map||state.flags[completeKey(quest.id)]||state.flags[quest.legacyStagingFlag]||quest.requiredFlags?.some(key=>!state.flags[key]))return null;
  if(!raw||raw.questId!==quest.id||!Number.isInteger(raw.step)||raw.step<0||raw.step>=definition.steps.length)return null;
- const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,300,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:typeof saved?.hidden==='boolean'?saved.hidden:base.hidden===true};});
+ const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,180,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:typeof saved?.hidden==='boolean'?saved.hidden:base.hidden===true};});
  const unpaid=definition.steps.findIndex((step,index)=>index<raw.step&&step.type==='handover'&&Object.entries(step.items).some(([id,count])=>(state.stagedHandovers[quest.id]?.[id]||0)<count));
  const step=unpaid<0?raw.step:unpaid;
  return {questId:quest.id,step,cues:restoreCues(raw.cues,definition),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:['kneel','sit'].includes(raw.heroPose)?raw.heroPose:'stand',focus:typeof raw.focus==='string'?raw.focus:'hero'};
@@ -32,7 +32,7 @@ export const stagingMethods={
  stagingActor(id){return id==='hero'?this.s.hero:this.s.sequence?.actors.find(actor=>actor.id===id);},
  stagingPresentation(){
   const current=this.stagingDefinition();
-  if(current)return {definition:current,actors:this.s.sequence?.actors||(this.s.flags[completeKey(this.q.id)]?current.finalActors:null)||current.actors||[],cues:this.s.sequence?.cues||(this.s.flags[completeKey(this.q.id)]?current.finalCues:{})||{}};
+  if(current)return {definition:current,actors:this.s.sequence?.actors||((this.s.flags[completeKey(this.q.id)]||this.s.flags[this.q.legacyStagingFlag])?current.finalActors:null)||current.actors||[],cues:this.s.sequence?.cues||((this.s.flags[completeKey(this.q.id)]||this.s.flags[this.q.legacyStagingFlag])?current.finalCues:{})||{}};
   for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&this.s.flags[completeKey(id)]&&(definition.persistFor?.includes(this.q.id)||(definition.persistFlag&&this.s.flags[definition.persistFlag])))return {definition,actors:definition.persistentActors||definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
   return null;
  },
@@ -42,7 +42,7 @@ export const stagingMethods={
  hasQuestItems(){return Object.entries(this.outstandingItems(this.q.requiredItems)).every(([id,count])=>(this.s.inventory[id]||0)>=count);},
  requireQuestItems(){return this.requireItems(this.outstandingItems(this.q.requiredItems));},
  stagingFocus(){return this.s.sequence?this.stagingActor(this.s.sequence.focus)||this.s.hero:this.s.hero;},
- canStartStaging(){return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)];},
+ canStartStaging(){return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
  startStaging(){
   if(!this.canStartStaging()||this.s.sequence||!this.requireQuestItems()||!this.requireQuestFlags())return false;
   const definition=this.stagingDefinition();this.s.sequence={questId:this.q.id,step:0,elapsed:0,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
@@ -72,6 +72,8 @@ export const stagingMethods={
   if(step.type==='cue'){sequence.cues[step.key]=step.value;this.advanceStaging();return;}
   if(step.type==='wait'){sequence.elapsed+=dt;if(sequence.elapsed>=step.duration)this.advanceStaging();return;}
   const actor=this.stagingActor(step.actor||'hero');
+  if(step.type==='replace'){const next=this.stagingActor(step.target);if(actor&&next){Object.assign(next,{x:actor.x,y:actor.y,direction:actor.direction,hidden:false});actor.hidden=true;}this.advanceStaging();return;}
+  if(step.type==='useJade'||step.type==='readLetter'){sequence.elapsed+=dt;if(sequence.elapsed>=(step.duration||1))this.advanceStaging();return;}
   if(step.type==='show'){if(actor)actor.hidden=false;this.advanceStaging();return;}
   if(step.type==='hide'){if(actor)actor.hidden=true;this.advanceStaging();return;}
   if(step.type==='wallImpact'){

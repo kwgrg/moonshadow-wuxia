@@ -1,3 +1,4 @@
+import {drawForbiddenGate,drawForbiddenProp,drawForbiddenAction} from './forbidden-renderer.mjs';
 import {clamp} from './runtime.mjs';
 import {getScene} from './world.mjs';
 
@@ -157,6 +158,7 @@ export class Renderer {
   // Treatment props and poses are drawn from this project's own atlas and
   // original geometry. They are presentation only; the runner owns item use.
   drawStagingProp(p){
+    if(drawForbiddenProp.call(this,p))return;
     if(['cultSeal','timePassage','solitaryLamp'].includes(p.kind)){this.drawCultProp(p);return;}
     const c=this.ctx,cues=p.cues||{},medicine=cues.medicine,t=this.e.settings.motion?this.e.time:0;
     if(p.kind==='herbBundle'&&medicine!=='handed')return;
@@ -415,7 +417,7 @@ export class Renderer {
     else{for(let i=0;i<(a.indoor?8:count);i++){const x=(i*137.5+t*(i%3+1)*7)%1600,y=(i*81+t*9)%950;c.globalAlpha=.13+Math.sin(t+i)*.08;c.fillStyle=a.particles==='petals'?'#e4bfc4':s.kind==='shore'?'#c5ecd7':'#efd196';c.beginPath();c.ellipse(x,y,a.particles==='petals'?4:2.1,1.3,Math.sin(i+t),0,TAU);c.fill();}c.globalAlpha=1;}
   }
   draw(){
-    this.camera();const c=this.ctx,s=this.scene,t=this.e.time;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);c.save();c.translate(this.cameraX,this.cameraY);c.scale(this.s,this.s);this.backgroundImage(c,W,H);this.drawStagingMood();
+    this.camera();const c=this.ctx,s=this.scene,t=this.e.time;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.w,this.h);c.save();c.translate(this.cameraX,this.cameraY);c.scale(this.s,this.s);this.backgroundImage(c,W,H);this.drawStagingMood();drawForbiddenGate.call(this);
     if(this.e.chapter.tint&&!this.assets[s.art]){c.fillStyle=this.e.chapter.tint;c.fillRect(0,0,W,H);}this.drawRoads();s.props.filter(p=>['pool','rug'].includes(p.kind)).forEach(p=>this.drawProp(p));this.drawTelegraphs();
     if(this.e.target)this.ellipse(this.e.target.x,this.e.target.y,17+Math.sin(t*5)*3,7,null,'#ecd69aaa',1.5);
     if(this.e.meditating)for(let i=0;i<3;i++)this.ellipse(this.e.s.hero.x,this.e.s.hero.y,35+i*14+Math.sin(t*2)*4,12+i*5,null,'#bce5d866',2);
@@ -432,7 +434,7 @@ export class Renderer {
       objects.push({...prop,...(actor?{x:actor.x,y:actor.y,direction:actor.direction,sortY:actor.y+2}:{}),render:'stagingProp',cues:presentation.cues,actors:presentation.actors,definition:presentation.definition});
     }
     objects.sort((a,b)=>(a.sortY??a.y)-(b.sortY??b.y)).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else if(o.render==='stagingProp')this.drawStagingProp(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
-    this.drawStagingStrike();this.drawEffects();this.drawWeather();c.restore();this.drawMini();
+    this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();c.restore();this.drawMini();
   }
   drawMini(){
     const c=this.mctx,size=180,s=this.scene;c.clearRect(0,0,size,size);this.backgroundImage(c,size,size);c.fillStyle='#072c2c88';c.fillRect(0,0,size,size);c.lineJoin='round';c.lineCap='round';c.strokeStyle='#cfcc9c99';

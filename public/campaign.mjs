@@ -1,3 +1,4 @@
+import {FORBIDDEN_REVISIONS,FORBIDDEN_ADDITIONS} from './forbidden-revisions.mjs';
 import {EVIL_DUNGEON_REVISIONS,EVIL_DUNGEON_ADDITIONS} from './evil-dungeon-revisions.mjs';
 import {CULT_REVISIONS,CULT_ADDITIONS} from './cult-revisions.mjs';
 import {RECRUITMENT_REVISIONS} from './recruitment-revisions.mjs';
@@ -43,3 +44,7 @@ for(const insertion of CULT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===in
 export const REVISION_FOUR_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const q of QUESTS)Object.assign(q,EVIL_DUNGEON_REVISIONS[q.id]||{});
 for(const insertion of EVIL_DUNGEON_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown evil-dungeon insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+export const REVISION_FIVE_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,FORBIDDEN_REVISIONS[q.id]||{});
+for(const insertion of FORBIDDEN_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown forbidden insertion');QUESTS.splice(index,0,...insertion.quests);}

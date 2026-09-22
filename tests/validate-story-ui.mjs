@@ -24,7 +24,7 @@ class Image{set src(value){queueMicrotask(()=>this.onload())}}
 class Renderer{resize(){}draw(){}toWorld(x,y){return{x,y}}}
 const raf=()=>0,timer=()=>0;
 let source=fs.readFileSync(new URL('../public/journey.js',import.meta.url),'utf8').replace(/^import .+;$/gm,'');
-source+='\nreturn {engine,updateUi,showCharacter,showBag,showShop,showJournal,showMap,showSaves,showSettings,showAbout,showHelp,showSide,showDialogue,nextDialogue,showChoice,closePanel,track};';
+source+='\nreturn {engine,updateUi,showCharacter,showBag,showShop,showJournal,showMap,showSaves,showSettings,showAbout,showHelp,showSide,showDialogue,nextDialogue,showChoice,closePanel,track,loadState};';
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 const names=[...Object.keys(core),'SOURCES','Renderer','npcCellFor','document','window','localStorage','Image','requestAnimationFrame','setTimeout','clearTimeout','setInterval','clearInterval','matchMedia','performance','location'];
 const values=[...Object.values(core),SOURCES,Renderer,npcCellFor,document,window,localStorage,Image,raf,timer,()=>{},timer,()=>{},()=>({matches:false}),{now:()=>0},{reload(){}}];
@@ -229,7 +229,7 @@ const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
 assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
 // Recruitment options must repeat without showing the accepted-route aftermath.
 for(const [id,limit] of [['e05',3],['e07',2]]){
- preset(id);if(id==='e07')ui.engine.s.flags.evilZhenMissing=true;ui.engine.s.phase='choice';ui.showChoice();
+ preset(id);if(id==='e07')Object.assign(ui.engine.s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});ui.engine.s.phase='choice';ui.showChoice();
  const initialCoins=ui.engine.s.coins;
  for(let refusal=1;refusal<=limit;refusal++){
   const seen=clickOption(1);
@@ -261,6 +261,13 @@ events.keydown({key:'e',repeat:false,target:{tagName:'CANVAS'},preventDefault(){
 assert.equal(ui.engine.target,null);assert.equal(ui.engine.autoInteract,null);assert.equal(ui.engine.s.destination,null);
 nodes.get('mobile-talk').click();assert.equal(ui.engine.target,null);assert.equal(ui.engine.autoInteract,null);
 assert.equal(nodes.get('dialogue').hidden,true);assert.equal(nodes.get('panel').open,false);checks++;
+
+// Loading a different pursuit must discard the previous actor route and auto-follow.
+preset('e07_first');ui.engine.s.flags.route='evil';ui.engine.s.flags.evilTrailEntry=true;ui.engine.beginObjective();ui.engine.followPursuit();for(let i=0;i<20;i++)ui.engine.tick(.05);
+const savedTrail=JSON.parse(JSON.stringify({...ui.engine.s,questId:ui.engine.q.id}));
+ui.engine._pursuitPath=[{x:1400,y:350}];ui.engine._pursuitFollow=true;
+ui.loadState(savedTrail);assert.equal(ui.engine._pursuitPath,null);assert.equal(ui.engine._pursuitFollow,false);assert.equal(ui.engine.s.pursuit.actor.x,savedTrail.pursuit.actor.x);
+ui.engine.s.hero.x+=1;events.pagehide();const departure=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(departure.hero.x,ui.engine.s.hero.x);assert.equal(departure.questId,'e07_first');checks++;
 
 console.log(JSON.stringify({result:'PASS',checks,
   covered:['终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],

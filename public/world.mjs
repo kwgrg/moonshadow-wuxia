@@ -86,6 +86,32 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'r_forbidden_second':
+      scene.title='无忧教禁地二层';scene.kind='cave';scene.art='forbidden-second';scene.ground=palettes.cave;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.points=[point('second-water','暗水回声',775,655,'水声从左侧低处传来，右侧干燥的石路继续通向上层。',{appearance:'trace',paintOnly:true}),point('second-stair','转折石阶',1040,515,'石阶在岩壁旁折向高处，前面的脚步声愈发清楚。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_forbidden_gate':
+      scene.title='无忧教禁地三层';scene.kind='hall';scene.art='forbidden-gate';scene.ground=palettes.hall;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.mechanism={leftPedestal:{x:550,y:260,approach:{x:550,y:430}},rightPedestal:{x:1080,y:270,approach:{x:1080,y:435}},door:{x:800,y:245},closedFootprint:[680,220,940,300],observation:{x:800,y:580},inside:{x:800,y:210}};
+      scene.points=[point('jade-left','左侧石座',550,430,'石座上留有一处凹槽，表面比周围石面平整许多。',{appearance:'trace',paintOnly:true}),point('jade-right','右侧石座',1080,435,'另一处凹槽隔着大厅与左座相望，北面石门无声地立着。',{appearance:'trace',paintOnly:true})];return true;
+    case 'm57':
+      scene.title='无忧教禁地密室';scene.kind='room';scene.art='forbidden-chamber';scene.ground=palettes.room;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.letterChest={x:1000,y:365,approach:{x:1000,y:440}};scene.portrait={x:810,y:110};
+      scene.points=[point('chamber-old-letter','箱前旧痕',1090,455,'木箱前的石地积着薄尘，来人的脚步刚在这里停住。',{appearance:'trace',paintOnly:true}),point('chamber-portrait','北壁画像',815,430,'抬头能看见北壁的画像，供案上的旧物仍按原处摆着。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_forbidden_path':
+      scene.title='村北林间路';scene.kind='forest';scene.art='forest';scene.ground=palettes.forest;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
+      scene.points=[point('trail-wind','林间微风',425,570,'风从林间穿过，前方的脚步声时近时远。村路已经落在身后。',{appearance:'trace',paintOnly:true}),point('trail-turn','转弯处',1080,620,'石路向高处折去，树影间还能看见前行的方向。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_forbidden_entry':
+      scene.title='无忧教禁地入口';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
+      scene.atmosphere={light:'day',weather:'mist',indoor:false,particles:'leaves'};
+      scene.points=[point('entry-wind','岩前冷风',995,575,'越靠近岩前，风声越低。她的脚步没有停下，仍沿石径向内。',{appearance:'trace',paintOnly:true}),point('entry-lookback','回望林路',435,640,'回望时还能分辨来时的林路，进入石窟后便只能循着回声前行。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_forbidden_first':
+      scene.title='无忧教禁地一层';scene.kind='cave';scene.art='cave';scene.ground=palettes.cave;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.points=[point('first-echo','石窟回声',660,500,'脚步在石窟里来回反响，前方的身影正朝另一段石阶走去。',{appearance:'trace',paintOnly:true}),point('first-damp','潮湿地面',1000,735,'潮气沿石面散开，来时的脚印与前方浅痕连成一线。',{appearance:'trace',paintOnly:true})];return true;
     case 'r_lingjue':
       scene.title='凌绝峰下山道';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
       scene.atmosphere={light:'dawn',weather:'mist',indoor:false,particles:'leaves'};
@@ -300,11 +326,21 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber'];
 
 
 // Match the painted ground before exposing a layout to the engine. These masks
 // approximate cliffs, fences, pools and walls with connected rectangular areas.
+// Conservative horizontal strips trace the independently generated paintings'
+// visible floor outline. They remain ordinary solid rectangles for the engine.
+function outsideFloor(polygon,bounds,step=24){
+ const [left,top,right,bottom]=bounds,edges=[],minY=Math.min(...polygon.map(p=>p[1])),maxY=Math.max(...polygon.map(p=>p[1]));
+ const span=y=>{const hits=[];for(let i=0;i<polygon.length;i++){const a=polygon[i],b=polygon[(i+1)%polygon.length];if((a[1]<=y&&b[1]>y)||(b[1]<=y&&a[1]>y))hits.push(a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]));}hits.sort((a,b)=>a-b);return hits.length>=2?[hits[0],hits.at(-1)]:null;};
+ const cuts=[...new Set([top,bottom,...polygon.map(p=>p[1]).filter(y=>y>top&&y<bottom),...Array.from({length:Math.ceil((bottom-top)/step)},(_,i)=>top+i*step)])].sort((a,b)=>a-b);
+ for(let row=0;row<cuts.length-1;row++){const y=cuts[row],end=cuts[row+1],startFloor=Math.max(y,minY),endFloor=Math.min(end,maxY);if(startFloor>=endFloor){edges.push([left,y,right,end]);continue;}if(startFloor>y)edges.push([left,y,right,startFloor]);if(endFloor<end)edges.push([left,endFloor,right,end]);const a=span(startFloor+.01),b=span(endFloor-.01);if(!a||!b){edges.push([left,startFloor,right,endFloor]);continue;}const innerLeft=Math.max(a[0],b[0]),innerRight=Math.min(a[1],b[1]);if(innerLeft>left)edges.push([left,startFloor,innerLeft,endFloor]);if(innerRight<right)edges.push([innerRight,startFloor,right,endFloor]);}
+ return edges;
+}
+
 function alignPaintedGround(scene){
   const masks={
     bedroom:{bounds:[210,355,1425,930],spawn:{x:1010,y:735},exit:{x:1375,y:880},edges:[[210,750,295,930],[295,880,1260,930],[1100,745,1250,930],[1255,700,1330,930],[1380,355,1425,420]]},
@@ -317,6 +353,12 @@ function alignPaintedGround(scene){
     cave:{bounds:[325,345,1375,950],spawn:{x:830,y:875},exit:{x:1270,y:395},edges:[[325,345,410,470],[325,660,510,950],[510,805,650,950],[1100,810,1375,950],[1300,590,1375,805]]},
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
+  const paintedFloors={
+    'forbidden-second':{bounds:[300,180,1300,950],polygon:[[650,230],[560,350],[390,500],[600,640],[700,800],[720,950],[1050,940],[1130,700],[1200,480],[1260,300],[1180,180]],spawn:{x:800,y:800},exit:{x:1100,y:410},solids:[]},
+    'forbidden-gate':{bounds:[230,180,1360,950],polygon:[[680,180],[680,242],[430,280],[340,400],[230,620],[360,805],[560,940],[1000,940],[1210,830],[1360,680],[1260,400],[1170,280],[940,242],[940,180]],spawn:{x:800,y:790},exit:{x:800,y:245},solids:[[490,300,605,340],[1020,315,1130,355]]},
+    'forbidden-chamber':{bounds:[180,300,1420,950],polygon:[[340,345],[200,610],[400,850],[650,948],[800,948],[1110,905],[1400,700],[1300,390],[1200,340]],spawn:{x:725,y:805},exit:{x:725,y:930},solids:[[927,330,1060,390]]}
+  };
+  for(const [key,definition] of Object.entries(paintedFloors))masks[key]={bounds:definition.bounds,spawn:definition.spawn,exit:definition.exit,edges:[...outsideFloor(definition.polygon,definition.bounds),...definition.solids]};
   const mask=masks[scene.maskArt||scene.art];
   if(!mask)return;
   scene.bounds=mask.bounds.slice();scene.spawn={...mask.spawn};scene.exit={...mask.exit};
@@ -371,7 +413,20 @@ function alignPaintedGround(scene){
   if(/^m[1-6]$/.test(scene.id)||scene.art==='bedroom'){scene.drawRoads=false;scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());}
   // Cult scenes reuse only the project's original paintings. Their layouts,
   // partition footprints and stage positions are independently authored here.
-  if(scene.id==='m71'){
+  if(['r_forbidden_second','r_forbidden_gate','m57'].includes(scene.id)){
+    scene.props=[];scene.paths=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+    if(scene.id==='r_forbidden_second'){scene.objective={x:950,y:620};scene.pursuitPath=[{x:850,y:650},{x:950,y:620},{x:1070,y:460}];}
+    if(scene.id==='r_forbidden_gate'){scene.objective={x:800,y:580};scene.pursuitPath=[{x:800,y:790},{x:800,y:650},{x:800,y:580}];}
+    if(scene.id==='m57')scene.objective={x:1000,y:440};
+  }else if(scene.id==='m31'){
+    scene.pursuitPath=[{x:760,y:645},{x:760,y:570},{x:750,y:470}];scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='r_forbidden_path'){
+    scene.spawn={x:800,y:825};scene.objective={x:950,y:685};scene.exit={x:1250,y:410};scene.pursuitPath=[{x:900,y:710},{x:950,y:685},{x:1120,y:525}];scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='r_forbidden_entry'){
+    scene.spawn={x:480,y:630};scene.objective={x:805,y:635};scene.exit={x:1250,y:410};scene.pursuitPath=[{x:630,y:620},{x:805,y:635},{x:1120,y:530}];scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='r_forbidden_first'){
+    scene.spawn={x:830,y:790};scene.objective={x:960,y:690};scene.exit={x:1270,y:410};scene.pursuitPath=[{x:940,y:690},{x:960,y:690},{x:1160,y:490}];scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='m71'){
     scene.spawn={x:760,y:800};scene.objective={x:845,y:445};scene.exit={x:765,y:915};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
   }else if(scene.id==='r_evil_yitian'){
     scene.spawn={x:1165,y:470};scene.objective={x:1020,y:620};scene.exit={x:775,y:915};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
@@ -440,7 +495,14 @@ const AUTHORED_PORTALS={
  r_evil_yitian:{m71:[[1250,410],[1165,470]],r_evil_ferry:[[775,915],[800,825]]},
  r_evil_ferry:{r_evil_yitian:[[345,420],[455,465]],m40:[[1295,710],[1175,700]]},
  m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]]},
- m34:{m40:[[750,415],[750,530]],m57:[[715,900],[710,780]]},
+ m34:{m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
+ m31:{m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]]},
+ r_forbidden_path:{m31:[[775,915],[800,825]],r_forbidden_entry:[[1250,410],[1165,470]]},
+ r_forbidden_entry:{r_forbidden_path:[[375,620],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
+ r_forbidden_first:{r_forbidden_entry:[[830,915],[830,790]],r_forbidden_second:[[1270,410],[1160,490]]},
+ r_forbidden_second:{r_forbidden_first:[[800,910],[800,790]],r_forbidden_gate:[[1100,410],[1010,505]]},
+ r_forbidden_gate:{r_forbidden_second:[[800,915],[800,790]],m57:[[800,245],[800,365]]},
+ m57:{r_forbidden_gate:[[725,930],[725,805]],m56:[[725,930],[725,805]],m58:[[1240,505],[1130,575]]},
  m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]]},
  r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
  r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},
