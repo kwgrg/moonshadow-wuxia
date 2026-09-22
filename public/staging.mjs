@@ -1,3 +1,4 @@
+import {CULT_STAGED_QUESTS} from './cult-staging.mjs';
 /**
  * Original staging for the web adaptation. No original game images, scripts,
  * dialogue, coordinates, animation timings, or implementation code are used.
@@ -7,6 +8,7 @@
  * `release` returns to the existing quest objective exactly once.
  */
 export const STAGED_QUESTS = {
+  ...CULT_STAGED_QUESTS,
   a01: {
     auto: true,
     heroStart: {x:455,y:390,direction:-1},

@@ -75,25 +75,19 @@ function clickOption(index){
   return drain();
 }
 
-// A terminal branch must not append the public continuation of the other branch.
-preset('g15');
-ui.engine.s.phase='choice';
-const g15After=ui.engine.q.after.map(line=>line[1]);
-ui.showChoice();
-const accepted=clickOption(0);
-assert.equal(ui.engine.s.ending,'cult');
-assert.ok(accepted.length>0);
-for(const text of g15After) assert.ok(!accepted.includes(text),'accepting the cult must not play rejection continuation');
-checks++;
-
-preset('g15');
-ui.engine.s.phase='choice';
-ui.showChoice();
-const refused=clickOption(1);
-assert.equal(ui.engine.s.ending,null);
-assert.equal(ui.engine.q.id,'g16');
-for(const text of g15After) assert.ok(refused.includes(text),'rejecting the cult retains its rescue continuation');
-checks++;
+// Acceptance enters the complete cult route; refusals do not share its dialogue.
+preset('g15');ui.engine.s.phase='choice';
+const rejectionLines=ui.engine.q.choice.options[1].after.map(line=>line[1]);
+ui.showChoice();const accepted=clickOption(0);
+assert.equal(ui.engine.s.ending,null);assert.equal(ui.engine.q.id,'gCult_wudang');assert.equal(ui.engine.s.flags.cultPath,true);
+assert.ok(accepted.length>0);for(const text of rejectionLines)assert.ok(!accepted.includes(text));checks++;
+preset('g15');ui.engine.s.phase='choice';ui.showChoice();
+for(let refusal=1;refusal<=3;refusal++){
+ const lines=clickOption(1);assert.equal(ui.engine.s.flags.refusal_g15,refusal);assert.equal(ui.engine.s.ending,null);
+ if(refusal<3){assert.equal(ui.engine.q.id,'g15');assert.equal(ui.engine.s.flags.moral,0);for(const text of rejectionLines)assert.ok(!lines.includes(text),'cannot announce leaving before the final refusal');}
+ else{assert.equal(ui.engine.q.id,'g16');assert.equal(ui.engine.s.flags.moral,2);for(const text of rejectionLines)assert.ok(lines.includes(text));}
+}
+assert.ok(!ui.engine.s.flags.cultPath);checks++;
 
 // Neither trap choice may announce the outcome before the player fights.
 for(const index of [0,1]){
@@ -256,6 +250,18 @@ for(const [id,limit] of [['e05',3],['e07',2]]){
 preset('e05');ui.engine.s.phase='choice';ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
 assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('dialogue-next').hidden,false);
 const interruptedAnswer=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(interruptedAnswer.phase,'failed');assert.equal(interruptedAnswer.flags.refusal_e05,3);assert.equal(core.restoreState(interruptedAnswer).hero.hp,0);drain();checks++;
+
+// An empty near-field action must not fall back to auto-walking toward a remote
+// marker, particularly next to a fallen actor after this route has ended.
+preset('gCult_epilogue');ui.engine.s.completed=true;ui.engine.s.ending='cult';ui.engine.s.phase='complete';
+ui.engine.s.flags.staged_gCult_zixuan=true;ui.engine.s.map='r_cult_dungeon';
+Object.assign(ui.engine.s.hero,{x:650,y:610});ui.updateUi();
+assert.equal(nodes.get('interaction').hidden,true);
+events.keydown({key:'e',repeat:false,target:{tagName:'CANVAS'},preventDefault(){}});
+assert.equal(ui.engine.target,null);assert.equal(ui.engine.autoInteract,null);assert.equal(ui.engine.s.destination,null);
+nodes.get('mobile-talk').click();assert.equal(ui.engine.target,null);assert.equal(ui.engine.autoInteract,null);
+assert.equal(nodes.get('dialogue').hidden,true);assert.equal(nodes.get('panel').open,false);checks++;
+
 console.log(JSON.stringify({result:'PASS',checks,
   covered:['终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'

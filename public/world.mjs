@@ -104,6 +104,29 @@ function handcrafted(scene) {
         point('sword-echo','远处练剑声',875,475,'山顶传来相互应答的呼喝声，脚步也随之加快。',{appearance:'trace',paintOnly:true})
       ];
       return true;
+    case 'm61':
+      scene.title='摘星楼议事厅';scene.kind='hall';scene.art='hall';scene.ground=palettes.hall;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.points=[
+        point('hall-order','厅侧铜牌',355,500,'铜牌记着楼内各处：东侧石阶通往地牢，再往内是一间供来客歇息的房间。',{appearance:'sign'}),
+        point('silent-hall','厅中灯火',1190,490,'灯火映在空阔的砖地上。厅内两侧的走廊都留着可以通行的空隙。',{appearance:'trace',paintOnly:true})
+      ];return true;
+    case 'r_cult_dungeon':
+      scene.title='摘星楼地牢';scene.kind='cave';scene.art='cult-dungeon';scene.fallbackArt='cave';scene.maskArt='cult-dungeon';scene.ground=palettes.cave;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.cells={qiangwei:{x:650,y:610,approach:{x:650,y:685}},zixuan:{x:1020,y:570,approach:{x:1020,y:645}},observer:{x:845,y:445}};
+      scene.points=[
+        point('cell-threshold','囚室门槛',555,750,'两间囚室之间隔着石墙。南侧甬道连通左右，北边还有一条狭窄的回廊。',{appearance:'trace',paintOnly:true}),
+        point('dungeon-lamp','地面水痕',1175,715,'湿冷石面留着深浅不一的水痕，行迹向东北的阶口延伸。',{appearance:'trace',paintOnly:true})
+      ];return true;
+    case 'r_cult_chamber':
+      scene.title='摘星楼客房';scene.kind='room';scene.art='bedroom';scene.ground=palettes.room;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.farewellDoor={x:1350,y:610};
+      scene.points=[
+        point('chamber-window','客房窗影',445,625,'窗纸把外头的夜色隔成几格，房里的烛光却照不到远处。',{appearance:'trace',paintOnly:true}),
+        point('chamber-seat','空椅',1040,430,'椅子仍放在案边。有人来过，也有人已走远。',{appearance:'trace',paintOnly:true})
+      ];return true;
     case 'm1':
       scene.kind='cliff';scene.art='cliff';scene.ground=palettes.cliff;
       scene.bounds=[170,375,1435,955];scene.spawn={x:495,y:870};scene.exit={x:1365,y:885};
@@ -260,7 +283,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon'];
 
 
 // Match the painted ground before exposing a layout to the engine. These masks
@@ -273,10 +296,11 @@ function alignPaintedGround(scene){
     temple:{bounds:[280,325,1390,950],spawn:{x:650,y:820},exit:{x:805,y:365},edges:[[280,325,555,345],[280,810,340,950],[755,865,1390,950],[1325,325,1390,760]]},
     hall:{bounds:[190,260,1380,950],spawn:{x:760,y:815},exit:{x:765,y:915},edges:[[190,820,525,950],[1025,820,1380,950],[190,260,230,475],[1340,260,1380,480]]},
     island:{bounds:[290,340,1390,940],spawn:{x:675,y:835},exit:{x:1295,y:710},edges:[[290,340,565,390],[1030,340,1390,570],[1130,570,1390,650],[1190,765,1390,940],[825,825,1190,940],[290,830,465,940]]},
+    'cult-dungeon':{bounds:[325,345,1375,950],spawn:{x:830,y:840},exit:{x:1270,y:410},edges:[[325,345,410,470],[325,660,510,950],[510,805,650,950],[1100,810,1375,950],[1300,590,1375,805],[772,425,816,595]]},
     cave:{bounds:[325,345,1375,950],spawn:{x:830,y:875},exit:{x:1270,y:395},edges:[[325,345,410,470],[325,660,510,950],[510,805,650,950],[1100,810,1375,950],[1300,590,1375,805]]},
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
-  const mask=masks[scene.art];
+  const mask=masks[scene.maskArt||scene.art];
   if(!mask)return;
   scene.bounds=mask.bounds.slice();scene.spawn={...mask.spawn};scene.exit={...mask.exit};
   scene.obstacles.push(...mask.edges.map(r=>r.slice()));
@@ -328,6 +352,28 @@ function alignPaintedGround(scene){
     scene.paths=[path([[800,915],[800,825],[925,690],[1100,575],[1245,410]],60,'earth'),path([[925,690],[680,680],[430,705]],40,'earth')];
   }
   if(/^m[1-6]$/.test(scene.id)||scene.art==='bedroom'){scene.drawRoads=false;scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());}
+  // Cult scenes reuse only the project's original paintings. Their layouts,
+  // partition footprints and stage positions are independently authored here.
+  if(scene.id==='m61'){
+    scene.spawn={x:760,y:800};scene.objective={x:845,y:445};scene.exit={x:1270,y:730};
+    scene.props=[prop('column',420,530,58,165),prop('column',1255,490,58,165),prop('altar',845,365,240,75),prop('lantern',300,680,42,95),prop('lantern',1290,685,42,95)];
+    scene.obstacles=[...mask.edges.map(r=>r.slice()),[398,510,442,550],[1233,470,1277,510]];
+    scene.drawRoads=false;scene.paths=[path([[350,700],[760,700],[845,445]],78,'tile'),path([[760,700],[1090,690],[1270,730]],72,'tile')];
+  }else if(scene.id==='r_cult_dungeon'){
+    scene.spawn={x:830,y:840};scene.objective={x:650,y:610};scene.exit={x:1270,y:410};
+    scene.obstacles=mask.edges.map(r=>r.slice());
+    // The original generated painting supplies the masonry, open gates and lamps.
+    // This art-specific mask follows the low wall's visible ground footprint.
+    // Keep actor/portal anchors, with paths around either wall end.
+    scene.props=[];
+    scene.paths=[path([[830,840],[830,750],[650,750],[650,610]],58),path([[830,750],[1020,730],[1020,570]],58),path([[650,610],[650,455],[845,445],[1020,445],[1160,490],[1270,410]],44)];
+    scene.drawRoads=false;
+  }else if(scene.id==='r_cult_chamber'){
+    scene.spawn={x:1175,y:610};scene.objective={x:965,y:625};scene.exit={x:1350,y:610};
+    scene.props=[prop('table',380,470,150,78),prop('lantern',1170,440,42,98),prop('bench',1015,390,145,48)];
+    scene.obstacles=[...mask.edges.map(r=>r.slice()),[320,443,440,494]];
+    scene.drawRoads=false;scene.paths=[path([[650,540],[965,625],[1180,610],[1350,610]],62,'wood')];
+  }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
   const project=p=>{
     if(open(p.x,p.y))return p;let best=null,dist=Infinity;
@@ -359,7 +405,10 @@ const AUTHORED_PORTALS={
  m3:{m2:[[510,855],[565,795]],m4:[[805,365],[805,450]]},
  m4:{m3:[[555,845],[635,785]],r_wudang:[[810,355],[810,440]]},
  r_wudang:{m4:[[800,915],[800,825]],m5:[[1245,410],[1170,485]]},
- m5:{r_wudang:[[355,925],[445,885]]},
+ m5:{r_wudang:[[355,925],[445,885]],m61:[[1260,820],[1150,760]]},
+ m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]]},
+ r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
+ r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},
  m6:{m2:[[1250,415],[1160,475]],m7:[[800,915],[800,825]]}
 };
 

@@ -215,7 +215,7 @@ for(const [oldIndex,id] of REVISION_TWO_QUEST_IDS.entries()) {
   delete raw.questId;
   const restored=restoreState(raw);
   assert.equal(QUESTS[restored.quest].id,id,`${id}: revision-two numeric index`);
-  assert.equal(restored.campaignRevision,3);
+  assert.equal(restored.campaignRevision,4);
 }
 checks++;
 

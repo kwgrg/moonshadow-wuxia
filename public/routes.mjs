@@ -4,6 +4,9 @@
  * they are not claims about the original game's map adjacency.
  */
 export const ROUTE_MAPS = {
+ m61:{name:'摘星楼议事厅',area:'楼内正厅',art:'hall',weather:'亥时 · 灯火沉沉',poem:'高堂灯未尽，故路已难回',shop:false,obstacles:[]},
+ r_cult_dungeon:{name:'摘星楼地牢',area:'左右囚室',art:'cult-dungeon',weather:'亥时 · 石壁寒灯',poem:'重门隔故人，灯影照前尘',shop:false,obstacles:[],routeOnly:true},
+ r_cult_chamber:{name:'摘星楼客房',area:'灯下旧室',art:'bedroom',weather:'亥时 · 灯影独坐',poem:'人去空帷在，一灯照孤身',shop:false,obstacles:[],routeOnly:true},
  r_lingjue:{name:'凌绝峰山路',area:'下山石径',art:'forest',weather:'卯时 · 晨雾未散',poem:'回首青山远，初踏江湖路',shop:false,obstacles:[],routeOnly:true},
  r_wudang:{name:'武当登山道',area:'云阶',art:'forest',weather:'辰时 · 松风入云',poem:'石阶连云去，问剑向山巅',shop:false,obstacles:[],routeOnly:true}
 };
@@ -29,6 +32,7 @@ function matches(when,state){
  if(when.route&&(state.flags?.route||'good')!==when.route)return false;
  if(when.flag&&!state.flags?.[when.flag])return false;
  if(when.not&&state.flags?.[when.not])return false;
+ if(when.notAll?.some(key=>state.flags?.[key]))return false;
  return true;
 }
 function questIndex(state,quests){
@@ -73,8 +77,10 @@ export function routeNeighbors(mapId,quests=[]){
  for(const [a,b] of [...OPENING,...SIDE_ROUTES]){if(a===mapId)neighbors.add(b);if(b===mapId)neighbors.add(a);}
  // Enumerate real branch combinations rather than joining the end of one
  // mutually exclusive story branch directly to the beginning of the other.
- const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not]).filter(Boolean))];
- const variations=[{},Object.fromEntries(flagNames.map(k=>[k,true]))];
+ const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
+ // cultPath and forsake are independent: both all-false/all-true alone miss
+ // the accepted recruitment route. Enumerate every actual condition flag.
+ const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
  for(const route of ['good','evil'])for(const flags of variations){
   const state={quest:quests.length,flags:{...flags,route}};
   for(const e of routeEdges(state,quests)){

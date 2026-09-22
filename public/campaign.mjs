@@ -1,3 +1,4 @@
+import {CULT_REVISIONS,CULT_ADDITIONS} from './cult-revisions.mjs';
 import {RECRUITMENT_REVISIONS} from './recruitment-revisions.mjs';
 import {ERRANDS_REVISIONS,ERRANDS_ADDITIONS} from './errands-revisions.mjs';
 import {FULLFLOW_REVISIONS,FULLFLOW_ADDITIONS} from './fullflow-revisions.mjs';
@@ -31,3 +32,9 @@ for(const q of QUESTS)Object.assign(q,ERRANDS_REVISIONS[q.id]||{});
 for(const insertion of ERRANDS_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown errand insertion');QUESTS.splice(index,0,...insertion.quests);}
 
 for(const q of QUESTS)Object.assign(q,RECRUITMENT_REVISIONS[q.id]||{});
+
+export const REVISION_THREE_QUEST_IDS=QUESTS.map(q=>q.id);
+const cultGate=QUESTS.findIndex(q=>q.id==='g15');
+for(let i=cultGate+1;i<QUESTS.length;i++)if(QUESTS[i].when?.route==='good')QUESTS[i].when={...QUESTS[i].when,notAll:[...(QUESTS[i].when.notAll||[]),'cultPath']};
+for(const q of QUESTS)Object.assign(q,CULT_REVISIONS[q.id]||{});
+for(const insertion of CULT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown cult-route insertion');QUESTS.splice(index,0,...insertion.quests);}
