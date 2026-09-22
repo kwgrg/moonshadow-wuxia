@@ -20,7 +20,8 @@ const document={getElementById:id=>nodes.get(id)||null,querySelector:q=>{if(!sel
 },createElement:()=>new Element(),addEventListener(k,fn){events[k]=fn},hidden:false};
 const local=new Map();const localStorage={getItem:k=>local.get(k)||null,setItem:(k,v)=>local.set(k,v)};
 const window={addEventListener(k,fn){events[k]=fn},matchMedia:()=>({matches:false})};
-class Image{set src(value){queueMicrotask(()=>this.onload())}}
+const failingArt=new Set(),artRequests=[];
+class Image{set src(value){artRequests.push(value);queueMicrotask(()=>failingArt.has(value)?this.onerror():this.onload())}}
 class Renderer{resize(){}draw(){}toWorld(x,y){return{x,y}}}
 const raf=()=>0,timer=()=>0;
 let source=fs.readFileSync(new URL('../public/journey.js',import.meta.url),'utf8').replace(/^import .+;$/gm,'');
@@ -269,8 +270,28 @@ ui.engine._pursuitPath=[{x:1400,y:350}];ui.engine._pursuitFollow=true;
 ui.loadState(savedTrail);assert.equal(ui.engine._pursuitPath,null);assert.equal(ui.engine._pursuitFollow,false);assert.equal(ui.engine.s.pursuit.actor.x,savedTrail.pursuit.actor.x);
 ui.engine.s.hero.x+=1;events.pagehide();const departure=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(departure.hero.x,ui.engine.s.hero.x);assert.equal(departure.questId,'e07_first');checks++;
 
+// Saved dream projections loaded through slots or import must await their own
+// backdrop. A failed uncached asset must freeze the exact saved step and retry
+// the image, not allow an invisible dream to continue on a fallback room.
+const loadResources=game=>JSON.parse(JSON.stringify({inventory:game.s.inventory,coins:game.s.coins,exp:game.s.hero.exp,hp:game.s.hero.hp,mp:game.s.hero.mp,potions:game.s.potions,elixirs:game.s.elixirs,kills:game.s.kills,done:game.s.done,claimedRewards:game.s.claimedRewards}));
+async function flushArt(){for(let n=0;n<25;n++)await Promise.resolve();}
+for(const [mode,branch,art] of [['manual-load','kill','wedding-dream'],['import','refuse','lake-dream']]){
+ const state=core.freshState();state.quest=core.QUESTS.findIndex(q=>q.id==='e06_night');state.map='r_evil_chamber';state.flags={...state.flags,route:'evil',evilFamilyHeard:true,[branch==='kill'?'evilQiangweiKill':'evilQiangweiRefuse']:true};state.choices.e06=branch==='kill'?1:0;state.done=['e06',branch==='kill'?'e06_kill':'e06_refuse','e06_aftermath'];state.claimedRewards=[...state.done];
+ const sourceGame=new core.GameEngine(state);sourceGame.onEvent=type=>{if(type==='stagingDialogue')sourceGame.advanceStaging();};sourceGame.beginObjective();for(let n=0;n<2000&&!sourceGame.s.sequence?.sceneKey;n++)sourceGame.tick(.05);assert.ok(sourceGame.s.sequence?.sceneKey,'fixture is an earned scene transition');
+ const raw=JSON.parse(JSON.stringify({...sourceGame.s,questId:sourceGame.q.id})),resourceBefore=loadResources(sourceGame),url='./assets/'+art+'.png',requestsBefore=artRequests.filter(value=>value===url).length;failingArt.add(url);
+ if(mode==='import'){ui.showSaves();await nodes.get('import-save').onchange({target:{files:[{size:1000,text:async()=>JSON.stringify(raw)}]}});}
+ else ui.loadState(raw); // The manual-slot handler calls this same entry point.
+ await flushArt();assert.equal(ui.engine.sceneLoading,true,mode+' keeps the load lock after an asset failure');assert.equal(ui.engine.sceneLoadFailed,true,mode+' exposes the retry action');assert.equal(artRequests.filter(value=>value===url).length,requestsBefore+1);const savedStep=ui.engine.s.sequence.step;
+ for(let n=0;n<80;n++)ui.engine.tick(.05);assert.equal(ui.engine.s.sequence.step,savedStep,'failed loading never advances a scene');assert.equal(ui.engine.s.sequence.sceneKey,raw.sequence.sceneKey);assert.deepEqual(loadResources(ui.engine),resourceBefore);assert.match(nodes.get('track-button').innerHTML,/重新载入/);
+ failingArt.delete(url);ui.track();assert.equal(ui.engine.sceneLoading,true,'retry waits for the new request');ui.engine.tick(.05);assert.equal(ui.engine.s.sequence.step,savedStep);await flushArt();assert.equal(artRequests.filter(value=>value===url).length,requestsBefore+2,'retry makes a fresh request after the rejected image');assert.equal(ui.engine.sceneLoadFailed,false);assert.equal(ui.engine.sceneLoading,false);assert.equal(ui.engine.s.sequence.step,savedStep,'finishing an image load does not replay or skip a step');
+ for(let n=0;n<80&&ui.engine.s.sequence.step===savedStep;n++)ui.engine.tick(.05);assert.ok(ui.engine.s.sequence.step>savedStep,'successful retry resumes the saved sequence');assert.deepEqual(loadResources(ui.engine),resourceBefore,'loading and retry never alter rewards or combat resources');checks++;
+}
+
+// The elder in the wedding dream must keep his elder portrait in dialogue too.
+assert.equal(npcCellFor('孟知秋'),3,'Meng uses the same elder atlas cell as his staged actor');ui.showDialogue([['孟知秋','对话肖像检测。',3]],()=>{});assert.equal(nodes.get('speaker-portrait').src,'./assets/npcs.png','Meng must not fall back to the masked character portrait');assert.match(nodes.get('speaker-portrait').style.transform,/-75%/);ui.nextDialogue();checks++;
+
 console.log(JSON.stringify({result:'PASS',checks,
-  covered:['终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
+  covered:['手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 

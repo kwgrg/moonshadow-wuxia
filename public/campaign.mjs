@@ -48,3 +48,7 @@ for(const insertion of EVIL_DUNGEON_ADDITIONS){const index=QUESTS.findIndex(q=>q
 export const REVISION_FIVE_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const q of QUESTS)Object.assign(q,FORBIDDEN_REVISIONS[q.id]||{});
 for(const insertion of FORBIDDEN_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown forbidden insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+export const REVISION_SIX_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const id of ['e06_night','e06_night_visit']){const q=QUESTS.find(q=>q.id===id);Object.assign(q,{exclusiveFlags:['evilQiangweiKill','evilQiangweiRefuse'],exclusiveLegacyFlag:'evilLegacyDreamUnknown'});}
+Object.assign(QUESTS.find(q=>q.id==='e06_night_visit'),{map:'r_zhen_chamber',objective:'出房穿过厅堂，到真儿房中交谈'});

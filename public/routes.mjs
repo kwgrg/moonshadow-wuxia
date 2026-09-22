@@ -14,6 +14,7 @@ export const ROUTE_MAPS = {
  m71:{name:'摘星楼',area:'楼内厅堂',art:'hall',weather:'亥时 · 灯火沉沉',poem:'高堂灯未尽，归路待天明',shop:false,obstacles:[]},
  r_evil_dungeon:{name:'摘星楼地牢',area:'蔷薇囚室',art:'cult-dungeon',weather:'亥时 · 石壁寒灯',poem:'一墙隔生死，归路问何人',shop:false,obstacles:[],routeOnly:true},
  r_evil_chamber:{name:'摘星楼歇宿客房',area:'夜灯下',art:'bedroom',weather:'亥时 · 孤灯未熄',poem:'门外长更尽，梦中故人来',shop:false,obstacles:[],routeOnly:true},
+ r_zhen_chamber:{name:'摘星楼真儿房间',area:'西北客房',art:'zhen-chamber',weather:'亥时 · 夜灯低垂',poem:'隔帘闻夜语，相约待归舟',shop:false,obstacles:[],routeOnly:true},
  r_evil_yitian:{name:'倚天山下山道',area:'通往渡头',art:'forest',weather:'辰时 · 山雾初散',poem:'山路向江去，远帆待归人',shop:false,obstacles:[],routeOnly:true},
  r_evil_ferry:{name:'倚天山渡头',area:'候船石岸',art:'island',weather:'辰时 · 江风微起',poem:'一帆分两岸，回首路迢迢',shop:false,obstacles:[],routeOnly:true},
  m61:{name:'摘星楼议事厅',area:'楼内正厅',art:'hall',weather:'亥时 · 灯火沉沉',poem:'高堂灯未尽，故路已难回',shop:false,obstacles:[]},
@@ -35,13 +36,14 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber']].map(([a,b])=>pairKey(a,b)));
 
 // These links are independent web staging. A ferry is an explicit voyage,
 // while the mountain connector must be walked on both sides of the journey.
 const EVIL_ROUTES=[
  ['m71','r_evil_dungeon','e05','e06'],
  ['m71','r_evil_chamber','e06_aftermath','e06_night'],
+ ['m71','r_zhen_chamber','e06_night','e06_night_visit'],
  ['m71','r_evil_yitian','e06_escort','e06_ferry'],
  ['r_evil_yitian','r_evil_ferry','e06_escort','e06_ferry'],
  ['r_evil_ferry','m40','e06_ferry','e06_landing','boat']

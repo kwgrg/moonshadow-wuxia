@@ -86,6 +86,11 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'r_zhen_chamber':
+      scene.title='摘星楼真儿房间';scene.kind='room';scene.art='zhen-chamber';scene.ground=palettes.room;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.objective={x:930,y:520};scene.drawRoads=false;
+      scene.points=[point('zhen-curtain','帘前灯影',770,390,'帘边灯影落在床前，屋里只有窗外的夜色与低低的说话声。',{appearance:'trace',paintOnly:true}),point('zhen-moonlight','窗下月色',1090,680,'月光穿过窗格，在木地板上留下清冷的长影。',{appearance:'trace',paintOnly:true})];return true;
     case 'r_forbidden_second':
       scene.title='无忧教禁地二层';scene.kind='cave';scene.art='forbidden-second';scene.ground=palettes.cave;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
@@ -326,8 +331,24 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream'];
 
+
+// Dream environments belong to the staging camera only. They never become maps,
+// receive route endpoints, or expose discoveries that can leak into a real save.
+const DREAM_SCENES={
+ weddingDream:{title:'梦中婚堂',kind:'hall',art:'wedding-dream',spawn:{x:780,y:650},objective:{x:870,y:630}},
+ lakeDream:{title:'梦中天池',kind:'shore',art:'lake-dream',spawn:{x:730,y:790},objective:{x:900,y:550}}
+};
+const dreamCache=new Map();
+export function getDreamScene(key){
+ if(!Object.hasOwn(DREAM_SCENES,key))return null;
+ let scene=dreamCache.get(key);
+ if(!scene){const definition=DREAM_SCENES[key];scene={...baseScene('dream:'+key,{name:definition.title,weather:'亥时 · 梦境',art:definition.art}),...definition,cinematicName:definition.title,ground:palettes[definition.kind],atmosphere:{light:'night',weather:'clear',indoor:definition.kind==='hall',particles:'dust'},drawRoads:false,props:[],points:[],paths:[],portals:{}};
+ alignPaintedGround(scene);dreamCache.set(key,scene);}
+ // Fixed masks are computed once; callers still receive isolated mutable state.
+ return {...scene,bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(rectangle=>rectangle.slice()),props:[],points:[],paths:[],portals:{}};
+}
 
 // Match the painted ground before exposing a layout to the engine. These masks
 // approximate cliffs, fences, pools and walls with connected rectangular areas.
@@ -354,6 +375,9 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'zhen-chamber':{bounds:[150,230,1430,950],polygon:[[455,290],[1030,290],[1140,360],[1210,400],[1220,630],[1350,700],[1370,810],[1190,845],[950,845],[950,950],[550,950],[550,845],[280,845],[255,750],[275,585],[325,430],[450,425]],spawn:{x:750,y:820},exit:{x:750,y:925},solids:[[555,240,1000,320],[180,250,450,420],[1230,350,1430,640],[1090,330,1150,370]]},
+    'wedding-dream':{bounds:[280,330,1340,960],polygon:[[390,330],[1080,330],[1140,400],[1290,410],[1340,520],[1280,600],[1300,800],[1040,830],[980,860],[980,960],[660,960],[630,845],[380,820],[300,650],[320,460]],spawn:{x:780,y:650},exit:{x:780,y:650},solids:[]},
+    'lake-dream':{bounds:[330,445,1310,940],polygon:[[440,470],[610,495],[800,520],[1010,555],[1160,570],[1230,660],[1300,740],[1170,830],[1090,895],[775,940],[530,900],[490,800],[400,700],[350,555]],spawn:{x:730,y:790},exit:{x:730,y:790},solids:[]},
     'forbidden-second':{bounds:[300,180,1300,950],polygon:[[650,230],[560,350],[390,500],[600,640],[700,800],[720,950],[1050,940],[1130,700],[1200,480],[1260,300],[1180,180]],spawn:{x:800,y:800},exit:{x:1100,y:410},solids:[]},
     'forbidden-gate':{bounds:[230,180,1360,950],polygon:[[680,180],[680,242],[430,280],[340,400],[230,620],[360,805],[560,940],[1000,940],[1210,830],[1360,680],[1260,400],[1170,280],[940,242],[940,180]],spawn:{x:800,y:790},exit:{x:800,y:245},solids:[[490,300,605,340],[1020,315,1130,355]]},
     'forbidden-chamber':{bounds:[180,300,1420,950],polygon:[[340,345],[200,610],[400,850],[650,948],[800,948],[1110,905],[1400,700],[1300,390],[1200,340]],spawn:{x:725,y:805},exit:{x:725,y:930},solids:[[927,330,1060,390]]}
@@ -489,9 +513,10 @@ const AUTHORED_PORTALS={
  m4:{m3:[[555,845],[635,785]],r_wudang:[[810,355],[810,440]]},
  r_wudang:{m4:[[800,915],[800,825]],m5:[[1245,410],[1170,485]]},
  m5:{r_wudang:[[355,925],[445,885]],m61:[[1260,820],[1150,760]]},
- m71:{m49:[[765,915],[760,800]],m16:[[1320,290],[1235,345]],r_evil_dungeon:[[1270,730],[1135,680]],r_evil_chamber:[[350,700],[490,690]],r_evil_yitian:[[765,915],[760,800]]},
+ m71:{m49:[[765,915],[760,800]],m16:[[1320,290],[1235,345]],r_evil_dungeon:[[1270,730],[1135,680]],r_evil_chamber:[[350,700],[490,690]],r_zhen_chamber:[[350,350],[490,435]],r_evil_yitian:[[765,915],[760,800]]},
  r_evil_dungeon:{m71:[[830,915],[830,790]]},
  r_evil_chamber:{m71:[[1350,610],[1215,590]]},
+ r_zhen_chamber:{m71:[[750,925],[750,820]]},
  r_evil_yitian:{m71:[[1250,410],[1165,470]],r_evil_ferry:[[775,915],[800,825]]},
  r_evil_ferry:{r_evil_yitian:[[345,420],[455,465]],m40:[[1295,710],[1175,700]]},
  m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]]},

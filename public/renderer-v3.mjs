@@ -1,3 +1,4 @@
+import {drawDreamAccessories,drawDreamOverlay} from './night-dream-renderer.mjs';
 import {drawForbiddenGate,drawForbiddenProp,drawForbiddenAction} from './forbidden-renderer.mjs';
 import {clamp} from './runtime.mjs';
 import {getScene} from './world.mjs';
@@ -14,7 +15,7 @@ export function npcCellFor(name){
   if(/老板|掌柜|小二|店主|酒保|李总管/.test(n))return 0;
   if(/商人|行商|货郎|张仲天/.test(n))return 1;
   if(/道士|道长|天星|张惟宜/.test(n))return 2;
-  if(/老头|老者|老丈|长老|钓叟|纳兰潜凛/.test(n))return 3;
+  if(/老头|老者|老丈|长老|钓叟|纳兰潜凛|孟知秋/.test(n))return 3;
   if(/强盗|匪|刺客|黑衣|蒙面|叛众|帮凶|打手|伏兵|劫持者|追兵|守卫|塔卫|来犯|刀客/.test(n))return 6;
   if(/弟子|执事/.test(n))return 5;
   if(/村民|路人|酒客|书生|乞丐|家丁|大夫|小叁子|李四/.test(n))return 4;
@@ -429,12 +430,13 @@ export class Renderer {
     objects.push({...this.e.s.hero,hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});if(this.e.companion)objects.push({...this.e.companion,render:'actor'});for(const ally of this.allies)if(ally.hp>0&&!ally.hidden)objects.push({...ally,ally:true,render:'actor'});
     const presentation=this.e.stagingPresentation?.();
     if(presentation)for(const prop of presentation.definition.props||[]){
+      if(Object.hasOwn(prop,'sceneKey')&&prop.sceneKey!==(this.e.s.sequence?.sceneKey??null))continue;
       const actor=prop.actor==='hero'?this.e.s.hero:prop.actor?presentation.actors.find(a=>a.id===prop.actor):null;
       if(prop.actor&&(!actor||actor.hidden))continue;
       objects.push({...prop,...(actor?{x:actor.x,y:actor.y,direction:actor.direction,sortY:actor.y+2}:{}),render:'stagingProp',cues:presentation.cues,actors:presentation.actors,definition:presentation.definition});
     }
     objects.sort((a,b)=>(a.sortY??a.y)-(b.sortY??b.y)).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else if(o.render==='stagingProp')this.drawStagingProp(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
-    this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();c.restore();this.drawMini();
+    drawDreamAccessories.call(this);this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();drawDreamOverlay.call(this);c.restore();this.drawMini();
   }
   drawMini(){
     const c=this.mctx,size=180,s=this.scene;c.clearRect(0,0,size,size);this.backgroundImage(c,size,size);c.fillStyle='#072c2c88';c.fillRect(0,0,size,size);c.lineJoin='round';c.lineCap='round';c.strokeStyle='#cfcc9c99';
