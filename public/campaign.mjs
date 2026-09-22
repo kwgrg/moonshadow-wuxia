@@ -1,3 +1,6 @@
+import {ERRANDS_REVISIONS,ERRANDS_ADDITIONS} from './errands-revisions.mjs';
+import {FULLFLOW_REVISIONS,FULLFLOW_ADDITIONS} from './fullflow-revisions.mjs';
+import {ROUTE_MAPS} from './routes.mjs';
 import {LATE_STORY_REVISIONS,LATE_STORY_ADDITIONS} from './late-story-revisions.mjs';
 import {GAMEPLAY_REVISIONS,GAMEPLAY_ADDITIONS} from './gameplay-revisions.mjs';
 import {STORY_REVISIONS} from './story-revisions.mjs';
@@ -12,8 +15,16 @@ export const SOURCES = [{"id":"retail2001","url":"https://gl.ali213.net/html/200
 export function chooseEnding(s){if(s.flags.route==='evil')return (s.flags.evil||0)>=3?'alone':'family';if(s.flags.forsake)return 'zhen_good';return s.flags.firstWoman==='mei'?'three':'reunion';}
 
 export const LEGACY_QUEST_IDS = QUESTS.map(q=>q.id);
+Object.assign(MAPS,ROUTE_MAPS);
 Object.assign(MAPS.m5,{name:'武当山顶',area:'演武坪',art:'temple'});
 for (const q of QUESTS) { const revision=STORY_REVISIONS[q.id]; if(revision) Object.assign(q,revision,{revised:true}); }
 
 for(const q of QUESTS){Object.assign(q,LATE_STORY_REVISIONS[q.id]||{},GAMEPLAY_REVISIONS[q.id]||{});}
 for(const insertion of [...GAMEPLAY_ADDITIONS,...LATE_STORY_ADDITIONS]){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error("Unknown insertion point");QUESTS.splice(index,0,...insertion.quests);}
+
+export const REVISION_TWO_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,FULLFLOW_REVISIONS[q.id]||{});
+for(const insertion of FULLFLOW_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown full-flow insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+for(const q of QUESTS)Object.assign(q,ERRANDS_REVISIONS[q.id]||{});
+for(const insertion of ERRANDS_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown errand insertion');QUESTS.splice(index,0,...insertion.quests);}

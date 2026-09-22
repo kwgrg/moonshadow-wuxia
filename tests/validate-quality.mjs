@@ -73,20 +73,20 @@ assert.equal(engine.inThreat({x:700,y:650},line),false);
 
 // A failed sixth-floor lever resets every switch, retains cleared fights and allows a full retry.
 const lever=new GameEngine();lever.s.quest=QUESTS.findIndex(q=>q.id==='eSwitch6');lever.s.map=lever.q.map;lever.s.flags.route='evil';lever.s.phase='choice';
-lever.s.done=QUESTS.filter(q=>/^e(Tower|Switch)[1-5]$/.test(q.id)).map(q=>q.id);
+lever.s.done=QUESTS.filter(q=>/^eTower[1-6]$|^eSwitch[1-5]$/.test(q.id)).map(q=>q.id);
 for(let i=1;i<=5;i++)lever.s.flags['switch'+i]=true;
 const incorrect=lever.puzzleCorrect(0)?1:0;
 assert.equal(lever.choose(incorrect),true);assert.equal(lever.q.id,'eSwitch1');
 assert.equal(lever.s.done.filter(id=>id.startsWith('eSwitch')).length,0);
-assert.equal(lever.s.done.filter(id=>id.startsWith('eTower')).length,5);
+assert.equal(lever.s.done.filter(id=>id.startsWith('eTower')).length,6);
 for(let floor=1;floor<=5;floor++){
- assert.equal(lever.q.id,'eSwitch'+floor);lever.travel(lever.q.map);lever.beginObjective();
+ assert.equal(lever.q.id,'eSwitch'+floor);assert.equal(lever.travel(lever.q.map),true);for(let t=0;t<12000&&lever.s.map!==lever.q.map;t++)lever.tick(.05);assert.equal(lever.s.map,lever.q.map);lever.beginObjective();
  while(lever.s.phase==='search'){
   const item=lever.markers.find(m=>m.kind==='search');lever.s.hero={...lever.s.hero,...lever.nearestOpen(item.x-30,item.y+20)};lever.interact(item);
  }
  if(lever.s.phase==='choice')lever.choose(0);else lever.completeQuest();
 }
-assert.equal(lever.q.id,'eTower6');
+assert.equal(lever.q.id,'eSwitch6');
 lever.s.quest=QUESTS.findIndex(q=>q.id==='eSwitch6');lever.s.map=lever.q.map;lever.s.phase='choice';
 assert.equal(lever.choose(lever.puzzleCorrect(0)?0:1),true);assert.equal(lever.s.flags.switch6,true);assert.equal(lever.q.id,'eTower7');
 const rescue=new GameEngine();rescue.s.quest=QUESTS.findIndex(q=>q.id==='e13');rescue.s.map=rescue.q.map;rescue.s.flags.route='evil';

@@ -28,7 +28,7 @@ export class Renderer {
   get scene(){return this.e.scene||getScene(this.e.s.map,this.e.region||this.e.chapter);}
   get background(){const s=this.scene;return this.assets[s.art]||this.assets[s.fallbackArt]||this.assets[this.e.chapter.art];}
   resize(){this.w=this.canvas.clientWidth;this.h=this.canvas.clientHeight;this.dpr=Math.min(devicePixelRatio||1,this.e.settings.quality==='high'?2:1.25);this.canvas.width=Math.round(this.w*this.dpr);this.canvas.height=Math.round(this.h*this.dpr);this.s=Math.max(this.w/W,this.h/H);if(this.w<760)this.s=Math.max(this.s,.75);}
-  camera(){const x=clamp(this.w/2-this.e.s.hero.x*this.s,this.w-W*this.s,0),y=clamp(this.h*.61-this.e.s.hero.y*this.s,this.h-H*this.s,0);this.cameraX+=(x-this.cameraX)*.08;this.cameraY+=(y-this.cameraY)*.08;}
+  camera(){const focus=this.e.stagingFocus?.()||this.e.s.hero;const x=clamp(this.w/2-focus.x*this.s,this.w-W*this.s,0),y=clamp(this.h*.61-focus.y*this.s,this.h-H*this.s,0);this.cameraX+=(x-this.cameraX)*.08;this.cameraY+=(y-this.cameraY)*.08;}
   toWorld(x,y){return{x:(x-this.cameraX)/this.s,y:(y-this.cameraY)/this.s};}
   backgroundImage(c,w,h){if(this.background)c.drawImage(this.background,0,0,w,h);else{c.fillStyle='#24403d';c.fillRect(0,0,w,h);}}
   polygon(points,fill,stroke=null,width=1){const c=this.ctx;c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
@@ -173,7 +173,7 @@ export class Renderer {
   drawActor(a,hero=false){
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:npcCellFor(a.name),useNpcAtlas=npcCell!==null&&this.assets.npcs;
-    const c=this.ctx,height=a.boss?158:hero?142:useNpcAtlas?140:130,width=height*384/1024;
+    const kneeling=a.pose==='kneel',c=this.ctx,height=kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=(hero?142:height)*384/1024;
     const bob=hero&&this.e.walkTime?Math.sin(this.e.walkTime)*2:Math.sin(this.e.time*1.5+a.x)*.5,lift=hero&&this.e.dashTime>0?Math.sin(this.e.dashTime/.6*Math.PI)*27:0;
     c.save();c.translate(a.x,a.y);this.ellipse(0,0,width*.67,9,'#02172066');
     if(hero){this.ellipse(0,0,29,10,null,'#c2e6ceaa',1.2);this.ellipse(0,0,34,13,null,'#a1d5bd35');}
@@ -181,7 +181,7 @@ export class Renderer {
     if(a.flash>0)c.filter='brightness(1.8)';else if(!hero&&this.e.q.friendly&&a.hp!==undefined)c.filter='saturate(.4) brightness(.8)';
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
     if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
-    else if(this.assets.characters)c.drawImage(this.assets.characters,sprite*384,0,384,1024,-width/2,-height,width,height);c.restore();
+    else if(this.assets.characters){if(kneeling&&this.assets['hero-kneel']){const w=height*936/1176;c.drawImage(this.assets['hero-kneel'],164,35,936,1176,-w/2,-height,w,height);}else c.drawImage(this.assets.characters,sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
     c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle=hero?'#f2e8c5':a.hp!==undefined?'#eed4bd':'#f1d898';c.fillText(hero?(this.e.q.playAs||'杨影枫'):(a.displayName||a.name),0,-height-12-lift);c.shadowBlur=0;c.shadowOffsetY=0;
     if(!hero&&a.hp!==undefined){c.fillStyle='#182524dd';c.fillRect(-29,-height-3,58,4);c.fillStyle=a.boss?'#cb6a59':'#c79572';c.fillRect(-29,-height-3,58*a.hp/a.maxHp,4);if(a.role==='ranged'||a.role==='brute'){c.font=`11px ${FONT}`;c.fillStyle='#f0c996';c.fillText(a.role==='ranged'?'远攻':'重击',0,-height-30);}}
     if(a.main&&this.e.s.phase!=='battle'){c.font='24px serif';c.fillStyle='#f7df99';c.shadowColor='#e3c877';c.shadowBlur=10;c.fillText(this.e.s.phase==='talk'?'!':'?',0,-height-35+Math.sin(this.e.time*3)*4);}c.restore();

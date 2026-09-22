@@ -6,10 +6,10 @@ for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length,q.i
 assert.equal(new Set(QUESTS.map(q=>q.id)).size,QUESTS.length);
 function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(id==='g20')return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
 for(const difficulty of ['normal','story']) for(const outcome of ['reunion','three','zhen_good','cult','alone','family']){
- const g=new GameEngine();g.settings.difficulty=difficulty;let transitions=0,battles=0,defeats=0;g.onEvent=(event)=>{if(event==='defeat')defeats++;};
+ const g=new GameEngine();g.settings.difficulty=difficulty;let transitions=0,battles=0,defeats=0;g.onEvent=(event)=>{if(event==='defeat')defeats++;if(event==='stagingDialogue')g.advanceStaging();if(event==='startingDifficulty')g.chooseStartingDifficulty(difficulty);};
  while(!g.s.completed&&transitions++<1000){const q=g.q;
-  if(g.s.map!==q.map){assert.equal(g.travel(q.map),true);continue;}
-  if(g.s.phase==='talk')g.beginObjective();
+  if(g.s.map!==q.map){assert.equal(g.travel(q.map),true,q.id+' route open');for(let t=0;t<18000&&g.s.map!==q.map;t++)g.tick(.05);assert.equal(g.s.map,q.map,q.id+' walking route arrives');continue;}
+  if(g.s.phase==='talk')g.beginObjective();if(g.s.phase==='staging'){for(let t=0;t<5000&&g.s.phase==='staging';t++)g.tick(.05);assert.notEqual(g.s.phase,'staging',q.id+' staging releases');continue;}
   if(g.s.phase==='training'){const opponent=g.markers.find(m=>m.kind==='master')||g.markers.find(m=>m.kind==='training'&&!m.defeated);assert.ok(opponent);g.interact(opponent);for(let n=0;n<1200&&g.s.phase==='training';n++)g.tick(.05);assert.equal(g.s.phase,'battle');}
   if(g.s.phase==='choice'){assert.equal(g.choose(option(g,outcome)),true);continue;}
   if(g.s.phase==='escape'){const marker=g.markers.find(m=>m.main);g.interact(marker);for(let t=0;t<1500&&g.q.id===q.id&&g.s.phase==='escape';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,'Timed escape must progress');continue;}

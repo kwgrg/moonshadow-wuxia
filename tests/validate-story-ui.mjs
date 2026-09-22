@@ -188,7 +188,7 @@ function makeLeverState(){
 function replayFiveSwitches(engine){
   for(let floor=1;floor<=5;floor++){
     assert.equal(engine.q.id,'eSwitch'+floor,'cleared fights must be skipped while resetting switches');
-    assert.equal(engine.travel(engine.q.map),true);
+    assert.equal(engine.travel(engine.q.map),true);for(let t=0;t<12000&&engine.s.map!==engine.q.map;t++)engine.tick(.05);assert.equal(engine.s.map,engine.q.map,'walk back to the current switch floor');
     engine.beginObjective();
     assert.equal(engine.s.phase,'search');
     const marker=engine.markers.find(m=>m.kind==='search');
@@ -198,7 +198,7 @@ function replayFiveSwitches(engine){
     engine.completeQuest();
   }
   assert.equal(engine.q.id,'eSwitch6','recovery returns to the sixth-floor lever without replaying cleared battles');
-  assert.equal(engine.travel(engine.q.map),true);
+  assert.equal(engine.travel(engine.q.map),true);for(let t=0;t<12000&&engine.s.map!==engine.q.map;t++)engine.tick(.05);assert.equal(engine.s.map,engine.q.map,'walk back to the current switch floor');
   engine.beginObjective();
   assert.equal(engine.s.phase,'choice');
 }
@@ -228,6 +228,11 @@ for(const mode of ['new-ledger','loaded-old-state','live-old-state']){
   assert.equal(lever.q.id,'eTower7');
   checks++;
 }
+// Regression from actual browser QA: the third bout must persist the choice,
+// not leave a battle save that forces all three bouts to replay on reload.
+preset('e02');ui.engine.s.wave=2;ui.engine.startBattle(true);const lastOpponent=ui.engine.s.enemies[0];lastOpponent.hp=1;Object.assign(ui.engine.s.hero,{x:lastOpponent.x,y:lastOpponent.y+20});ui.engine.cast(0);
+const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
+assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
 console.log(JSON.stringify({result:'PASS',checks,
   covered:['终局与拒绝对白分流','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'

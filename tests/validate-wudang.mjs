@@ -224,9 +224,9 @@ assert.equal(migratedAfter.q.id,'a05');
 assert.equal(migratedAfter.s.phase,'after','已结束的旧比武不能强迫重新挑战');
 
 // A completed sparring session survives leaving the courtyard and reloading.
-migratedAfter.s.visited.push('m2');assert.equal(migratedAfter.travel('m2'),true);
+migratedAfter.s.visited.push('m2');assert.equal(migratedAfter.travel('m2'),true);for(let i=0;i<8000&&migratedAfter.s.map!=='m2';i++)migratedAfter.tick(.05);assert.equal(migratedAfter.s.map,'m2');
 const awayAfter=new GameEngine(restoreState(JSON.parse(JSON.stringify(migratedAfter.s))));
-assert.equal(awayAfter.travel('m5'),true);assert.equal(awayAfter.s.phase,'after');
+assert.equal(awayAfter.travel('m5'),true);for(let i=0;i<8000&&awayAfter.s.map!=='m5';i++)awayAfter.tick(.05);assert.equal(awayAfter.s.map,'m5');assert.equal(awayAfter.s.phase,'after');
 assert.equal(awayAfter.markers.filter(m=>m.kind==='training').length,10,'旁观弟子不应在剧情败北后消失');
 console.log(JSON.stringify({result:'PASS',scenario:'武当自由切磋',checks:[
   '十名不同弟子可选且可任意顺序挑战',

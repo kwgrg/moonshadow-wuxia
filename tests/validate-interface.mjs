@@ -31,8 +31,8 @@ const values=[...Object.values(core),SOURCES,Renderer,npcCellFor,document,window
 const ui=await new AsyncFunction(...names,source)(...values);
 assert.equal(nodes.get('loading').hidden,false);assert.equal(ui.engine.q.id,'a01');
 for(const show of [()=>ui.showCharacter(),()=>ui.showCharacter('equipment'),()=>ui.showCharacter('skills'),ui.showBag,ui.showJournal,()=>ui.showJournal('side'),()=>ui.showJournal('endings'),ui.showMap,()=>ui.showMap(true),ui.showSaves,ui.showSettings,ui.showAbout,ui.showHelp]){show();assert.equal(nodes.get('panel').open,true);ui.closePanel();assert.equal(ui.engine.paused,false);}
-ui.engine.s.hero.x=ui.engine.npc.x;ui.engine.s.hero.y=ui.engine.npc.y;ui.track();assert.equal(nodes.get('dialogue').hidden,false);let steps=0;while(ui.engine.q.id==='a01'&&steps++<20)ui.nextDialogue();assert.equal(ui.engine.q.id,'a02');
-ui.engine.travel(ui.engine.q.map);ui.showShop();assert.equal(nodes.get('panel').open,true);ui.closePanel();
+ui.engine.s.hero.x=ui.engine.npc.x;ui.engine.s.hero.y=ui.engine.npc.y;ui.track();let steps=0;while(ui.engine.q.id==='a01'&&steps++<1500){ui.engine.tick(.05);if(!nodes.get('dialogue').hidden){if(nodes.get('dialogue-next').hidden)nodes.get('start-normal')?.click();else ui.nextDialogue();}}assert.equal(ui.engine.q.id,'a02');
+ui.engine.travel(ui.engine.q.map);for(let i=0;i<3000&&ui.engine.s.map!==ui.engine.q.map;i++)ui.engine.tick(.05);ui.showShop();assert.equal(nodes.get('panel').open,true);ui.closePanel();
 for(const marker of ui.engine.markers.filter(m=>m.kind==='side')){ui.showSide(marker.id);ui.closePanel();}
 globalThis.innerWidth=1440;globalThis.innerHeight=900;globalThis.devicePixelRatio=1;
 let draws=0;const context=new Proxy({},{get:(target,prop)=>target[prop]??((...args)=>{if(['translate','scale','ellipse','arc','fillRect','clearRect','moveTo','lineTo'].includes(prop))for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),prop);if(prop==='drawImage'){assert.ok(args[0],'Image reference');draws++;for(const v of args.slice(1))assert.ok(Number.isFinite(v));}}),set:(target,key,value)=>(target[key]=value,true)});

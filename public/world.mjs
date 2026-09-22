@@ -1,3 +1,6 @@
+import { QUESTS } from './campaign.mjs';
+import { ROUTE_MAPS, routeNeighbors } from './routes.mjs';
+
 /**
  * Playable scenery for the web adaptation. These are authored layouts, not
  * recovered maps from the 2001 game. Coordinates use a 1536 × 1024 world.
@@ -83,6 +86,24 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'r_lingjue':
+      scene.title='凌绝峰下山道';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
+      scene.atmosphere={light:'dawn',weather:'mist',indoor:false,particles:'leaves'};
+      scene.points=[
+        point('road-direction','岔路石标',995,635,'石标向北指回凌绝峰，向南指向武当山脚。离开山顶之后，顺着溪边石径便能找到酒肆。',{appearance:'sign'}),
+        point('cliff-wind','临崖松声',415,510,'松枝在崖边摇动。山下炊烟已隐约可见，回头还能望见来时的峰顶。',{appearance:'trace',paintOnly:true}),
+        {...chest('road-rest',1085,805,'歇脚石旁留有一份行路人交换的干粮。',0),name:'歇脚石',reward:{potions:1},appearance:'bundle'}
+      ];
+      return true;
+    case 'r_wudang':
+      scene.title='武当登山道';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
+      scene.points=[
+        point('cloud-steps','云阶路标',1100,575,'山门在身后，演武坪在高处。石阶之间留有供来客歇息和错身的空地。',{appearance:'sign'}),
+        point('view-foothill','回望山脚',430,705,'越过松梢，可以看见山脚的屋舍。来路仍在，下山时照着石标回走即可。',{appearance:'trace',paintOnly:true}),
+        point('sword-echo','远处练剑声',875,475,'山顶传来相互应答的呼喝声，脚步也随之加快。',{appearance:'trace',paintOnly:true})
+      ];
+      return true;
     case 'm1':
       scene.kind='cliff';scene.art='cliff';scene.ground=palettes.cliff;
       scene.bounds=[170,375,1435,955];scene.spawn={x:495,y:870};scene.exit={x:1365,y:885};
@@ -224,11 +245,13 @@ const cache=new Map();
 
 /** Immutable-by-convention layout. The engine stores discoveries in its save state. */
 export function getScene(mapId,region={}) {
+  region=ROUTE_MAPS[mapId]||region;
   const key=[mapId,region.name,region.weather].join('|');
   if(cache.has(key))return cache.get(key);
   const scene=baseScene(mapId,region);
   if(!handcrafted(scene))generatedLayout(scene);
   alignPaintedGround(scene);
+  attachPortals(scene);
   for(const p of scene.points) {
 
     scene.paths.push(path([[p.x,p.y],[p.x,Math.min(900,p.y+80)]],28,['inn','room'].includes(scene.kind)?'wood':'earth'));
@@ -295,6 +318,15 @@ function alignPaintedGround(scene){
     scene.points[0]={...scene.points[0],name:'林间石径',text:'竹林旁的石径在这里变宽。前方岔路一侧绕着山崖，另一侧深入树林。',paintOnly:true};scene.points[2].x=1150;scene.points[2].y=875;
     scene.paths=[path([[800,880],[840,740],[1010,600],[1110,470],[1250,395]],65,'earth'),path([[840,740],[500,650],[380,660]],48,'earth')];
   }
+  if(scene.id==='r_lingjue'){
+    scene.spawn={x:1165,y:470};scene.objective={x:995,y:635};scene.exit={x:775,y:915};
+    scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+    scene.paths=[path([[1250,420],[1165,470],[1020,605],[855,735],[775,915]],60,'earth'),path([[1020,605],[725,590],[415,510]],40,'earth')];
+  }else if(scene.id==='r_wudang'){
+    scene.spawn={x:800,y:825};scene.objective={x:1100,y:575};scene.exit={x:1245,y:410};
+    scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+    scene.paths=[path([[800,915],[800,825],[925,690],[1100,575],[1245,410]],60,'earth'),path([[925,690],[680,680],[430,705]],40,'earth')];
+  }
   if(/^m[1-6]$/.test(scene.id)||scene.art==='bedroom'){scene.drawRoads=false;scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());}
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
   const project=p=>{
@@ -319,3 +351,46 @@ function alignPaintedGround(scene){
 
 
 
+
+const AUTHORED_PORTALS={
+ m1:{r_lingjue:[[1370,865],[1285,765]]},
+ r_lingjue:{m1:[[1250,420],[1165,470]],m2:[[775,915],[800,825]]},
+ m2:{r_lingjue:[[365,755],[480,745]],m3:[[1150,620],[1080,680]],m6:[[875,795],[840,695]]},
+ m3:{m2:[[510,855],[565,795]],m4:[[805,365],[805,450]]},
+ m4:{m3:[[555,845],[635,785]],r_wudang:[[810,355],[810,440]]},
+ r_wudang:{m4:[[800,915],[800,825]],m5:[[1245,410],[1170,485]]},
+ m5:{r_wudang:[[355,925],[445,885]]},
+ m6:{m2:[[1250,415],[1160,475]],m7:[[800,915],[800,825]]}
+};
+
+/** Stable endpoints for every possible neighbour, including unvisited side maps. */
+function attachPortals(scene){
+ const [left,top,right,bottom]=scene.bounds,neighbors=routeNeighbors(scene.id,QUESTS);
+ const open=(x,y)=>x>=left+18&&x<=right-18&&y>=top+18&&y<=bottom-18&&!scene.obstacles.some(r=>x>r[0]-18&&x<r[2]+18&&y>r[1]-18&&y<r[3]+18);
+ const cells=[];for(let y=top+30;y<bottom-18;y+=25)for(let x=left+30;x<right-18;x+=25)if(open(x,y))cells.push({x,y});
+ const project=p=>open(p.x,p.y)?p:cells.reduce((best,c)=>Math.hypot(c.x-p.x,c.y-p.y)<Math.hypot(best.x-p.x,best.y-p.y)?c:best,cells[0]||scene.spawn);
+ const assigned=[],center={x:(left+right)/2,y:(top+bottom)/2};
+ const candidates=[scene.exit,scene.spawn,{x:right-35,y:(top+bottom)/2},{x:left+35,y:(top+bottom)/2},{x:(left+right)/2,y:top+35},{x:(left+right)/2,y:bottom-35},{x:left+75,y:top+80},{x:right-75,y:bottom-80}].map(project);
+ scene.portals={};
+ for(const [index,to] of neighbors.entries()){
+  const authored=AUTHORED_PORTALS[scene.id]?.[to];
+  let exit=authored?project({x:authored[0][0],y:authored[0][1]}):null;
+  if(!exit){
+   const available=[...candidates,...cells.filter((_,i)=>i%7===0)];
+   exit=available.reduce((best,c)=>{
+    const score=p=>assigned.length?Math.min(...assigned.map(a=>Math.hypot(p.x-a.x,p.y-a.y))):1000-Math.hypot(p.x-candidates[0].x,p.y-candidates[0].y);
+    return score(c)>score(best)?c:best;
+   },available[index%candidates.length]);
+  }
+  assigned.push(exit);
+  const toward={x:center.x-exit.x,y:center.y-exit.y},length=Math.hypot(toward.x,toward.y)||1;
+  let entry=authored?project({x:authored[1][0],y:authored[1][1]}):project({x:exit.x+toward.x/length*100,y:exit.y+toward.y/length*100});
+  // Narrow painted doorways can project the preferred arrival onto the exit.
+  // Choose a nearby interior cell far enough away to require a return walk.
+  if(Math.hypot(entry.x-exit.x,entry.y-exit.y)<90){
+   const arrivals=cells.filter(p=>Math.hypot(p.x-exit.x,p.y-exit.y)>=110);
+   if(arrivals.length)entry=arrivals.reduce((best,p)=>Math.hypot(p.x-entry.x,p.y-entry.y)<Math.hypot(best.x-entry.x,best.y-entry.y)?p:best,arrivals[0]);
+  }
+  scene.portals[to]={exit:{...exit},entry:{...entry}};
+ }
+}
