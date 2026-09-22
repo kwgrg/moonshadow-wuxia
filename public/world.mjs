@@ -86,6 +86,19 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'r_island_village':{
+      scene.title='忘忧岛村落';scene.kind='village';scene.art='island-village';scene.ground=palettes.village;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};scene.objective={x:450,y:540};scene.drawRoads=false;
+      const positions={};for(let i=0;i<35;i++)positions['island-bandit-'+String(i+1).padStart(2,'0')]={x:810+(i%6)*75,y:430+Math.floor(i/6)*60};
+      positions['island-bandit-chief']={x:1260,y:615};positions['island-mei']={x:520,y:600};
+      scene.skirmish={heroStart:{x:400,y:620},positions};
+      scene.points=[point('village-ruts','广场辙痕',630,590,'脚印与车辙交错穿过广场，屋前的门扉关得很紧。',{appearance:'trace',paintOnly:true}),point('village-return','南面村道',830,850,'村道从菜田和石墙之间向下延伸，海风从渡口方向吹来。',{appearance:'trace',paintOnly:true})];return true;
+    }
+    case 'r_mainland_dock':
+      scene.title='中原码头';scene.kind='shore';scene.art='mainland-dock';scene.ground=palettes.shore;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};scene.objective={x:900,y:620};scene.drawRoads=false;
+      scene.points=[point('mainland-tide','栈桥潮声',800,445,'江水拍着栈桥下的木桩，靠岸的船还在轻轻摇晃。',{appearance:'trace',paintOnly:true}),point('mainland-steps','南侧石阶',705,840,'石阶通向岸上的道路。回望时，船帆与江面渐渐被屋檐遮住。',{appearance:'trace',paintOnly:true})];return true;
+
     case 'r_zhen_chamber':
       scene.title='摘星楼真儿房间';scene.kind='room';scene.art='zhen-chamber';scene.ground=palettes.room;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
@@ -331,7 +344,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -348,6 +361,16 @@ export function getDreamScene(key){
  alignPaintedGround(scene);dreamCache.set(key,scene);}
  // Fixed masks are computed once; callers still receive isolated mutable state.
  return {...scene,bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(rectangle=>rectangle.slice()),props:[],points:[],paths:[],portals:{}};
+}
+
+// A neutral cutaway is a camera environment, not a dream or a travelled map.
+let towerSceneCache=null;
+export function getStagingScene(key){
+ const dream=getDreamScene(key);if(dream)return dream;
+ if(key!=='towerInterlude')return null;
+ if(!towerSceneCache){const scene={...baseScene('staging:towerInterlude',{name:'摘星楼交锋',weather:'亥时 · 灯火沉沉',art:'hall'}),kind:'hall',art:'hall',cinematicName:'摘星楼交锋',hidePlayer:true,ground:palettes.hall,atmosphere:{light:'night',weather:'clear',indoor:true,particles:'dust'},objective:{x:930,y:520},drawRoads:false,props:[],points:[],paths:[],portals:{}};
+ alignPaintedGround(scene);towerSceneCache=scene;}
+ const scene=towerSceneCache;return {...scene,bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(rectangle=>rectangle.slice()),props:[],points:[],paths:[],portals:{}};
 }
 
 // Match the painted ground before exposing a layout to the engine. These masks
@@ -375,6 +398,8 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'island-village':{bounds:[110,270,1430,980],polygon:[[470,285],[745,285],[800,305],[960,330],[1170,370],[1250,410],[1300,490],[1280,550],[1380,600],[1310,710],[1350,770],[1220,835],[955,865],[910,980],[745,980],[735,820],[650,780],[500,720],[345,660],[130,625],[120,550],[230,570],[305,535],[260,485],[130,435],[135,375],[300,335]],spawn:{x:400,y:620},exit:{x:810,y:935},solids:[]},
+    'mainland-dock':{bounds:[190,225,1350,980],polygon:[[600,245],[730,245],[775,330],[800,390],[1210,405],[1270,450],[1270,550],[1200,640],[1200,790],[1050,800],[995,860],[940,980],[420,980],[455,865],[330,805],[325,680],[200,615],[210,510],[355,435],[520,400],[590,400]],spawn:{x:700,y:455},exit:{x:710,y:920},solids:[]},
     'zhen-chamber':{bounds:[150,230,1430,950],polygon:[[455,290],[1030,290],[1140,360],[1210,400],[1220,630],[1350,700],[1370,810],[1190,845],[950,845],[950,950],[550,950],[550,845],[280,845],[255,750],[275,585],[325,430],[450,425]],spawn:{x:750,y:820},exit:{x:750,y:925},solids:[[555,240,1000,320],[180,250,450,420],[1230,350,1430,640],[1090,330,1150,370]]},
     'wedding-dream':{bounds:[280,330,1340,960],polygon:[[390,330],[1080,330],[1140,400],[1290,410],[1340,520],[1280,600],[1300,800],[1040,830],[980,860],[980,960],[660,960],[630,845],[380,820],[300,650],[320,460]],spawn:{x:780,y:650},exit:{x:780,y:650},solids:[]},
     'lake-dream':{bounds:[330,445,1310,940],polygon:[[440,470],[610,495],[800,520],[1010,555],[1160,570],[1230,660],[1300,740],[1170,830],[1090,895],[775,940],[530,900],[490,800],[400,700],[350,555]],spawn:{x:730,y:790},exit:{x:730,y:790},solids:[]},
@@ -478,7 +503,7 @@ function alignPaintedGround(scene){
   }
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
-  if(['m40','m34','r_evil_ferry'].includes(scene.id)){
+  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
@@ -519,9 +544,12 @@ const AUTHORED_PORTALS={
  r_zhen_chamber:{m71:[[750,925],[750,820]]},
  r_evil_yitian:{m71:[[1250,410],[1165,470]],r_evil_ferry:[[775,915],[800,825]]},
  r_evil_ferry:{r_evil_yitian:[[345,420],[455,465]],m40:[[1295,710],[1175,700]]},
- m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]]},
+ m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
+ r_island_village:{m31:[[230,595],[370,605]],m40:[[810,935],[830,815]]},
+ r_mainland_dock:{m40:[[700,335],[700,455]],m41:[[710,920],[720,800]]},
+ m41:{r_mainland_dock:[[1250,415],[1160,475]],m49:[[800,915],[800,800]]},
  m34:{m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
- m31:{m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]]},
+ m31:{m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
  r_forbidden_path:{m31:[[775,915],[800,825]],r_forbidden_entry:[[1250,410],[1165,470]]},
  r_forbidden_entry:{r_forbidden_path:[[375,620],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
  r_forbidden_first:{r_forbidden_entry:[[830,915],[830,790]],r_forbidden_second:[[1270,410],[1160,490]]},

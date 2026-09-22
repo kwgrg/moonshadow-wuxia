@@ -2,46 +2,181 @@
 // reference audit; positions, health, timing, targeting and damage are authored.
 const range=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
 const finite=(n,min,max,fallback)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
-const baseUnit=(entry,side,index)=>({id:entry.id,name:entry.name,boss:!!entry.boss,ally:side==='ally',skirmish:true,npcCell:side==='ally'?(entry.boss?3:6):(entry.boss?2:5),sprite:side==='ally'?3:0,role:'sword',tier:12,direction:side==='ally'?1:-1,hp:entry.boss?(side==='ally'?2600:1800):(side==='ally'?500:460),maxHp:entry.boss?(side==='ally'?2600:1800):(side==='ally'?500:460),attackTimer:.6+(index%5)*.12,skillTimer:2+(index%6)*.3,telegraph:0,telegraphZone:null,flash:0,slow:0});
+const hasPoint=point=>Number.isFinite(point?.x)&&Number.isFinite(point?.y);
+const criticalIds=quest=>[...new Set((quest.skirmish?.criticalAllyIds||[]).filter(id=>quest.skirmish.allies.some(entry=>entry.id===id)))];
+function baseUnit(entry,side,index){
+ const ally=side==='ally',fallbackHp=entry.boss?(ally?2600:1800):(ally?500:460);
+ const maxHp=finite(entry.maxHp,1,100000,finite(entry.hp,1,100000,fallbackHp));
+ const defaultCell=ally?(entry.boss?3:6):(entry.boss?2:5);
+ return {id:entry.id,name:entry.name,boss:!!entry.boss,ally,skirmish:true,
+  npcCell:entry.npcCell===null?null:Number.isInteger(entry.npcCell)&&entry.npcCell>=0?entry.npcCell:defaultCell,
+  sprite:Number.isInteger(entry.sprite)&&entry.sprite>=0?entry.sprite:ally?3:0,
+  role:typeof entry.role==='string'&&entry.role?entry.role:'sword',tier:finite(entry.tier,1,99,12),
+  direction:ally?1:-1,hp:finite(entry.hp,0,maxHp,maxHp),maxHp,
+  attackTimer:.6+(index%5)*.12,skillTimer:2+(index%6)*.3,telegraph:0,telegraphZone:null,flash:0,slow:0};
+}
+function declaredRoster(quest){
+ const rule=quest.skirmish;
+ if(!rule||!Array.isArray(rule.enemies)||!rule.enemies.length||!Array.isArray(rule.allies))throw new Error('当前战场的阵容配置不完整');
+ const entries=[...rule.enemies,...rule.allies],ids=entries.map(entry=>entry?.id);
+ if(ids.some(id=>typeof id!=='string'||!id)||new Set(ids).size!==ids.length)throw new Error('当前战场的单位身份必须独立且有效');
+ if(rule.criticalAllyIds&&(!Array.isArray(rule.criticalAllyIds)||rule.criticalAllyIds.some(id=>!rule.allies.some(entry=>entry.id===id))))throw new Error('当前战场的关键同伴不在友方阵容中');
+ return [...rule.enemies.map((entry,index)=>({entry,index,side:'enemy'})),...rule.allies.map((entry,index)=>({entry,index,side:'ally'}))];
+}
+function explicitPosition(engine,entry){
+ if(Object.hasOwn(entry,'x')||Object.hasOwn(entry,'y'))return {x:entry.x,y:entry.y};
+ return engine.q.skirmish.positions?.[entry.id]??engine.scene.skirmish?.positions?.[entry.id];
+}
+function placementAllocator(engine,reserved=[]){
+ const hero=engine.s.hero,occupied=[hero,...reserved],slots=[];
+ const reachable=point=>{
+  if(!hasPoint(point)||!engine.passable(point.x,point.y))return false;
+  if(range(hero,point)<1||engine.clearSegment(hero,point))return true;
+  const path=engine.findPath(point.x,point.y);return !!path.length&&range(path.at(-1),point)<35;
+ };
+ const claim=point=>{
+  if(!reachable(point)||occupied.some(other=>range(point,other)<40))return false;
+  const result={x:point.x,y:point.y};occupied.push(result);return result;
+ };
+ // Preserve the existing cult deployment order when no authored positions are supplied.
+ for(let y=390;y<=930;y+=60)for(let x=220;x<=1410;x+=70)if(engine.passable(x,y)&&range(hero,{x,y})>75)slots.push({x,y});
+ return {claim,take(side){
+  slots.sort((a,b)=>side==='ally'?a.x-b.x||b.y-a.y:b.x-a.x||a.y-b.y);
+  while(slots.length){const result=claim(slots.shift());if(result)return result;}
+  throw new Error('当前战场没有足够的独立可达站位');
+ }};
+}
+function savedUnits(entries,saved){
+ const accepted=new Map(),duplicates=new Set(),ids=new Set(entries.map(entry=>entry.id));
+ for(const unit of Array.isArray(saved)?saved:[]){
+  if(!unit||!ids.has(unit.id))continue;
+  if(accepted.has(unit.id)){duplicates.add(unit.id);continue;}
+  accepted.set(unit.id,unit);
+ }
+ for(const id of duplicates)accepted.delete(id);
+ return accepted;
+}
+function rosterCleared(quest,state){
+ const roster=quest.skirmish.enemies,units=state.enemies,defeated=new Set(state.skirmish.defeatedIds);
+ return roster.length>0&&units.length===roster.length&&new Set(units.map(unit=>unit.id)).size===roster.length&&roster.every(entry=>defeated.has(entry.id)&&units.some(unit=>unit.id===entry.id&&unit.hp===0));
+}
+const completedRoster=state=>({enemies:state.enemies.map(unit=>({...unit,telegraph:0,telegraphZone:null})),allies:state.allies.map(unit=>({...unit,telegraph:0,telegraphZone:null}))});
+function validClearedRoster(quest,battle){
+ const saved=battle.clearedRoster;
+ if(battle.finished!==true||battle.failed===true||!saved)return null;
+ for(const side of ['enemies','allies']){
+  const entries=quest.skirmish[side],units=saved[side];
+  if(!Array.isArray(units)||units.length!==entries.length||new Set(units.map(unit=>unit?.id)).size!==entries.length)return null;
+  if(!entries.every(entry=>units.some(unit=>unit?.id===entry.id&&Number.isFinite(unit.hp)&&hasPoint(unit)&&(side!=='enemies'||unit.hp===0))))return null;
+ }
+ if(criticalIds(quest).some(id=>!saved.allies.some(unit=>unit.id===id&&unit.hp>0)))return null;
+ return saved;
+}
+function legacyCultClear(raw,quest,state){
+ if(quest.id!=='gCult_wudang'||raw.skirmish.finished!==true||raw.skirmish.failed===true||!(raw.hero?.hp>0))return false;
+ const previousVersion=Number.isInteger(raw.campaignRevision)&&raw.campaignRevision>=1&&raw.campaignRevision<=7;
+ if(!(raw.skirmish.legacyCleared===true||(previousVersion&&state.map!==quest.map)))return false;
+ if(raw.objectiveProgress?.questId!==quest.id||raw.objectiveProgress.phase!=='after'||raw.flags?.cultPath!==true)return false;
+ if(!Array.isArray(raw.enemies)||raw.enemies.length!==0)return false;
+ const ids=raw.skirmish.defeatedIds,roster=quest.skirmish.enemies;
+ return Array.isArray(ids)&&ids.length===roster.length&&new Set(ids).size===roster.length&&roster.every(entry=>ids.includes(entry.id));
+}
 export function restoreSkirmish(raw,quest,state){
- if(!quest.skirmish||raw.skirmish?.questId!==quest.id)return;
- if(state.map!==quest.map&&raw.skirmish.finished!==true)return;
- const roster=quest.skirmish.enemies;
- const defeatedIds=[...new Set((Array.isArray(raw.skirmish.defeatedIds)?raw.skirmish.defeatedIds:[]).filter(id=>roster.some(e=>e.id===id)))];
- function units(entries,side,saved){return entries.map((entry,index)=>{
-  const base=baseUnit(entry,side,index),unit=Array.isArray(saved)?saved.find(u=>u?.id===entry.id):null;
-  const hp=side==='enemy'&&defeatedIds.includes(entry.id)?0:finite(unit?.hp,0,base.maxHp,base.maxHp);
-  if(side==='enemy'&&hp===0&&!defeatedIds.includes(entry.id))defeatedIds.push(entry.id);
-  const savedZone=unit?.telegraphZone,telegraph=savedZone?.kind==='circle'?finite(unit?.telegraph,0,1.2,0):0;
-  const telegraphZone=telegraph>0?{kind:'circle',x:finite(savedZone.x,120,1460,unit.x),y:finite(savedZone.y,300,950,unit.y),radius:115}:null;
-  return {...base,telegraph,telegraphZone,x:finite(unit?.x,120,1460,side==='ally'?400:1150),y:finite(unit?.y,300,950,650),hp,direction:unit?.direction===-1?-1:1,attackTimer:finite(unit?.attackTimer,0,3,1),skillTimer:finite(unit?.skillTimer,0,7,3)};
+ if(!quest.skirmish)return;
+ state.skirmish=null;state.enemies=[];state.allies=[];
+ declaredRoster(quest);
+ if(raw.skirmish?.questId!==quest.id){
+  if(!state.sequence&&state.map===quest.map&&['battle','after'].includes(state.phase))state.phase='talk';
+  return;
+ }
+ const rule=quest.skirmish,cleared=validClearedRoster(quest,raw.skirmish);
+ // Map transitions remove visible combatants. Only an actual victory snapshot
+ // may supply that omitted roster; a kill-count claim is never sufficient.
+ const enemySource=Array.isArray(raw.enemies)&&raw.enemies.length===0&&cleared?cleared.enemies:raw.enemies;
+ const allySource=Array.isArray(raw.allies)&&raw.allies.length===0&&cleared?cleared.allies:raw.allies;
+ const enemyRecords=savedUnits(rule.enemies,enemySource),allyRecords=savedUnits(rule.allies,allySource),critical=criticalIds(quest);
+ const missingCritical=critical.some(id=>!Number.isFinite(allyRecords.get(id)?.hp));
+ function units(entries,side,records){return entries.map((entry,index)=>{
+  const base=baseUnit(entry,side,index),unit=records.get(entry.id),validHp=Number.isFinite(unit?.hp);
+  // An absent enemy is unknown, never evidence of a kill. An absent critical
+  // companion instead invalidates continuation and requires an explicit retry.
+  const hp=validHp?finite(unit.hp,0,base.maxHp,base.maxHp):side==='ally'&&critical.includes(entry.id)?0:base.maxHp;
+  const point=hasPoint(unit)?{x:finite(unit.x,0,1600,0),y:finite(unit.y,0,1100,0)}:hasPoint(entry)?{x:entry.x,y:entry.y}:{x:null,y:null};
+  const savedZone=unit?.telegraphZone,telegraph=savedZone?.kind==='circle'&&hasPoint(savedZone)?finite(unit?.telegraph,0,1.2,0):0;
+  return {...base,...point,hp,_needsPlacement:!hasPoint(unit),
+   telegraph,telegraphZone:telegraph>0?{kind:'circle',x:finite(savedZone.x,0,1600,0),y:finite(savedZone.y,0,1100,0),radius:115}:null,
+   direction:unit?.direction===-1?-1:base.direction,attackTimer:finite(unit?.attackTimer,0,3,1),skillTimer:finite(unit?.skillTimer,0,7,3)};
  });}
- state.enemies=units(roster,'enemy',raw.enemies);state.allies=units(quest.skirmish.allies,'ally',raw.allies);
- const failed=raw.skirmish.failed===true||raw.hero?.hp<=0,finished=!failed&&defeatedIds.length===roster.length;
- state.skirmish={questId:quest.id,defeatedIds,finished,failed};
- state.phase=state.map!==quest.map?'travel':finished?'after':'battle';if(state.skirmish.failed)state.hero.hp=0;
+ const enemies=units(rule.enemies,'enemy',enemyRecords),allies=units(rule.allies,'ally',allyRecords);
+ if(legacyCultClear(raw,quest,state)){
+  // Old cult saves deliberately discarded the cleared army after leaving its
+  // map. Preserve their corroborated history without inventing a new fight or
+  // manufacturing a current-format victory snapshot. Never applies to island.
+  state.enemies=[];state.allies=allies.filter(unit=>Number.isFinite(allyRecords.get(unit.id)?.hp));
+  state.skirmish={questId:quest.id,defeatedIds:[...raw.skirmish.defeatedIds],finished:true,failed:false,failedReason:null,legacyCleared:true};
+  state.phase=state.map===quest.map?'after':'travel';return;
+ }
+ const deadIds=new Set(enemies.filter(unit=>unit.hp===0).map(unit=>unit.id));
+ const defeatedIds=[...new Set([...(Array.isArray(raw.skirmish.defeatedIds)?raw.skirmish.defeatedIds:[]).filter(id=>deadIds.has(id)),...deadIds])];
+ const deadCritical=critical.find(id=>Number.isFinite(allyRecords.get(id)?.hp)&&allyRecords.get(id).hp<=0);
+ const previousReason=raw.skirmish.failedReason;
+ const persistedReason=raw.skirmish.failed===true&&(previousReason==='hero'||critical.includes(previousReason)||previousReason==='incomplete-roster')?previousReason:null;
+ let failedReason=raw.hero?.hp<=0?'hero':persistedReason||deadCritical||(missingCritical?'incomplete-roster':null);
+ if(!failedReason&&raw.skirmish.failed===true)failedReason=critical.length?'battle':'hero';
+ if(critical.includes(failedReason))allies.find(unit=>unit.id===failedReason).hp=0;
+ const battle={questId:quest.id,defeatedIds,finished:false,failed:!!failedReason,failedReason};
+ battle.finished=!battle.failed&&rosterCleared(quest,{enemies,skirmish:battle});
+ if(battle.finished)battle.clearedRoster=completedRoster({enemies,allies});
+ if(state.map!==quest.map&&!battle.finished)return;
+ state.enemies=enemies;state.allies=allies;state.skirmish=battle;
+ state.phase=state.map!==quest.map?'travel':battle.finished?'after':'battle';
+ if(failedReason==='hero')state.hero.hp=0;
 }
 export const skirmishMethods={
  startSkirmish(){
-  if(!this.q.skirmish||this.s.failure)return false;
-  this.s.skirmish={questId:this.q.id,defeatedIds:[],finished:false,failed:false};this.s.phase='battle';this.s.enemies=[];this.s.allies=[];this.s.destination=null;
+  if(!this.q.skirmish||this.s.failure||this.s.skirmish?.failed)return false;
+  const roster=declaredRoster(this.q),originalHero=this.s.hero;
+  const start=this.q.skirmish.heroStart||this.scene.skirmish?.heroStart||{x:580,y:810};
+  const hero={...originalHero,...this.nearestOpen(start.x,start.y),direction:1},positions=new Map();
+  this.s.hero=hero;
+  try{
+   const allocator=placementAllocator(this);
+   for(const {entry} of roster){const point=explicitPosition(this,entry);if(point!=null){
+    const chosen=allocator.claim(point);if(!chosen)throw new Error('当前战场的单位 '+entry.id+' 站位重叠或不可达');positions.set(entry.id,chosen);
+   }}
+   for(const {entry,side} of roster)if(!positions.has(entry.id))positions.set(entry.id,allocator.take(side));
+  }finally{this.s.hero=originalHero;}
+  Object.assign(originalHero,hero);
+  this.s.skirmish={questId:this.q.id,defeatedIds:[],finished:false,failed:false,failedReason:null};this.s.phase='battle';this.s.destination=null;
+  this.s.enemies=roster.filter(unit=>unit.side==='enemy').map(({entry,side,index})=>({...baseUnit(entry,side,index),...positions.get(entry.id)}));
+  this.s.allies=roster.filter(unit=>unit.side==='ally').map(({entry,side,index})=>({...baseUnit(entry,side,index),...positions.get(entry.id)}));
   this.target=null;this.waypoints=[];this.attackTarget=null;this.autoInteract=null;
-  const start=this.q.skirmish.heroStart||{x:580,y:810};Object.assign(this.s.hero,this.nearestOpen(start.x,start.y),{direction:1});
-  const slots=[];for(let y=390;y<=930;y+=60)for(let x=220;x<=1410;x+=70)if(this.passable(x,y)&&range(this.s.hero,{x,y})>75)slots.push({x,y});
-  const take=side=>{slots.sort((a,b)=>side==='ally'?a.x-b.x||b.y-a.y:b.x-a.x||a.y-b.y);const point=slots.shift();if(!point)throw new Error('武当战场没有足够的独立站位');return point;};
-  this.s.enemies=this.q.skirmish.enemies.map((entry,index)=>({...baseUnit(entry,'enemy',index),...take('enemy')}));
-  this.s.allies=this.q.skirmish.allies.map((entry,index)=>({...baseUnit(entry,'ally',index),...take('ally')}));
   this._skirmishSave=0;this.emit('battle');return true;
  },
+ repairSkirmishPositions(){
+  if(this.s.skirmish?.questId!==this.q.id||this.s.map!==this.q.map)return;
+  const units=[...this.s.enemies,...this.s.allies],repair=units.filter(unit=>unit._needsPlacement||!hasPoint(unit)||!this.passable(unit.x,unit.y));
+  if(repair.length){
+   const allocator=placementAllocator(this,units.filter(unit=>!repair.includes(unit))),roster=declaredRoster(this.q);
+   for(const unit of repair){const {entry,side}=roster.find(candidate=>candidate.entry.id===unit.id),preferred=explicitPosition(this,entry);
+    Object.assign(unit,(preferred&&allocator.claim(preferred))||allocator.take(side));
+   }
+  }
+  for(const unit of units)delete unit._needsPlacement;
+ },
  markSkirmishDefeat(enemy,byHero=false){
-  if(!this.s.skirmish||enemy.hp>0||this.s.skirmish.defeatedIds.includes(enemy.id))return false;
-  this.s.skirmish.defeatedIds.push(enemy.id);this.addEffect('spark',enemy.x,enemy.y-40,40,'#c5b895',.5);
+  const battle=this.s.skirmish;
+  if(!battle||battle.questId!==this.q.id||battle.finished||battle.failed||this.s.phase!=='battle'||!enemy||enemy.hp!==0||!this.s.enemies.includes(enemy)||!this.q.skirmish.enemies.some(entry=>entry.id===enemy.id)||battle.defeatedIds.includes(enemy.id))return false;
+  battle.defeatedIds.push(enemy.id);this.addEffect('spark',enemy.x,enemy.y-40,40,'#c5b895',.5);
   this.emit('skirmishProgress');return true;
  },
  checkSkirmishOutcome(){
-  const battle=this.s.skirmish;if(!battle||battle.finished||battle.failed)return;
-  if(this.s.hero.hp<=0){battle.failed=true;this.paused=true;this.target=null;this.attackTarget=null;this.emit('skirmishProgress');this.emit('defeat');return;}
-  if(battle.defeatedIds.length===this.q.skirmish.enemies.length){battle.finished=true;this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.emit('victory');}
+  const battle=this.s.skirmish;if(!battle||battle.questId!==this.q.id||battle.finished||battle.failed)return;
+  const critical=criticalIds(this.q),down=critical.find(id=>this.s.allies.some(unit=>unit.id===id&&unit.hp<=0));
+  const missing=critical.some(id=>this.s.allies.filter(unit=>unit.id===id&&Number.isFinite(unit.hp)).length!==1);
+  const failedReason=this.s.hero.hp<=0?'hero':down||(missing?'incomplete-roster':null);
+  if(failedReason){battle.failed=true;battle.failedReason=failedReason;this.paused=true;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys?.clear();this.emit('skirmishProgress');this.emit('defeat');return;}
+  if(rosterCleared(this.q,this.s)){battle.finished=true;battle.clearedRoster=completedRoster(this.s);this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.emit('victory');}
  },
  moveCombatant(unit,target,dt){
   if(range(unit,target)<86)return;

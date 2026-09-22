@@ -1,3 +1,4 @@
+import {EVIL_DOCKS_REVISIONS,EVIL_DOCKS_ADDITIONS} from './evil-docks-revisions.mjs';
 import {FORBIDDEN_REVISIONS,FORBIDDEN_ADDITIONS} from './forbidden-revisions.mjs';
 import {EVIL_DUNGEON_REVISIONS,EVIL_DUNGEON_ADDITIONS} from './evil-dungeon-revisions.mjs';
 import {CULT_REVISIONS,CULT_ADDITIONS} from './cult-revisions.mjs';
@@ -52,3 +53,7 @@ for(const insertion of FORBIDDEN_ADDITIONS){const index=QUESTS.findIndex(q=>q.id
 export const REVISION_SIX_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const id of ['e06_night','e06_night_visit']){const q=QUESTS.find(q=>q.id===id);Object.assign(q,{exclusiveFlags:['evilQiangweiKill','evilQiangweiRefuse'],exclusiveLegacyFlag:'evilLegacyDreamUnknown'});}
 Object.assign(QUESTS.find(q=>q.id==='e06_night_visit'),{map:'r_zhen_chamber',objective:'出房穿过厅堂，到真儿房中交谈'});
+
+export const REVISION_SEVEN_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,EVIL_DOCKS_REVISIONS[q.id]||{});
+for(const insertion of EVIL_DOCKS_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown evil-docks insertion');QUESTS.splice(index,0,...insertion.quests);}

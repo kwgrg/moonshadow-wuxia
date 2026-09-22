@@ -16,7 +16,7 @@ function enterChoice(game){
  assert.equal(game.s.phase,'choice','story defeat must lead to the reply, not an uncommittable after phase');assert.equal(game.s.enemies.length,0);assert.equal(game.s.failure,null);assert.ok(game.s.hero.hp>0);
 }
 let restoredFailures=0;
-for(const [id,limit,nextId] of [['e05',3,'e06'],['e07',2,'e08']]){
+for(const [id,limit,nextId] of [['e05',3,'e06'],['e07',2,'e08_interlude']]){
  const game=create(id),rule=game.q.refusalRule;assert.deepEqual(rule,{limit,outcome:'fatal',key:id,refuseIndex:1});
  // Counts from the other confrontation must not lower this one's threshold.
  const other=id==='e05'?'e07':'e05';game.s.flags['refusal_'+other]=20;enterChoice(game);assert.equal(game.refusalCount(),0);
@@ -47,10 +47,10 @@ for(const [id,limit,nextId] of [['e05',3,'e06'],['e07',2,'e08']]){
  }
  const retried=new GameEngine(restoreState(snapshot(game)));assert.equal(retried.retryRefusal(),true);assert.equal(retried.s.phase,'choice');assert.equal(retried.s.failure,null);assert.equal(retried.s.hero.hp,hpBefore);assert.equal(retried.refusalCount(),limit-1);assert.ok(!Object.hasOwn(retried.s.choices,id));assert.equal(retried.s.enemies.length,0,'reply retry does not replay the whole duel');
  assert.equal(retried.refusalOutcome(1),'fatal');assert.equal(retried.choose(1),true);assert.equal(retried.s.phase,'failed','the same final refusal is still fatal after retry');
- assert.equal(retried.retryRefusal(),true);assert.equal(retried.choose(0),true);assert.equal(retried.q.id,nextId);assert.equal(retried.s.failure,null);assert.ok(retried.s.done.includes(id));assert.ok(retried.s.claimedRewards.includes(id));assert.equal(retried.s.hero.hp,hpBefore);
- if(id==='e07'){assert.equal(retried.s.inventory.jade_half||0,0);assert.equal(retried.s.inventory.mother_letter||0,0);assert.equal(retried.s.flags.companion,'月眉儿');}
- const accepted=snapshot(retried);retried.s.quest=index(id);retried.s.map=QUESTS[index(id)].map;retried.s.phase='choice';retried.completeQuest();
- assert.deepEqual(retried.s.inventory,accepted.inventory);assert.equal(retried.s.coins,accepted.coins);assert.equal(retried.s.hero.exp,accepted.hero.exp,'revisiting an accepted offer cannot repay rewards');
+ assert.equal(retried.retryRefusal(),true);assert.equal(retried.choose(0),true);assert.equal(retried.q.id,nextId);assert.equal(retried.s.failure,null);assert.ok(retried.s.done.includes(id));assert.ok(retried.s.claimedRewards.includes(id));assert.equal(retried.s.hero.hp,id==='e07'?retried.s.hero.maxHp:hpBefore,'only e07 acceptance adds its verified recovery');
+ if(id==='e07'){assert.equal(retried.s.inventory.jade_half||0,0);assert.equal(retried.s.inventory.mother_letter||0,0);assert.equal(retried.s.flags.companion,'月眉儿');assert.equal(retried.s.flags.evilRecruitAccepted,true);assert.equal(retried.s.hero.mp,retried.s.hero.maxMp);assert.equal(retried.s.hero.stamina,100);assert.ok(!retried.s.flags.evilLegacyIslandPassage,'new acceptance must still play the island return');}
+ const accepted=snapshot(retried);if(id==='e07'){retried.s.hero.hp-=10;retried.s.hero.mp-=10;retried.s.hero.stamina=23;}const replayVitals={hp:retried.s.hero.hp,mp:retried.s.hero.mp,stamina:retried.s.hero.stamina};retried.s.quest=index(id);retried.s.map=QUESTS[index(id)].map;retried.s.phase='choice';retried.completeQuest();
+ assert.deepEqual(retried.s.inventory,accepted.inventory);assert.equal(retried.s.coins,accepted.coins);assert.equal(retried.s.hero.exp,accepted.hero.exp,'revisiting an accepted offer cannot repay rewards');assert.deepEqual({hp:retried.s.hero.hp,mp:retried.s.hero.mp,stamina:retried.s.hero.stamina},replayVitals,'completed acceptance cannot repeatedly heal');
 
  // Acceptance is possible after any nonfatal number of refusals, including zero.
  for(let count=0;count<limit;count++){

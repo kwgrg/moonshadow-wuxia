@@ -290,8 +290,17 @@ for(const [mode,branch,art] of [['manual-load','kill','wedding-dream'],['import'
 // The elder in the wedding dream must keep his elder portrait in dialogue too.
 assert.equal(npcCellFor('孟知秋'),3,'Meng uses the same elder atlas cell as his staged actor');ui.showDialogue([['孟知秋','对话肖像检测。',3]],()=>{});assert.equal(nodes.get('speaker-portrait').src,'./assets/npcs.png','Meng must not fall back to the masked character portrait');assert.match(nodes.get('speaker-portrait').style.transform,/-75%/);ui.nextDialogue();checks++;
 
+// Reusing the faction engine must not leak the former battle's title into the
+// island HUD. Check the actual UI text and its live enemy count after a defeat.
+preset('e08_island_battle');ui.engine.s.flags.evilTowerInterludeComplete=true;ui.engine.s.flags.staged_e08_island_battle=true;
+ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;ui.engine.startSkirmish();ui.updateUi();
+assert.match(nodes.get('quest-description').textContent,/村中解围.*0 \/ 36/);
+assert.doesNotMatch(nodes.get('quest-description').textContent,/武当/);
+ui.engine.s.enemies[0].hp=0;ui.engine.markSkirmishDefeat(ui.engine.s.enemies[0]);ui.updateUi();
+assert.match(nodes.get('quest-description').textContent,/村中解围.*1 \/ 36/);checks++;
+
 console.log(JSON.stringify({result:'PASS',checks,
-  covered:['手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
+  covered:['岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 

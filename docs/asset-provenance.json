@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-22",
+  "scope": "All public PNG files; public/assets currently accepts PNG only.",
+  "statusMeaning": {
+    "documented": "具有对应交付文件、制作方法和完整提示词的制作记录；仅表示文档状态，不是法律原创、授权或所有上游来源已确认。",
+    "unconfirmed": "缺直接可复核来源记录；保留当前文件哈希与缺口，不能因一致性测试通过而改称来源完整。"
+  },
+  "maintenance": "新增或替换PNG必须同时更新条目、真实来源文档和SHA-256；无法确认来源时必须保留unconfirmed及原因。生成源文件不进入发布目录，校验器不读取原游戏或本机生成目录。",
+  "assets": [
+    {
+      "path": "public/assets/bedroom.png",
+      "sha256": "b0603fd42b88547112687b5c866400918a1b8292ca4ae0ff637bcb9a0bc23d7d",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/bedroom-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "该制作记录没有保留可直接复核的生成源文件绝对路径；本清单哈希仅绑定当前交付文件。"
+      ]
+    },
+    {
+      "path": "public/assets/cave.png",
+      "sha256": "3506674b457005c3fccedb4cfed4a55aaf480ccc53b97428d9083d5093aba67f",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/characters.png",
+      "sha256": "bf197c097a9b3886ef8228e03c73064078c2d9b89fe9af2887cb799664393042",
+      "status": "unconfirmed",
+      "documents": [
+        {
+          "path": "docs/reference-boundary-audit.md",
+          "kind": "audit"
+        },
+        {
+          "path": "docs/hero-kneel-art.md",
+          "kind": "indirect-claim"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+      ]
+    },
+    {
+      "path": "public/assets/cliff.png",
+      "sha256": "b686c6298bcb4d58d1beeddca68b45ffaf5d963b6809ae03241d03b96c7f9b19",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/cult-dungeon.png",
+      "sha256": "0ac79c14251a23e0e757558b6322b87338f5925c01990b268bc554106eaab2b3",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/cult-dungeon-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/forbidden-chamber.png",
+      "sha256": "7e95918f506fa2115de8068610b01444096f9ebbd41197fa4d639e9af93d922e",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/forbidden-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/forbidden-gate.png",
+      "sha256": "e4207fbd41086b77f02df5c784b4fc0c7c1dc9f59041569115f4ebbea4ea5f56",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/forbidden-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/forbidden-second.png",
+      "sha256": "f581ef1bb3cd03d2e3e0f876554e124b0479bb656ff87859028833546c66846c",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/forbidden-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/forest.png",
+      "sha256": "29e00c5f6a8aa2d7181f9dc63e61322f911f3634a4bd2ae058907f69931bbd62",
+      "status": "unconfirmed",
+      "documents": [
+        {
+          "path": "docs/reference-boundary-audit.md",
+          "kind": "audit"
+        },
+        {
+          "path": "docs/scene-audit.md",
+          "kind": "indirect-claim"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+      ]
+    },
+    {
+      "path": "public/assets/hall.png",
+      "sha256": "eb80ef8d641d16011801e2fa7c7100b5cf07782f1c9fc87883d4879fb9e47459",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/hero-kneel.png",
+      "sha256": "d16e8d948b50564964340ecefd839673fccfa4d9ca54fd3f225f8a66bcb40a13",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/hero-kneel-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [
+        "public/assets/characters.png"
+      ],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "跪姿自身有制作记录，但参考输入characters.png仍为unconfirmed；其上游来源没有因此补齐。"
+      ]
+    },
+    {
+      "path": "public/assets/inn.png",
+      "sha256": "bbe36775d74e48233d4a71dfc3db9b0c9ec9ba499e07b1d1e0aed87b04916dde",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/island-village.png",
+      "sha256": "afba54159b95e726ee6e1f8a99a048e449b4dc497abc54e3741b02f254548e36",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-docks-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "2026-09-22与记录所列当前任务image_gen生成源文件完整字节比较一致。"
+      ]
+    },
+    {
+      "path": "public/assets/island.png",
+      "sha256": "79c705298b1bfeee233dfd2ba6791b9a47ab4500bbbe07ba0044c89deb51018e",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/lake-dream.png",
+      "sha256": "0ef7456cbcb0972e2e78de1d10c86a6e7db84c3c834f4057a6de1db7e1446db6",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/night-dream-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/lake.png",
+      "sha256": "7ffc6b2b2eaba5704aa7087644a1c62db1df7b569a774f4f72c85aeae1c1cac2",
+      "status": "unconfirmed",
+      "documents": [
+        {
+          "path": "docs/reference-boundary-audit.md",
+          "kind": "audit"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+      ]
+    },
+    {
+      "path": "public/assets/mainland-dock.png",
+      "sha256": "5afc723b8d03c7557c38f07dc5530d08708857d50871a72db008594efadd764b",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-docks-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "2026-09-22与记录所列当前任务image_gen生成源文件完整字节比较一致。"
+      ]
+    },
+    {
+      "path": "public/assets/mei-original.png",
+      "sha256": "600078a555c6a6a345ea254338453f84e3e5bd7241fd32f2f0bd4e89603d89fb",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-docks-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "2026-09-22与记录所列当前任务image_gen生成源文件完整字节比较一致。"
+      ]
+    },
+    {
+      "path": "public/assets/npcs.png",
+      "sha256": "0220bffa9d48bee3f5fc48e9304025bca65c20c4f8166ba6cd78c957586aa5ca",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/npcs-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "该制作记录没有保留可直接复核的生成源文件绝对路径；本清单哈希仅绑定当前交付文件。"
+      ]
+    },
+    {
+      "path": "public/assets/props.png",
+      "sha256": "aaeabaebde4a42276b03dddd9449fa60239dde49b0bf6f6137bba5422a4090f1",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/props-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
+        "该制作记录没有保留可直接复核的生成源文件绝对路径；本清单哈希仅绑定当前交付文件。"
+      ]
+    },
+    {
+      "path": "public/assets/snow.png",
+      "sha256": "a2ab673db0972b529b51bf1b2f32e4cf383e23b4b0bc229d108c54bca2ffdc9f",
+      "status": "unconfirmed",
+      "documents": [
+        {
+          "path": "docs/reference-boundary-audit.md",
+          "kind": "audit"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+      ]
+    },
+    {
+      "path": "public/assets/temple.png",
+      "sha256": "527a69b14abbe42cc86fd3eec724b7fcc5595448a270e88d57cbdb017d2ff364",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/art-prompts.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/town.png",
+      "sha256": "d8e77f77fbeccba61fbbdf5e7656c74838621fedc8e33899a9e978f615d7f4fa",
+      "status": "unconfirmed",
+      "documents": [
+        {
+          "path": "docs/reference-boundary-audit.md",
+          "kind": "audit"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+      ]
+    },
+    {
+      "path": "public/assets/wedding-dream.png",
+      "sha256": "60ca02cab0a09905761d8496263fbeac55d533e8bad2482ef29024dc01c9f7e3",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/night-dream-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/wudang.png",
+      "sha256": "e6830d1485deee47328bbd3eacad80f3280cf8d55d8d5c97f09c59c52be08b07",
+      "status": "unconfirmed",
+      "documents": [],
+      "referenceAssets": [],
+      "notes": [
+        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
+        "全量清单复查新增发现：art-prompts.md只记录cliff/inn/temple/hall/island/cave，不包含wudang；不能借用temple的记录。"
+      ]
+    },
+    {
+      "path": "public/assets/zhen-chamber.png",
+      "sha256": "6f94481784ef53728b1ec3bac7a0726ff78fe0c0ad62e04e4e7b90adbdb9e54b",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/night-dream-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    }
+  ]
+}

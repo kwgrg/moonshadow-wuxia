@@ -1,3 +1,4 @@
+import {EVIL_DOCKS_STAGING} from './evil-docks-staging.mjs';
 import {NIGHT_DREAM_STAGING} from './night-dream-staging.mjs';
 import {FORBIDDEN_STAGING} from './forbidden-staging.mjs';
 import {EVIL_DUNGEON_STAGING} from './evil-dungeon-staging.mjs';
@@ -173,3 +174,5 @@ Object.assign(STAGED_QUESTS,EVIL_DUNGEON_STAGING);
 Object.assign(STAGED_QUESTS,FORBIDDEN_STAGING);
 
 Object.assign(STAGED_QUESTS,NIGHT_DREAM_STAGING);
+
+Object.assign(STAGED_QUESTS,EVIL_DOCKS_STAGING);

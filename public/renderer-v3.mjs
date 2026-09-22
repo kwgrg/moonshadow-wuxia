@@ -292,10 +292,12 @@ export class Renderer {
     const c=this.ctx,sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
     const falling=step?.type==='pose'&&step.actor===a.id&&step.pose==='fallen';
     let progress=falling?clamp(sequence.elapsed/(step.duration||.8),0,1):1;progress=progress*progress*(3-2*progress);
+    const ownArt=a.name==='月眉儿'&&this.assets['mei-original'];
     const cell=a.npcCell??npcCellFor(a.name),atlas=cell!==null&&this.assets.npcs,height=atlas?126:124,width=height*(atlas?.75:384/1024),side=a.fallDirection===-1?-1:1;
     c.save();c.translate(a.x,a.y);this.ellipse(side*47*progress,3,24+37*progress,9,'#09202266');
     c.save();c.rotate(side*Math.PI*.485*progress);c.scale(1,1-.13*progress);c.filter=`saturate(${1-.55*progress}) brightness(${1-.2*progress})`;
-    if(atlas)c.drawImage(this.assets.npcs,(cell%4)*384,Math.floor(cell/4)*512,384,512,-width/2,-height*.93,width,height);
+    if(ownArt)c.drawImage(ownArt,0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
+    else if(atlas)c.drawImage(this.assets.npcs,(cell%4)*384,Math.floor(cell/4)*512,384,512,-width/2,-height*.93,width,height);
     else if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,1024,-width/2,-height,width,height);
     c.restore();c.font=`14px ${FONT}`;c.textAlign='center';c.shadowColor='#091b22';c.shadowBlur=6;c.fillStyle='#c8c5bb';c.fillText(a.name,side*43*progress,-height-13+progress*(height-31));c.restore();
   }
@@ -361,7 +363,8 @@ export class Renderer {
     if(step?.type==='wallImpact'&&!hero&&step.actor===a.id)c.rotate(Math.sin(clamp(sequence.elapsed/(step.duration||.45),0,1)*Math.PI)*.2);
     if(a.flash>0)c.filter='brightness(1.8)';else if(!hero&&!a.ally&&this.e.q.friendly&&a.hp!==undefined)c.filter='saturate(.4) brightness(.8)';
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
-    if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
+    if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
+    else if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
     else if(this.assets.characters){if(kneeling&&this.assets['hero-kneel']){const w=height*936/1176;c.drawImage(this.assets['hero-kneel'],164,35,936,1176,-w/2,-height,w,height);}else c.drawImage(this.assets.characters,sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
     const crowded=(this.e.s.enemies.length+this.allies.length)>16,visibleLabel=hero||a.hp===undefined||!crowded||a.boss||this.labelledUnits?.has(a.id)||(!a.ally&&this.e.attackTarget?.id===a.id);
     if(visibleLabel){
@@ -427,7 +430,7 @@ export class Renderer {
     const markers=this.e.markers,ids=new Set(markers.flatMap(m=>[m.id,m.id?.replace(`${this.e.s.map}:`,'')]));
     const objects=s.props.filter(p=>!['pool','rug'].includes(p.kind)).map(p=>({...p,render:'prop'}));
     for(const p of s.points){if(ids.has(p.id))continue;objects.push({...p,kind:p.appearance||p.kind,opened:(this.e.s.opened||[]).includes(`${this.e.s.map}:${p.id}`),render:'point'});}
-    objects.push({...this.e.s.hero,hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});if(this.e.companion)objects.push({...this.e.companion,render:'actor'});for(const ally of this.allies)if(ally.hp>0&&!ally.hidden)objects.push({...ally,ally:true,render:'actor'});
+    if(!s.hidePlayer)objects.push({...this.e.s.hero,hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});if(this.e.companion)objects.push({...this.e.companion,render:'actor'});for(const ally of this.allies)if(ally.hp>0&&!ally.hidden)objects.push({...ally,ally:true,render:'actor'});
     const presentation=this.e.stagingPresentation?.();
     if(presentation)for(const prop of presentation.definition.props||[]){
       if(Object.hasOwn(prop,'sceneKey')&&prop.sceneKey!==(this.e.s.sequence?.sceneKey??null))continue;
@@ -443,6 +446,6 @@ export class Renderer {
     for(const road of s.paths){c.lineWidth=Math.max(1,road.width/W*size);c.beginPath();road.points.forEach(([x,y],i)=>i?c.lineTo(x/W*size,y/H*size):c.moveTo(x/W*size,y/H*size));c.stroke();}
     c.fillStyle='#193e3cd9';for(const [x1,y1,x2,y2] of s.obstacles)c.fillRect(x1/W*size,y1/H*size,(x2-x1)/W*size,(y2-y1)/H*size);
     const dot=(a,color,r=3)=>{c.beginPath();c.fillStyle=color;c.arc(a.x/W*size,a.y/H*size,r,0,TAU);c.fill();};
-    s.points.filter(p=>!(this.e.s.opened||[]).includes(`${this.e.s.map}:${p.id}`)).forEach(p=>dot(p,p.kind==='chest'?'#d1b67d':'#a0bdb0',2));this.e.markers.forEach(m=>dot(m,m.main?'#f6d589':m.kind==='travel'?'#d2e2d0':'#a4dcd5',m.main?4:3));this.e.s.enemies.filter(e=>e.hp>0).forEach(e=>dot(e,'#f08874'));this.allies.filter(a=>a.hp>0&&!a.hidden).forEach(a=>dot(a,'#81d9af'));dot(this.e.s.hero,'#d1ffde',4);c.strokeStyle='#e2efc2aa';c.beginPath();c.arc(this.e.s.hero.x/W*size,this.e.s.hero.y/H*size,8,0,TAU);c.stroke();
+    s.points.filter(p=>!(this.e.s.opened||[]).includes(`${this.e.s.map}:${p.id}`)).forEach(p=>dot(p,p.kind==='chest'?'#d1b67d':'#a0bdb0',2));this.e.markers.forEach(m=>dot(m,m.main?'#f6d589':m.kind==='travel'?'#d2e2d0':'#a4dcd5',m.main?4:3));this.e.s.enemies.filter(e=>e.hp>0).forEach(e=>dot(e,'#f08874'));this.allies.filter(a=>a.hp>0&&!a.hidden).forEach(a=>dot(a,'#81d9af'));if(!s.hidePlayer){dot(this.e.s.hero,'#d1ffde',4);c.strokeStyle='#e2efc2aa';c.beginPath();c.arc(this.e.s.hero.x/W*size,this.e.s.hero.y/H*size,8,0,TAU);c.stroke();}
   }
 }
