@@ -1,3 +1,4 @@
+import {EVIL_DUNGEON_STAGING} from './evil-dungeon-staging.mjs';
 import {CULT_STAGED_QUESTS} from './cult-staging.mjs';
 /**
  * Original staging for the web adaptation. No original game images, scripts,
@@ -165,3 +166,4 @@ export const STAGED_QUESTS = {
     ]
   }
 };
+Object.assign(STAGED_QUESTS,EVIL_DUNGEON_STAGING);

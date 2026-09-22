@@ -143,21 +143,21 @@ for(const [choiceIndex,evilDelta,zhenDelta] of [[0,-2,1],[1,2,0]]) {
   checks++;
 }
 
-// The small-house encounter conceals identity until combat is over. A failed
+// The small-house encounter identifies Zixuan before combat. A failed
 // attempt remains the same encounter; both forgiveness effects survive the split.
 for(const [choiceIndex,expectedEvil] of [[0,-1],[1,2]]) {
   const {game,events}=at('e04');
-  assert.equal(game.q.npc,'紫衫蒙面人');
-  assert.ok(!game.q.before.flat().join(' ').includes('紫轩'));
+  assert.equal(game.q.npc,'紫轩');
+  assert.ok(game.q.before.some(line=>line[0]==='杨影枫'&&line[1].includes('紫轩')));
   game.beginObjective();
   assert.equal(game.s.enemies.length,1);
-  assert.equal(game.s.enemies[0].name,'紫衫蒙面人');
+  assert.equal(game.s.enemies[0].name,'紫轩');
   assert.equal(game.choose(choiceIndex),false);
   if(choiceIndex===0) {
     lose(game);assert.equal(game.paused,true);
     assert.equal(game.s.phase,'battle');assert.equal(game.q.id,'e04');
     assert.equal(events.some(e=>e.name==='choice'),false);
-    game.retry();assert.equal(game.s.enemies[0].name,'紫衫蒙面人');
+    game.retry();assert.equal(game.s.enemies[0].name,'紫轩');
   }
   strike(game);
   assert.equal(game.s.phase,'choice');
@@ -215,7 +215,7 @@ for(const [oldIndex,id] of REVISION_TWO_QUEST_IDS.entries()) {
   delete raw.questId;
   const restored=restoreState(raw);
   assert.equal(QUESTS[restored.quest].id,id,`${id}: revision-two numeric index`);
-  assert.equal(restored.campaignRevision,4);
+  assert.equal(restored.campaignRevision,5);
 }
 checks++;
 
@@ -253,7 +253,7 @@ console.log(JSON.stringify({result:'PASS',checks,covered:[
   '婚宴三场一对一结束后才开放婚夜选择，原善恶/好感效果不变',
   '婚宴与小筑普通失败保留战斗重试，不提前进入选择',
   '蒙面人剧情败局不能被强攻错误击杀，败后再赴落叶谷',
-  '紫轩在单挑后才揭名并作原谅选择',
+  '战前认出紫轩，单挑后才作原谅选择',
   '云生结海夜袭前可装备使用，重试不重授或重置熟练度',
   '全部旧revision2数字任务映射与旧e10缺技能迁移',
 ],note:'真实引擎状态测试；不是原版参数认证或实际浏览器通关。'},null,2));

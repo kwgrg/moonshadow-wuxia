@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {GameEngine,freshState,restoreState,QUESTS,MAPS,SKILLS,ITEMS,SIDE_QUESTS,distance} from '../public/runtime.mjs';
 import fs from 'node:fs';
 const stats=[];
-for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
+for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
 assert.equal(new Set(QUESTS.map(q=>q.id)).size,QUESTS.length);
 function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(id==='g20')return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
 for(const difficulty of ['normal','story']) for(const outcome of ['reunion','three','zhen_good','cult','alone','family']){

@@ -229,7 +229,7 @@ const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
 assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
 // Recruitment options must repeat without showing the accepted-route aftermath.
 for(const [id,limit] of [['e05',3],['e07',2]]){
- preset(id);ui.engine.s.phase='choice';ui.showChoice();
+ preset(id);if(id==='e07')ui.engine.s.flags.evilZhenMissing=true;ui.engine.s.phase='choice';ui.showChoice();
  const initialCoins=ui.engine.s.coins;
  for(let refusal=1;refusal<=limit;refusal++){
   const seen=clickOption(1);

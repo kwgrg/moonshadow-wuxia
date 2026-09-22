@@ -1,3 +1,4 @@
+import {EVIL_DUNGEON_REVISIONS,EVIL_DUNGEON_ADDITIONS} from './evil-dungeon-revisions.mjs';
 import {CULT_REVISIONS,CULT_ADDITIONS} from './cult-revisions.mjs';
 import {RECRUITMENT_REVISIONS} from './recruitment-revisions.mjs';
 import {ERRANDS_REVISIONS,ERRANDS_ADDITIONS} from './errands-revisions.mjs';
@@ -38,3 +39,7 @@ const cultGate=QUESTS.findIndex(q=>q.id==='g15');
 for(let i=cultGate+1;i<QUESTS.length;i++)if(QUESTS[i].when?.route==='good')QUESTS[i].when={...QUESTS[i].when,notAll:[...(QUESTS[i].when.notAll||[]),'cultPath']};
 for(const q of QUESTS)Object.assign(q,CULT_REVISIONS[q.id]||{});
 for(const insertion of CULT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown cult-route insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+export const REVISION_FOUR_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,EVIL_DUNGEON_REVISIONS[q.id]||{});
+for(const insertion of EVIL_DUNGEON_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown evil-dungeon insertion');QUESTS.splice(index,0,...insertion.quests);}

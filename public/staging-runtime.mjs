@@ -22,10 +22,10 @@ export function restoreStaging(raw,quest,state){
  const definition=STAGED_QUESTS[quest.id];
  if(!definition||state.map!==quest.map||state.flags[completeKey(quest.id)]||quest.requiredFlags?.some(key=>!state.flags[key]))return null;
  if(!raw||raw.questId!==quest.id||!Number.isInteger(raw.step)||raw.step<0||raw.step>=definition.steps.length)return null;
- const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,300,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:saved?.hidden===true||base.hidden===true};});
+ const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,300,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:typeof saved?.hidden==='boolean'?saved.hidden:base.hidden===true};});
  const unpaid=definition.steps.findIndex((step,index)=>index<raw.step&&step.type==='handover'&&Object.entries(step.items).some(([id,count])=>(state.stagedHandovers[quest.id]?.[id]||0)<count));
  const step=unpaid<0?raw.step:unpaid;
- return {questId:quest.id,step,cues:restoreCues(raw.cues,definition),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:raw.heroPose==='kneel'?'kneel':'stand',focus:typeof raw.focus==='string'?raw.focus:'hero'};
+ return {questId:quest.id,step,cues:restoreCues(raw.cues,definition),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:['kneel','sit'].includes(raw.heroPose)?raw.heroPose:'stand',focus:typeof raw.focus==='string'?raw.focus:'hero'};
 }
 export const stagingMethods={
  stagingDefinition(){return this.s.map===this.q.map?STAGED_QUESTS[this.q.id]:null;},
@@ -33,7 +33,7 @@ export const stagingMethods={
  stagingPresentation(){
   const current=this.stagingDefinition();
   if(current)return {definition:current,actors:this.s.sequence?.actors||(this.s.flags[completeKey(this.q.id)]?current.finalActors:null)||current.actors||[],cues:this.s.sequence?.cues||(this.s.flags[completeKey(this.q.id)]?current.finalCues:{})||{}};
-  for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&definition.persistFor?.includes(this.q.id)&&this.s.flags[completeKey(id)])return {definition,actors:definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
+  for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&this.s.flags[completeKey(id)]&&(definition.persistFor?.includes(this.q.id)||(definition.persistFlag&&this.s.flags[definition.persistFlag])))return {definition,actors:definition.persistentActors||definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
   return null;
  },
  stagingActors(){const presentation=this.stagingPresentation();if(!presentation)return [];return presentation.actors.filter(actor=>!actor.hidden&&!(actor.enemy&&['battle','after'].includes(this.s.phase))).map(actor=>({...actor,kind:'stagingActor',main:false,interactive:actor.pose!=='fallen'}));},
@@ -72,7 +72,12 @@ export const stagingMethods={
   if(step.type==='cue'){sequence.cues[step.key]=step.value;this.advanceStaging();return;}
   if(step.type==='wait'){sequence.elapsed+=dt;if(sequence.elapsed>=step.duration)this.advanceStaging();return;}
   const actor=this.stagingActor(step.actor||'hero');
+  if(step.type==='show'){if(actor)actor.hidden=false;this.advanceStaging();return;}
   if(step.type==='hide'){if(actor)actor.hidden=true;this.advanceStaging();return;}
+  if(step.type==='wallImpact'){
+   if(actor){actor.pose='stand';actor.direction=step.direction===-1?-1:1;}
+   sequence.elapsed+=dt;if(sequence.elapsed>=(step.duration||.45))this.advanceStaging();return;
+  }
   if(step.type==='strike'){
    const victim=this.stagingActor(step.target);if(actor){actor.pose='attack';if(victim)actor.direction=victim.x>=actor.x?1:-1;}
    sequence.elapsed+=dt;if(sequence.elapsed>=(step.duration||.6)){if(actor)actor.pose='stand';this.advanceStaging();}return;

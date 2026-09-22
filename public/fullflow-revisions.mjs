@@ -6,7 +6,7 @@ const evilSources = [
 ];
 const evidence = detail => ({
   sources: [...evilSources],
-  source: '2026-09-22 根据已有邪线攻略核验记录独立补写：' + detail + '。未新提取原目录；对白与战斗数值为网页重新设计。',
+  source: '2026-09-22 根据已有邪线攻略核验记录独立补写：' + detail + '。没有保存或导入原版内容；对白与战斗数值为网页重新设计。',
   revised: true,
   dialogueStatus: 'independently-authored-from-recorded-events',
   referencePolicy: 'reference-only-no-original-content',
@@ -81,12 +81,12 @@ export const FULLFLOW_REVISIONS = {
     rewards: {skills: [7]},
   },
   e04: {
-    ...evidence('十日后在芭蕉小筑与紫衫蒙面人单独交手，战后揭露紫轩身份并作是否原谅的选择'),
-    npc: '紫衫蒙面人',
+    ...evidence('十日后在芭蕉小筑战前认出紫轩，单独交手后再作是否原谅的选择；2026-09-22只读静态核验 ed270dd3/4e6e5652 的战前对白11790–11840与敌对设置顺序，见evil-dungeon-reference.md'),
+    npc: '紫轩',
     sprite: 2,
     choiceSpeaker: '紫轩',
     choiceSprite: 2,
-    objective: '赴芭蕉小筑之约，与紫衫蒙面人交手后问清来意',
+    objective: '赴芭蕉小筑之约，认出紫轩后与她单独交手',
     type: 'choice',
     battleBeforeChoice: true,
     choiceBeforeObjective: false,
@@ -94,16 +94,17 @@ export const FULLFLOW_REVISIONS = {
     scriptedLoss: false,
     count: 1,
     boss: null,
-    enemy: '紫衫蒙面人',
+    enemy: '紫轩',
     enemySprite: 2,
     waves: null,
     before: [
-      ['江湖纪事', '十日之约已至。影枫踏入小筑，一名紫衫蒙面人正持剑立在庭中。', 0],
-      ['杨影枫', '我依约来了。上回未能接住的招式，今日再试。', 0],
-      ['紫衫蒙面人', '那就出剑。等交过手，再说其他的事。', 2],
+      ['江湖纪事', '十日之约已至。一名紫衫女子正在小筑等候，影枫走近，已认出了她。', 0],
+      ['杨影枫', '紫轩？原来约我来这里的人是你。', 0],
+      ['紫轩', '是我。先让我看看，这些日子你可有长进。', 2],
+      ['杨影枫', '也好，出招吧。其余的话，等交手之后再说。', 0],
     ],
     choice: {
-      prompt: '交手结束，蒙面人撤下遮面之物，竟是紫轩。她承认曾受命接近你，你是否愿意原谅她？',
+      prompt: '交手结束，紫轩谈起当年受命接近你的往事。你是否愿意原谅她？',
       options: [
         {
           text: '原谅',

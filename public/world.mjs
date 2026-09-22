@@ -104,6 +104,21 @@ function handcrafted(scene) {
         point('sword-echo','远处练剑声',875,475,'山顶传来相互应答的呼喝声，脚步也随之加快。',{appearance:'trace',paintOnly:true})
       ];
       return true;
+    case 'm71':
+      scene.title='摘星楼厅堂';scene.kind='hall';scene.art='hall';scene.ground=palettes.hall;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
+      scene.points=[
+        point('hall-passages','楼内廊道',355,500,'厅西的廊道通往歇宿处，东侧石阶向地牢延伸。下山须从南面的正门出去。',{appearance:'trace',paintOnly:true}),
+        point('hall-silence','空阔厅堂',1180,480,'脚步声从石阶间折回，厅堂里一时听不见别的动静。',{appearance:'trace',paintOnly:true})
+      ];return true;
+    case 'r_evil_yitian':
+      scene.title='倚天山下山道';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
+      scene.atmosphere={light:'day',weather:'mist',indoor:false,particles:'leaves'};
+      scene.points=[point('yitian-way','山路转弯处',1020,620,'北侧山路折回摘星楼，南边的脚步声渐近水岸。',{appearance:'trace',paintOnly:true}),point('yitian-valley','山坳风声',425,570,'走到山坳这一侧，风从林间穿来，远处的水声比楼前听得清楚。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_evil_ferry':
+      scene.title='倚天山渡头';scene.kind='shore';scene.art='island';scene.ground=palettes.shore;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};
+      scene.points=[point('ferry-water','渡头水声',760,515,'岸边泊船随水起伏，去岛上的行程要从这里登船。',{appearance:'trace',paintOnly:true}),point('ferry-tide','石岸潮痕',620,425,'石岸上的湿痕一层高过一层，候船的人沿高处绕行，避开临水的低洼处。',{appearance:'trace',paintOnly:true})];return true;
     case 'm61':
       scene.title='摘星楼议事厅';scene.kind='hall';scene.art='hall';scene.ground=palettes.hall;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
@@ -111,14 +126,16 @@ function handcrafted(scene) {
         point('hall-order','厅侧铜牌',355,500,'铜牌记着楼内各处：东侧石阶通往地牢，再往内是一间供来客歇息的房间。',{appearance:'sign'}),
         point('silent-hall','厅中灯火',1190,490,'灯火映在空阔的砖地上。厅内两侧的走廊都留着可以通行的空隙。',{appearance:'trace',paintOnly:true})
       ];return true;
+    case 'r_evil_dungeon':
     case 'r_cult_dungeon':
       scene.title='摘星楼地牢';scene.kind='cave';scene.art='cult-dungeon';scene.fallbackArt='cave';scene.maskArt='cult-dungeon';scene.ground=palettes.cave;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
-      scene.cells={qiangwei:{x:650,y:610,approach:{x:650,y:685}},zixuan:{x:1020,y:570,approach:{x:1020,y:645}},observer:{x:845,y:445}};
+      scene.cells={qiangwei:{x:650,y:610,approach:scene.id==='r_evil_dungeon'?{x:585,y:700}:{x:650,y:685}},...(scene.id==='r_cult_dungeon'?{zixuan:{x:1020,y:570,approach:{x:1020,y:645}}}:{}),observer:{x:845,y:445}};
       scene.points=[
         point('cell-threshold','囚室门槛',555,750,'两间囚室之间隔着石墙。南侧甬道连通左右，北边还有一条狭窄的回廊。',{appearance:'trace',paintOnly:true}),
         point('dungeon-lamp','地面水痕',1175,715,'湿冷石面留着深浅不一的水痕，行迹向东北的阶口延伸。',{appearance:'trace',paintOnly:true})
       ];return true;
+    case 'r_evil_chamber':
     case 'r_cult_chamber':
       scene.title='摘星楼客房';scene.kind='room';scene.art='bedroom';scene.ground=palettes.room;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
@@ -354,12 +371,18 @@ function alignPaintedGround(scene){
   if(/^m[1-6]$/.test(scene.id)||scene.art==='bedroom'){scene.drawRoads=false;scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());}
   // Cult scenes reuse only the project's original paintings. Their layouts,
   // partition footprints and stage positions are independently authored here.
-  if(scene.id==='m61'){
+  if(scene.id==='m71'){
+    scene.spawn={x:760,y:800};scene.objective={x:845,y:445};scene.exit={x:765,y:915};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='r_evil_yitian'){
+    scene.spawn={x:1165,y:470};scene.objective={x:1020,y:620};scene.exit={x:775,y:915};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='r_evil_ferry'){
+    scene.spawn={x:455,y:465};scene.objective={x:1040,y:705};scene.exit={x:1295,y:710};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
+  }else if(scene.id==='m61'){
     scene.spawn={x:760,y:800};scene.objective={x:845,y:445};scene.exit={x:1270,y:730};
     scene.props=[prop('column',420,530,58,165),prop('column',1255,490,58,165),prop('altar',845,365,240,75),prop('lantern',300,680,42,95),prop('lantern',1290,685,42,95)];
     scene.obstacles=[...mask.edges.map(r=>r.slice()),[398,510,442,550],[1233,470,1277,510]];
     scene.drawRoads=false;scene.paths=[path([[350,700],[760,700],[845,445]],78,'tile'),path([[760,700],[1090,690],[1270,730]],72,'tile')];
-  }else if(scene.id==='r_cult_dungeon'){
+  }else if(['r_cult_dungeon','r_evil_dungeon'].includes(scene.id)){
     scene.spawn={x:830,y:840};scene.objective={x:650,y:610};scene.exit={x:1270,y:410};
     scene.obstacles=mask.edges.map(r=>r.slice());
     // The original generated painting supplies the masonry, open gates and lamps.
@@ -368,11 +391,16 @@ function alignPaintedGround(scene){
     scene.props=[];
     scene.paths=[path([[830,840],[830,750],[650,750],[650,610]],58),path([[830,750],[1020,730],[1020,570]],58),path([[650,610],[650,455],[845,445],[1020,445],[1160,490],[1270,410]],44)];
     scene.drawRoads=false;
-  }else if(scene.id==='r_cult_chamber'){
+  }else if(['r_cult_chamber','r_evil_chamber'].includes(scene.id)){
     scene.spawn={x:1175,y:610};scene.objective={x:965,y:625};scene.exit={x:1350,y:610};
     scene.props=[prop('table',380,470,150,78),prop('lantern',1170,440,42,98),prop('bench',1015,390,145,48)];
     scene.obstacles=[...mask.edges.map(r=>r.slice()),[320,443,440,494]];
     scene.drawRoads=false;scene.paths=[path([[650,540],[965,625],[1180,610],[1350,610]],62,'wood')];
+  }
+  // These complete shore paintings already contain water, stone and paths.
+  // Removing the generated overlays also removes their invisible footprints.
+  if(['m40','m34','r_evil_ferry'].includes(scene.id)){
+    scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
   const project=p=>{
@@ -406,6 +434,13 @@ const AUTHORED_PORTALS={
  m4:{m3:[[555,845],[635,785]],r_wudang:[[810,355],[810,440]]},
  r_wudang:{m4:[[800,915],[800,825]],m5:[[1245,410],[1170,485]]},
  m5:{r_wudang:[[355,925],[445,885]],m61:[[1260,820],[1150,760]]},
+ m71:{m49:[[765,915],[760,800]],m16:[[1320,290],[1235,345]],r_evil_dungeon:[[1270,730],[1135,680]],r_evil_chamber:[[350,700],[490,690]],r_evil_yitian:[[765,915],[760,800]]},
+ r_evil_dungeon:{m71:[[830,915],[830,790]]},
+ r_evil_chamber:{m71:[[1350,610],[1215,590]]},
+ r_evil_yitian:{m71:[[1250,410],[1165,470]],r_evil_ferry:[[775,915],[800,825]]},
+ r_evil_ferry:{r_evil_yitian:[[345,420],[455,465]],m40:[[1295,710],[1175,700]]},
+ m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]]},
+ m34:{m40:[[750,415],[750,530]],m57:[[715,900],[710,780]]},
  m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]]},
  r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
  r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},

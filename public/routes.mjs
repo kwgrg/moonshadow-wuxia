@@ -4,6 +4,11 @@
  * they are not claims about the original game's map adjacency.
  */
 export const ROUTE_MAPS = {
+ m71:{name:'摘星楼',area:'楼内厅堂',art:'hall',weather:'亥时 · 灯火沉沉',poem:'高堂灯未尽，归路待天明',shop:false,obstacles:[]},
+ r_evil_dungeon:{name:'摘星楼地牢',area:'蔷薇囚室',art:'cult-dungeon',weather:'亥时 · 石壁寒灯',poem:'一墙隔生死，归路问何人',shop:false,obstacles:[],routeOnly:true},
+ r_evil_chamber:{name:'摘星楼歇宿客房',area:'夜灯下',art:'bedroom',weather:'亥时 · 孤灯未熄',poem:'门外长更尽，梦中故人来',shop:false,obstacles:[],routeOnly:true},
+ r_evil_yitian:{name:'倚天山下山道',area:'通往渡头',art:'forest',weather:'辰时 · 山雾初散',poem:'山路向江去，远帆待归人',shop:false,obstacles:[],routeOnly:true},
+ r_evil_ferry:{name:'倚天山渡头',area:'候船石岸',art:'island',weather:'辰时 · 江风微起',poem:'一帆分两岸，回首路迢迢',shop:false,obstacles:[],routeOnly:true},
  m61:{name:'摘星楼议事厅',area:'楼内正厅',art:'hall',weather:'亥时 · 灯火沉沉',poem:'高堂灯未尽，故路已难回',shop:false,obstacles:[]},
  r_cult_dungeon:{name:'摘星楼地牢',area:'左右囚室',art:'cult-dungeon',weather:'亥时 · 石壁寒灯',poem:'重门隔故人，灯影照前尘',shop:false,obstacles:[],routeOnly:true},
  r_cult_chamber:{name:'摘星楼客房',area:'灯下旧室',art:'bedroom',weather:'亥时 · 灯影独坐',poem:'人去空帷在，一灯照孤身',shop:false,obstacles:[],routeOnly:true},
@@ -23,7 +28,17 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry']].map(([a,b])=>pairKey(a,b)));
+
+// These links are independent web staging. A ferry is an explicit voyage,
+// while the mountain connector must be walked on both sides of the journey.
+const EVIL_ROUTES=[
+ ['m71','r_evil_dungeon','e05','e06'],
+ ['m71','r_evil_chamber','e06_aftermath','e06_night'],
+ ['m71','r_evil_yitian','e06_escort','e06_ferry'],
+ ['r_evil_yitian','r_evil_ferry','e06_escort','e06_ferry'],
+ ['r_evil_ferry','m40','e06_ferry','e06_landing','boat']
+];
 
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
@@ -58,6 +73,12 @@ export function routeEdges(state={},quests=[]){
   const stage=quests.find(q=>q.id===requires);
   if(stage&&arrived(stage,state,quests))edges.set(pairKey(from,to),{from,to,requires,locked:false,reason:'',inferred:true,design:'authored-side-route'});
  }
+ if(state.flags?.route==='evil')for(const [from,to,requires,stageId,transport] of EVIL_ROUTES){
+  const stage=quests.find(q=>q.id===stageId);
+  if(!stage||!arrived(stage,state,quests))continue;
+  const locked=!finished(requires,state,quests);
+  edges.set(pairKey(from,to),{from,to,requires,locked,reason:locked?'先办完眼前的事，再从这里离开。':'',inferred:true,design:'authored-evil-route',...(transport?{transport}: {})});
+ }
  const itinerary=quests.filter(q=>matches(q.when,state));
  for(let i=1;i<itinerary.length;i++){
   const before=itinerary[i-1],next=itinerary[i];
@@ -74,7 +95,7 @@ export function routeEdges(state={},quests=[]){
 /** Possible neighbours for stable authored portal placement, regardless of save. */
 export function routeNeighbors(mapId,quests=[]){
  const neighbors=new Set();
- for(const [a,b] of [...OPENING,...SIDE_ROUTES]){if(a===mapId)neighbors.add(b);if(b===mapId)neighbors.add(a);}
+ for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES]){if(a===mapId)neighbors.add(b);if(b===mapId)neighbors.add(a);}
  // Enumerate real branch combinations rather than joining the end of one
  // mutually exclusive story branch directly to the beginning of the other.
  const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
@@ -95,7 +116,7 @@ export function routeNeighbors(mapId,quests=[]){
 export function exitsFor(mapId,state={},quests=[]){
  return routeEdges(state,quests).filter(e=>e.from===mapId||e.to===mapId).map(e=>{
   const to=e.from===mapId?e.to:e.from;
-  return {...e,id:`route:${mapId}:${to}`,to,exitKey:to,entryKey:mapId,label:ROUTE_MAPS[to]?.name||to};
+  return {...e,id:`route:${mapId}:${to}`,to,exitKey:to,entryKey:mapId,label:ROUTE_MAPS[to]?.name||to,...(e.transport==='boat'?{travelLabel:to==='m40'?'乘船前往忘忧岛渡口':'乘船返回倚天山渡头'}:{})};
  });
 }
 

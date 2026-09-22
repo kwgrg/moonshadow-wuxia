@@ -4,7 +4,7 @@ import {GameEngine,freshState,restoreState,QUESTS} from '../public/runtime.mjs';
 // Focused checks for the independently authored e05/e07 refusal state machine.
 // Thresholds follow the recorded event audit; animation and UI need their own QA.
 const index=id=>QUESTS.findIndex(q=>q.id===id);
-function create(id){const s=freshState();s.quest=index(id);s.map=QUESTS[s.quest].map;s.phase='talk';s.flags.route='evil';const game=new GameEngine(s);Object.assign(game.s.hero,game.scene.spawn);return game;}
+function create(id){const s=freshState();s.quest=index(id);s.map=QUESTS[s.quest].map;s.phase='talk';s.flags.route='evil';if(id==='e07')s.flags.evilZhenMissing=true;const game=new GameEngine(s);Object.assign(game.s.hero,game.scene.spawn);return game;}
 const snapshot=game=>JSON.parse(JSON.stringify({...game.s,questId:game.q.id}));
 function enterChoice(game){
  assert.equal(game.choose(1),false,'refusal is unavailable before the duel');game.beginObjective();assert.equal(game.s.phase,'battle');assert.equal(game.s.enemies.length,1);
@@ -47,7 +47,7 @@ for(const [id,limit,nextId] of [['e05',3,'e06'],['e07',2,'e08']]){
  const retried=new GameEngine(restoreState(snapshot(game)));assert.equal(retried.retryRefusal(),true);assert.equal(retried.s.phase,'choice');assert.equal(retried.s.failure,null);assert.equal(retried.s.hero.hp,hpBefore);assert.equal(retried.refusalCount(),limit-1);assert.ok(!Object.hasOwn(retried.s.choices,id));assert.equal(retried.s.enemies.length,0,'reply retry does not replay the whole duel');
  assert.equal(retried.refusalOutcome(1),'fatal');assert.equal(retried.choose(1),true);assert.equal(retried.s.phase,'failed','the same final refusal is still fatal after retry');
  assert.equal(retried.retryRefusal(),true);assert.equal(retried.choose(0),true);assert.equal(retried.q.id,nextId);assert.equal(retried.s.failure,null);assert.ok(retried.s.done.includes(id));assert.ok(retried.s.claimedRewards.includes(id));assert.equal(retried.s.hero.hp,hpBefore);
- if(id==='e07'){assert.equal(retried.s.inventory.jade_half,2);assert.equal(retried.s.inventory.mother_letter,1);assert.equal(retried.s.flags.companion,'月眉儿');}
+ if(id==='e07'){assert.equal(retried.s.inventory.jade_half||0,0);assert.equal(retried.s.inventory.mother_letter||0,0);assert.equal(retried.s.flags.companion,'月眉儿');}
  const accepted=snapshot(retried);retried.s.quest=index(id);retried.s.map=QUESTS[index(id)].map;retried.s.phase='choice';retried.completeQuest();
  assert.deepEqual(retried.s.inventory,accepted.inventory);assert.equal(retried.s.coins,accepted.coins);assert.equal(retried.s.hero.exp,accepted.hero.exp,'revisiting an accepted offer cannot repay rewards');
 

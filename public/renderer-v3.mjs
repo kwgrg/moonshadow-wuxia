@@ -162,8 +162,14 @@ export class Renderer {
     if(p.kind==='herbBundle'&&medicine!=='handed')return;
     if(p.kind==='medicineBowl'&&!['ready','served'].includes(medicine))return;
     if(p.kind==='jadePair'&&!cues.jade)return;
+    if(p.kind==='jadeHalf'&&cues.jadeStory!=='shown')return;
     c.save();c.translate(p.x,p.y);
-    if(p.kind==='sickbed'){
+    if(p.kind==='jadeHalf'){
+      c.translate((p.direction||1)*26,-72);this.glow(0,0,22,'#96c6aa');
+      c.beginPath();c.moveTo(0,-14);c.lineTo(2,-6);c.lineTo(-1,4);c.lineTo(0,14);c.arc(0,0,14,Math.PI/2,-Math.PI/2,true);c.closePath();c.fillStyle='#91b99b';c.fill();c.strokeStyle='#d8d8af';c.lineWidth=1.2;c.stroke();
+      c.strokeStyle='#b08e56';c.beginPath();c.moveTo(-3,-13);c.quadraticCurveTo(-8,-27,2,-22);c.stroke();
+    }else if(p.kind==='sickbed'){
+
       const w=p.w||190;
       this.ellipse(0,8,w*.58,23,'#201b174d');
       const wood=c.createLinearGradient(0,-46,0,15);wood.addColorStop(0,'#9a744c');wood.addColorStop(1,'#463121');
@@ -233,6 +239,14 @@ export class Renderer {
     }
     c.restore();
   }
+  drawSeatedHero(a){
+    const c=this.ctx;c.save();c.translate(a.x,a.y);this.ellipse(0,1,39,11,'#08222570');
+    // Original seated silhouette using the project hero atlas and robe folds.
+    this.polygon([[-20,-25],[-48,-5],[-36,8],[0,3],[37,8],[48,-5],[20,-25]],'#727e88','#b4bcb8',1.2);
+    c.strokeStyle='#c0c7be77';c.beginPath();c.moveTo(-39,0);c.quadraticCurveTo(0,-13,36,1);c.moveTo(-21,-17);c.lineTo(12,4);c.stroke();
+    if(this.assets.characters)c.drawImage(this.assets.characters,0,0,384,600,-27,-94,54,84);
+    c.font='15px '+FONT;c.textAlign='center';c.fillStyle='#e4dabb';c.shadowColor='#092022';c.shadowBlur=6;c.fillText('杨影枫',0,-105);c.restore();
+  }
   drawRestingActor(a){
     const c=this.ctx,sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
     const rising=a.pose==='sit'&&step?.type==='pose'&&step.actor===a.id;
@@ -284,6 +298,13 @@ export class Renderer {
   }
   drawStagingStrike(){
     const sequence=this.e.s.sequence,definition=this.e.stagingPresentation?.()?.definition,step=sequence&&definition?.steps[sequence.step];
+    if(step?.type==='wallImpact'){
+      const actor=this.e.stagingActor?.(step.actor);if(!actor||actor.hidden)return;
+      const progress=clamp(sequence.elapsed/(step.duration||.45),0,1),c=this.ctx,side=step.direction===-1?-1:1;
+      c.save();c.translate(actor.x+side*26,actor.y-75);c.globalAlpha=Math.sin(progress*Math.PI)*.7;
+      for(let i=0;i<7;i++){const angle=i*2.4,radius=5+progress*(9+i*2);this.ellipse(Math.cos(angle)*radius,Math.sin(angle)*radius+progress*12,2+i%3,1.8,'#b8b6a5');}
+      c.restore();return;
+    }
     if(step?.type!=='strike')return;
     const source=this.e.stagingActor?.(step.actor),target=this.e.stagingActor?.(step.target);if(!source||!target||source.hidden||target.hidden)return;
     const progress=clamp(sequence.elapsed/(step.duration||.6),0,1),strength=Math.sin(progress*Math.PI),c=this.ctx;
@@ -293,7 +314,11 @@ export class Renderer {
     c.strokeStyle='#f8fff2';c.lineWidth=1.3;c.beginPath();c.moveTo(10,-23+progress*47);c.lineTo(dx?radius+12:radius,12-progress*18);c.stroke();c.restore();
   }
   drawStagingMood(){
-    const cues=this.e.stagingPresentation?.()?.cues;if(!cues?.chapterTime)return;
+    const cues=this.e.stagingPresentation?.()?.cues;if(!cues)return;
+    if(cues.evilNight||cues.shoreRest||cues.evilMorning){
+      const c=this.ctx,dark=cues.evilNight==='dark'||cues.shoreRest==='asleep';c.save();c.fillStyle=dark?'rgba(8,16,34,.42)':cues.evilMorning?'rgba(229,191,116,.08)':'rgba(19,40,57,.07)';c.fillRect(0,0,W,H);c.restore();
+    }
+    if(!cues.chapterTime)return;
     const c=this.ctx,night=cues.chapterTime==='alone',sequence=this.e.s.sequence,definition=this.e.stagingPresentation().definition,step=sequence&&definition.steps[sequence.step],prior=sequence&&definition.steps[sequence.step-1];
     const entering=step?.type==='wait'&&prior?.type==='cue'&&prior.key==='chapterTime';
     const progress=entering?clamp(sequence.elapsed/(step.duration||1),0,1):1;
@@ -319,6 +344,7 @@ export class Renderer {
   drawActor(a,hero=false){
     if(a.hidden)return;
     if(a.pose==='fallen'){this.drawFallenActor(a);return;}
+    if(hero&&a.pose==='sit'){this.drawSeatedHero(a);return;}
     if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:(a.npcCell??npcCellFor(a.name)),useNpcAtlas=npcCell!==null&&this.assets.npcs;
@@ -329,6 +355,7 @@ export class Renderer {
     c.save();c.translate(0,-lift+bob);if(a.direction===-1)c.scale(-1,1);if(hero&&this.e.hitTime>0)c.rotate(Math.sin(this.e.hitTime*10)*.07);
     const sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
     if(step?.type==='strike'&&(hero?step.actor==='hero':step.actor===a.id))c.rotate(Math.sin(clamp(sequence.elapsed/(step.duration||.6),0,1)*Math.PI)*.14);
+    if(step?.type==='wallImpact'&&!hero&&step.actor===a.id)c.rotate(Math.sin(clamp(sequence.elapsed/(step.duration||.45),0,1)*Math.PI)*.2);
     if(a.flash>0)c.filter='brightness(1.8)';else if(!hero&&!a.ally&&this.e.q.friendly&&a.hp!==undefined)c.filter='saturate(.4) brightness(.8)';
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
     if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
