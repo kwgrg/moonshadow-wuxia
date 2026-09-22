@@ -182,7 +182,7 @@ export class Renderer {
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
     if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
     else if(this.assets.characters)c.drawImage(this.assets.characters,sprite*384,0,384,1024,-width/2,-height,width,height);c.restore();
-    c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle=hero?'#f2e8c5':a.hp!==undefined?'#eed4bd':'#f1d898';c.fillText(hero?(this.e.q.playAs||'杨影枫'):a.name,0,-height-12-lift);c.shadowBlur=0;c.shadowOffsetY=0;
+    c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle=hero?'#f2e8c5':a.hp!==undefined?'#eed4bd':'#f1d898';c.fillText(hero?(this.e.q.playAs||'杨影枫'):(a.displayName||a.name),0,-height-12-lift);c.shadowBlur=0;c.shadowOffsetY=0;
     if(!hero&&a.hp!==undefined){c.fillStyle='#182524dd';c.fillRect(-29,-height-3,58,4);c.fillStyle=a.boss?'#cb6a59':'#c79572';c.fillRect(-29,-height-3,58*a.hp/a.maxHp,4);if(a.role==='ranged'||a.role==='brute'){c.font=`11px ${FONT}`;c.fillStyle='#f0c996';c.fillText(a.role==='ranged'?'远攻':'重击',0,-height-30);}}
     if(a.main&&this.e.s.phase!=='battle'){c.font='24px serif';c.fillStyle='#f7df99';c.shadowColor='#e3c877';c.shadowBlur=10;c.fillText(this.e.s.phase==='talk'?'!':'?',0,-height-35+Math.sin(this.e.time*3)*4);}c.restore();
   }

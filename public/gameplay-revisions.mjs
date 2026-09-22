@@ -1,6 +1,12 @@
 // Playable actions restored from the event audit; coordinates and balance remain adaptations.
 const source=['https://gl.ali213.net/html/2001/3982.html','https://vv0817.neocities.org/gametxt/15_jxqysp'];
 export const GAMEPLAY_REVISIONS={
+ a05:{training:{requiredWins:5,opponents:10,names:['清虚','清水','清微','清霄','清灵','清玄','清云','清越','清河','清木']},waves:null,
+  objective:'在演武坪逐个向弟子请教，胜过五人后可挑战张惟宜',
+  before:[['天星道长','剑术有高下，修为无止境。想见识本门功夫，先与在场的弟子切磋。',0],['张惟宜','十位师弟都在此处，少侠可以自行择人请教。胜过其中五位，我再与你过招。',0],['杨影枫','既然如此，便从一招一式见真章。',0]],
+  after:[['杨影枫','我一心求胜，反倒把自己的破绽全露了出来。',0],['天星道长','今日所见，不过江湖一隅。把这次得失记住，往后再慢慢求证。',0],['杨影枫','承蒙指点。今日失利，我会用今后的路来补上。',0]],
+  referencePolicy:'independently-authored-from-mechanics-observation'
+ },
  a49:{before:[['江湖纪事','几天后的夜里，真儿悄悄来找杨影枫。禁地方向灯火未熄，她想知道父亲究竟在练什么功。',0],['纳兰真','杨大哥，我们去远远看一眼，好不好？',1]],choiceBeforeObjective:true,choice:{prompt:'真儿想偷偷看看父亲在禁地练功，你如何回答？',options:[
   {text:'答应同行，提醒她小心',effects:{affection:{zhen:1}},after:[['杨影枫','好。但只能远远看一眼，别惊扰前辈。',0]]},
   {text:'先劝她不要去',effects:{affection:{zhen:-1}},after:[['纳兰真','你不愿意就算了，我自己去。',1],['江湖纪事','真儿赌气走到海边。杨影枫放心不下，追上去劝解，最终还是陪她同行。',0]]}

@@ -10,6 +10,7 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
  while(!g.s.completed&&transitions++<1000){const q=g.q;
   if(g.s.map!==q.map){assert.equal(g.travel(q.map),true);continue;}
   if(g.s.phase==='talk')g.beginObjective();
+  if(g.s.phase==='training'){const opponent=g.markers.find(m=>m.kind==='master')||g.markers.find(m=>m.kind==='training'&&!m.defeated);assert.ok(opponent);g.interact(opponent);for(let n=0;n<1200&&g.s.phase==='training';n++)g.tick(.05);assert.equal(g.s.phase,'battle');}
   if(g.s.phase==='choice'){assert.equal(g.choose(option(g,outcome)),true);continue;}
   if(g.s.phase==='escape'){const marker=g.markers.find(m=>m.main);g.interact(marker);for(let t=0;t<1500&&g.q.id===q.id&&g.s.phase==='escape';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,'Timed escape must progress');continue;}
   if(g.s.phase==='battle'){
@@ -20,6 +21,7 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
     for(const id of g.s.hotbar)if(id!=null&&id!==3&&id!==5&&id!==15)g.cast(id);
     if(g.s.hero.hp<g.s.hero.maxHp*.5){g.cast(3);g.potion();}if(g.s.hero.mp<30)g.elixir();g.tick(.05);
    }
+   if(q.training&&g.s.phase==='training')continue;
    if(q.battleBeforeChoice){assert.equal(g.s.phase,'choice');g.choose(option(g,outcome));continue;}
    assert.equal(g.s.phase,'after',`${outcome} ${q.id} battle should complete (hp ${g.s.hero.hp}, tick ${ticks})`);
   }
@@ -30,7 +32,7 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
  }
  assert.equal(g.s.ending,outcome);assert.ok(transitions<1000);assert.ok(g.s.done.length>70);stats.push({difficulty,outcome,events:g.s.done.length,battles,level:g.s.hero.level,visited:g.s.visited.length});
 }
-const opening=new GameEngine();opening.s.quest=QUESTS.findIndex(q=>q.id==='a05');opening.s.map=opening.q.map;opening.s.wave=1;opening.startBattle(true);opening.s.enemies[0].hp=1;opening.s.hero.x=opening.s.enemies[0].x;opening.s.hero.y=opening.s.enemies[0].y;opening.cast(0);assert.equal(opening.s.ending,'opening');
+const opening=new GameEngine();opening.s.quest=QUESTS.findIndex(q=>q.id==='a05');opening.s.map=opening.q.map;opening.s.training={questId:'a05',defeated:[0,1,2,3,4],active:null,master:true};opening.startBattle();opening.s.enemies[0].hp=1;opening.s.hero.x=opening.s.enemies[0].x;opening.s.hero.y=opening.s.enemies[0].y;opening.cast(0);assert.equal(opening.s.ending,'opening');
 const path=new GameEngine();const marker=path.npc;path.interact(marker);for(let i=0;i<1000&&path.autoInteract;i++)path.tick(.05);assert.equal(path.autoInteract,null);assert.ok(distance(path.s.hero,marker)<135);
 path.keys.add('ArrowLeft');for(let i=0;i<2000;i++)path.tick(.05);assert.ok(path.s.hero.x>=path.scene.bounds[0]);path.keys.clear();assert.equal(path.equipSkill(18,0),false);path.unlock(18);assert.equal(path.equipSkill(18,4),true);
 const donation=new GameEngine();const beggar=SIDE_QUESTS.find(q=>q.repeat);donation.s.map=beggar.map;donation.s.coins=800;for(let i=0;i<9;i++)assert.equal(donation.side(beggar.id),true);assert.equal(donation.s.sideDone.includes(beggar.id),false);donation.side(beggar.id);assert.equal(donation.s.sideDone.includes(beggar.id),true);assert.ok(donation.s.skills[11]!==undefined);assert.equal(donation.side(beggar.id),false);

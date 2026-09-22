@@ -134,16 +134,21 @@ function handcrafted(scene) {
       scene.points[2].reward={potions:1};
       return true;
     case 'm5':
-      scene.kind='hall';scene.art='hall';scene.ground=palettes.hall;
-      scene.bounds=[280,420,1435,945];scene.spawn={x:760,y:885};scene.exit={x:1365,y:870};
-      scene.paths=[path([[760,885],[760,710],[1020,670],[1020,595]],140,'tile'),path([[760,885],[1365,870]],64,'tile')];
-      solid(scene,prop('column',435,510,58,175),[412,487,458,533]);
-      solid(scene,prop('column',1300,510,58,175),[1277,487,1323,533]);
-      solid(scene,prop('column',420,825,58,175),[397,802,443,848]);
-      solid(scene,prop('column',1300,745,58,175),[1277,722,1323,768]);
-      scene.props.push(prop('altar',880,425,350,90),prop('rug',945,705,340,155),prop('brazier',575,455,65,68),prop('brazier',1185,425,65,68));
-      scene.points=[point('taiji-relief','太极石刻',345,610,'大殿四柱围着演武的空地。身法宜留余地，退让并不等于败退。',{appearance:'stele'}),point('practice-rack','殿侧剑架',1180,890,'试剑用的木剑收在架上。此处以切磋为意，胜负由场上的交锋决定。',{appearance:'sword'}),chest('hall-incense-box',320,910,'旧木箱里放着一小包补气药。',10)];
-      scene.points[2].reward={elixirs:1};
+      // Independently staged outdoor practice yard. These positions belong to
+      // this web layout and do not reproduce the original game's map grid.
+      scene.title='武当演武场';scene.kind='temple';scene.art='temple';scene.ground=palettes.temple;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};
+      scene.trainingPositions=[
+        {x:450,y:540},{x:450,y:660},{x:450,y:780},
+        {x:610,y:815},{x:785,y:815},{x:960,y:815},{x:1135,y:815},
+        {x:1235,y:730},{x:1235,y:610},{x:1235,y:490}
+      ];
+      scene.arena={x:840,y:650,radius:165};
+      scene.points=[
+        point('practice-etiquette','切磋须知',640,435,'各位弟子分列场边候教。走近其中一位问剑，即可与他单独切磋；收剑之后，再向下一位请教。',{appearance:'sign'}),
+        point('practice-rack','场边剑架',1140,445,'木剑用于试招。胜负既分便应收势，围观的弟子也会给场上两人留出退让的距离。',{appearance:'sword'}),
+        {...chest('training-supplies',350,740,'练武用的补气药收在场边，休息时可以取用。',0),reward:{elixirs:1}}
+      ];
       return true;
     case 'm6':
       scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
@@ -276,9 +281,15 @@ function alignPaintedGround(scene){
     scene.points[0].x=1150;scene.points[0].y=430;scene.points[1]={...scene.points[1],x:400,y:655,name:'院中石砖',text:'石砖沿庭院向正殿铺开。门阶前留着宽阔的空地，转身与退让都有余地。',paintOnly:true};scene.points[2].x=1160;scene.points[2].y=765;
     scene.paths=[path([[555,845],[745,700],[815,410],[810,355]],76),path([[745,700],[430,630],[400,655]],44),path([[745,700],[1160,765]],44)];
   }else if(scene.id==='m5'){
-    scene.objective={x:1010,y:570};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());
-    scene.points[0]={...scene.points[0],x:770,y:575,text:'太极纹刻在大殿中央的地砖上。纹样四周留着完整的演武空地，柱廊分列两侧。',paintOnly:true};scene.points[1].x=1190;scene.points[1].y=715;scene.points[2].x=350;scene.points[2].y=735;
-    scene.paths=[path([[765,915],[760,815],[795,670],[1010,570]],75,'tile'),path([[795,670],[355,615]],44,'tile'),path([[795,670],[1190,715]],44,'tile')];
+    // Keep the two side queues and the southern waiting line outside the arena.
+    // Zhang Weiyi oversees the yard from the north; the gate remains reachable.
+    scene.spawn={x:700,y:735};scene.objective={x:835,y:445};scene.exit={x:805,y:365};
+    scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());
+    scene.paths=[
+      path([[700,735],[840,650],[835,445],[805,365]],78),
+      path([[450,540],[450,660],[450,780],[610,815],[785,815],[960,815],[1135,815],[1235,730],[1235,610],[1235,490]],48),
+      path([[450,660],[840,650],[1235,610]],48)
+    ];
   }else if(scene.id==='m6'){
     scene.spawn={x:800,y:880};scene.objective={x:1000,y:600};scene.exit={x:1250,y:395};
     scene.points[0]={...scene.points[0],name:'林间石径',text:'竹林旁的石径在这里变宽。前方岔路一侧绕着山崖，另一侧深入树林。',paintOnly:true};scene.points[2].x=1150;scene.points[2].y=875;

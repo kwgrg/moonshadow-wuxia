@@ -12,6 +12,7 @@ export const SOURCES = [{"id":"retail2001","url":"https://gl.ali213.net/html/200
 export function chooseEnding(s){if(s.flags.route==='evil')return (s.flags.evil||0)>=3?'alone':'family';if(s.flags.forsake)return 'zhen_good';return s.flags.firstWoman==='mei'?'three':'reunion';}
 
 export const LEGACY_QUEST_IDS = QUESTS.map(q=>q.id);
+Object.assign(MAPS.m5,{name:'武当山顶',area:'演武坪',art:'temple'});
 for (const q of QUESTS) { const revision=STORY_REVISIONS[q.id]; if(revision) Object.assign(q,revision,{revised:true}); }
 
 for(const q of QUESTS){Object.assign(q,LATE_STORY_REVISIONS[q.id]||{},GAMEPLAY_REVISIONS[q.id]||{});}
