@@ -153,6 +153,99 @@ export class Renderer {
       default:this.ellipse(0,-10,18,14,'#899b82','#c8cba8',1);
     }c.restore();
   }
+  // Treatment props and poses are drawn from this project's own atlas and
+  // original geometry. They are presentation only; the runner owns item use.
+  drawStagingProp(p){
+    const c=this.ctx,cues=p.cues||{},medicine=cues.medicine,t=this.e.settings.motion?this.e.time:0;
+    if(p.kind==='herbBundle'&&medicine!=='handed')return;
+    if(p.kind==='medicineBowl'&&!['ready','served'].includes(medicine))return;
+    if(p.kind==='jadePair'&&!cues.jade)return;
+    c.save();c.translate(p.x,p.y);
+    if(p.kind==='sickbed'){
+      const w=p.w||190;
+      this.ellipse(0,8,w*.58,23,'#201b174d');
+      const wood=c.createLinearGradient(0,-46,0,15);wood.addColorStop(0,'#9a744c');wood.addColorStop(1,'#463121');
+      this.polygon([[-w/2,-36],[w/2,-27],[w/2,5],[-w/2,0]],wood,'#402f23',2);
+      for(const x of [-w*.42,w*.42]){c.fillStyle='#4d3425';c.fillRect(x-5,-1,10,20);c.fillStyle='#987249';c.fillRect(x-4,-1,3,19);}
+      this.polygon([[-w*.49,-43],[w*.46,-37],[w*.49,-24],[-w*.48,-27]],'#c5b798','#e0cfad',1.2);
+      const quilt=c.createLinearGradient(0,-40,0,-15);quilt.addColorStop(0,'#747b8b');quilt.addColorStop(1,'#3e485b');
+      this.polygon([[-w*.2,-40],[w*.45,-35],[w*.47,-18],[-w*.22,-24]],quilt,'#9a98a0',1);
+      c.strokeStyle='#b3a69266';c.lineWidth=1;for(let i=0;i<7;i++){c.beginPath();c.moveTo(-28+i*15,-36);c.lineTo(-31+i*15,-23);c.stroke();}
+      c.save();c.translate(-w*.34,-37);c.rotate(.07);this.ellipse(0,0,23,12,'#ded4b8','#a49980',1);this.ellipse(-2,-2,17,7,'#eee3c8');c.restore();
+      this.polygon([[-w*.52,4],[-w*.52,-66],[-w*.47,-72],[-w*.43,-64],[-w*.43,-1]],wood,'#3d2e22',2);
+      c.strokeStyle='#be9463';c.lineWidth=2;c.beginPath();c.moveTo(-w*.485,-57);c.lineTo(-w*.485,-7);c.stroke();
+    }else if(p.kind==='medicineStove'){
+      this.ellipse(1,5,36,12,'#1c201b66');
+      const clay=c.createLinearGradient(-23,0,25,0);clay.addColorStop(0,'#514c43');clay.addColorStop(.5,'#8d7b63');clay.addColorStop(1,'#3b3932');
+      this.polygon([[-23,-39],[23,-39],[28,1],[-28,1]],clay,'#b2a084',1.2);
+      this.ellipse(0,0,28,9,'#4a4439','#a89371',1);
+      this.ellipse(0,-11,12,8,'#242923');
+      if(['brewing','ready'].includes(medicine)){
+        this.glow(0,-9,22,'#e2a24d');
+        this.polygon([[-8,-8],[-3,-23-Math.sin(t*5)*3],[1,-13],[7,-20],[9,-8]],'#efbb6c');
+      }
+      this.ellipse(0,-42,30,10,'#383b32','#b8aa8b',1.5);
+      const pot=c.createRadialGradient(-8,-66,4,0,-60,30);pot.addColorStop(0,'#9d7351');pot.addColorStop(.6,'#6e4d38');pot.addColorStop(1,'#342c24');
+      this.ellipse(0,-60,24,22,pot,'#c1956b',1);
+      c.strokeStyle='#76533c';c.lineWidth=5;c.beginPath();c.arc(24,-64,9,-1.7,1.7);c.stroke();
+      this.ellipse(0,-78,23,6,'#73543d','#b18b63',1);this.ellipse(0,-84,5,4,'#b19870');
+      if(['brewing','ready'].includes(medicine)){
+        for(let i=0;i<3;i++){
+          const drift=Math.sin(t*1.7+i*2)*4;c.strokeStyle=`rgba(233,229,201,${medicine==='ready'?.4:.27+i*.06})`;c.lineWidth=2+i*.35;
+          c.beginPath();c.moveTo((i-1)*8,-86);c.bezierCurveTo((i-1)*8+14+drift,-105,(i-1)*8-12+drift,-121,(i-1)*8+drift,-140-i*5);c.stroke();
+        }
+        c.font=`12px ${FONT}`;c.textAlign='center';c.shadowColor='#282419';c.shadowBlur=5;c.fillStyle='#ead5a8';c.fillText(medicine==='brewing'?'文火煎药':'药汁已成',0,-157);
+      }
+    }else if(p.kind==='herbBundle'){
+      c.translate((p.direction||1)*20,-61);c.rotate(-.12);
+      this.polygon([[-18,0],[-13,-14],[15,-12],[21,3],[1,10]],'#b1a586','#dfd1ae',1);
+      c.strokeStyle='#7d9b70';c.lineWidth=2;for(let i=0;i<7;i++){const x=-12+i*4;c.beginPath();c.moveTo(x,2);c.lineTo(x+3,-20-(i%3)*3);c.stroke();this.ellipse(x+2,-17-(i%3)*3,5,2.6,i%2?'#a4bd92':'#7b9b6b');}
+      c.strokeStyle='#76553a';c.beginPath();c.moveTo(-16,-2);c.lineTo(17,-5);c.stroke();
+    }else if(p.kind==='medicineBowl'){
+      let x=(p.direction||1)*21,y=-59,tilt=0;
+      if(medicine==='served'){
+        const patient=p.actors.find(actor=>actor.id==='patient'),sequence=this.e.s.sequence,step=sequence&&p.definition.steps[sequence.step];
+        const prior=sequence&&p.definition.steps[sequence.step-1],serving=step?.type==='wait'&&prior?.type==='cue'&&prior.key==='medicine'&&prior.value==='served';
+        if(patient){
+          const mouth={x:patient.x-56-p.x,y:patient.y-41-p.y},tray={x:patient.x-106-p.x,y:patient.y+21-p.y};
+          if(serving){tilt=sequence.elapsed<1.9?-.18:0;const progress=clamp(sequence.elapsed/.8,0,1),settle=clamp((sequence.elapsed-1.9)/.7,0,1);x+=(mouth.x-x)*progress;y+=(mouth.y-y)*progress;x+=(tray.x-x)*settle;y+=(tray.y-y)*settle;}
+          else{x=tray.x;y=tray.y;}
+        }
+      }
+      c.translate(x,y);c.rotate(tilt);
+      this.polygon([[-14,-4],[14,-4],[9,6],[-9,6]],'#b9c8bd','#e4e3c8',1);
+      this.ellipse(0,-4,14,5,'#d7deca','#658c84',1);this.ellipse(0,-4,10,3.1,medicine==='ready'?'#765633':'#8b7145');
+      if(medicine==='ready'){c.strokeStyle='#eee8cf88';c.lineWidth=1;c.beginPath();c.moveTo(0,-10);c.bezierCurveTo(-6,-16,5,-22,1,-29);c.stroke();}
+    }else if(p.kind==='jadePair'){
+      const sequence=this.e.s.sequence,step=sequence&&p.definition.steps[sequence.step],joining=cues.jade==='joined'&&step?.type==='wait';
+      const progress=cues.jade==='joined'?(joining?clamp(sequence.elapsed/1.1,0,1):1):0,gap=21*(1-progress);
+      this.ellipse(0,0,68,46,'#13362f80');this.glow(0,-2,58,progress?'#bce3ac':'#829f88');
+      for(const side of [-1,1]){
+        c.save();c.translate(side*gap,0);c.scale(side,1);
+        const jade=c.createLinearGradient(0,-28,25,27);jade.addColorStop(0,'#d1e0b1');jade.addColorStop(.4,'#84b597');jade.addColorStop(1,'#355f50');
+        c.beginPath();c.moveTo(0,-28);c.lineTo(3,-15);c.lineTo(-2,-5);c.lineTo(3,9);c.lineTo(0,28);c.arc(0,0,28,Math.PI/2,-Math.PI/2,true);c.closePath();c.fillStyle=jade;c.fill();c.strokeStyle='#e6dfb0';c.lineWidth=1.3;c.stroke();
+        c.strokeStyle='#426c5666';c.lineWidth=1;c.beginPath();c.arc(0,0,19,1.9,4.4);c.stroke();this.ellipse(-12,-9,3,3,'#d8e2bc88');
+        c.strokeStyle='#b99762';c.beginPath();c.moveTo(-5,-26);c.quadraticCurveTo(-13,-40,-1,-39);c.stroke();c.restore();
+      }
+      c.font=`12px ${FONT}`;c.textAlign='center';c.shadowColor='#09281f';c.shadowBlur=6;c.fillStyle='#f0e4bd';c.fillText(cues.jade==='joined'?'玉佩相合':'两半旧玉',0,51);
+    }
+    c.restore();
+  }
+  drawRestingActor(a){
+    const c=this.ctx,sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
+    const rising=a.pose==='sit'&&step?.type==='pose'&&step.actor===a.id;
+    let rise=a.pose==='sit'?1:0;if(rising)rise=clamp(sequence.elapsed/(step.duration||1),0,1);rise=rise*rise*(3-2*rise);
+    c.save();c.translate(a.x,a.y);
+    c.save();c.translate(-8-22*rise,-38+18*rise);c.rotate(-Math.PI/2*(1-rise));
+    if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,600,-26,-75,52,82);
+    c.restore();
+    const quilt=c.createLinearGradient(0,-40,0,4);quilt.addColorStop(0,'#777886');quilt.addColorStop(.55,'#555d72');quilt.addColorStop(1,'#353d51');
+    this.polygon([[-17-25*rise,-40+11*rise],[73,-29],[88,-7],[39,6],[-20-25*rise,-13]],quilt,'#a6a4a3',1);
+    c.strokeStyle='#c1b3a266';c.lineWidth=1;for(let i=0;i<5;i++){c.beginPath();c.moveTo(-7+i*16,-33+rise*8);c.quadraticCurveTo(-15+i*16,-12,6+i*15,-5);c.stroke();}
+    if(rise>.5){c.strokeStyle='#c6b7b66e';c.beginPath();c.moveTo(-36,-20);c.quadraticCurveTo(-7,-10,24,-15);c.stroke();}
+    c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle='#f1d898';c.fillText(a.name,-24,-72-45*rise);
+    c.font=`11px ${FONT}`;c.fillStyle='#d7d4b9';c.fillText(rise>.7?'倚榻调息':'卧病休养',-24,-57-45*rise);c.restore();
+  }
   drawBat(a){
     const c=this.ctx,scale=a.boss?1.65:1,flap=Math.sin(this.e.time*13+a.x)*18;
     c.save();c.translate(a.x,a.y);this.ellipse(0,0,25*scale,8*scale,'#031e2659');
@@ -171,6 +264,7 @@ export class Renderer {
     c.fillStyle='#142627dd';c.fillRect(a.x-28,top+8,56,4);c.fillStyle=a.boss?'#ce7c68':'#bda272';c.fillRect(a.x-28,top+8,56*a.hp/a.maxHp,4);c.restore();
   }
   drawActor(a,hero=false){
+    if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:npcCellFor(a.name),useNpcAtlas=npcCell!==null&&this.assets.npcs;
     const kneeling=a.pose==='kneel',c=this.ctx,height=kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=(hero?142:height)*384/1024;
@@ -242,7 +336,13 @@ export class Renderer {
     const objects=s.props.filter(p=>!['pool','rug'].includes(p.kind)).map(p=>({...p,render:'prop'}));
     for(const p of s.points){if(ids.has(p.id))continue;objects.push({...p,kind:p.appearance||p.kind,opened:(this.e.s.opened||[]).includes(`${this.e.s.map}:${p.id}`),render:'point'});}
     objects.push({...this.e.s.hero,hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});if(this.e.companion)objects.push({...this.e.companion,render:'actor'});
-    objects.sort((a,b)=>a.y-b.y).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
+    const presentation=this.e.stagingPresentation?.();
+    if(presentation)for(const prop of presentation.definition.props||[]){
+      const actor=prop.actor?presentation.actors.find(a=>a.id===prop.actor):null;
+      if(prop.actor&&!actor)continue;
+      objects.push({...prop,...(actor?{x:actor.x,y:actor.y,direction:actor.direction,sortY:actor.y+2}:{}),render:'stagingProp',cues:presentation.cues,actors:presentation.actors,definition:presentation.definition});
+    }
+    objects.sort((a,b)=>(a.sortY??a.y)-(b.sortY??b.y)).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else if(o.render==='stagingProp')this.drawStagingProp(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
     this.drawEffects();this.drawWeather();c.restore();this.drawMini();
   }
   drawMini(){

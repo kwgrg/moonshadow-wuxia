@@ -35,7 +35,11 @@ ui.engine.s.hero.x=ui.engine.npc.x;ui.engine.s.hero.y=ui.engine.npc.y;ui.track()
 ui.engine.travel(ui.engine.q.map);for(let i=0;i<3000&&ui.engine.s.map!==ui.engine.q.map;i++)ui.engine.tick(.05);ui.showShop();assert.equal(nodes.get('panel').open,true);ui.closePanel();
 for(const marker of ui.engine.markers.filter(m=>m.kind==='side')){ui.showSide(marker.id);ui.closePanel();}
 globalThis.innerWidth=1440;globalThis.innerHeight=900;globalThis.devicePixelRatio=1;
-let draws=0;const context=new Proxy({},{get:(target,prop)=>target[prop]??((...args)=>{if(['translate','scale','ellipse','arc','fillRect','clearRect','moveTo','lineTo'].includes(prop))for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),prop);if(prop==='drawImage'){assert.ok(args[0],'Image reference');draws++;for(const v of args.slice(1))assert.ok(Number.isFinite(v));}}),set:(target,key,value)=>(target[key]=value,true)});
+const gradient=(...coordinates)=>{
+ for(const coordinate of coordinates)assert.ok(Number.isFinite(coordinate),'Gradient coordinate');
+ return {addColorStop(offset,color){assert.ok(Number.isFinite(offset)&&offset>=0&&offset<=1,'Gradient color offset');assert.equal(typeof color,'string');}};
+};
+let draws=0;const context=new Proxy({createLinearGradient:gradient,createRadialGradient:gradient},{get:(target,prop)=>target[prop]??((...args)=>{if(['translate','scale','ellipse','arc','fillRect','clearRect','moveTo','lineTo'].includes(prop))for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),prop);if(prop==='drawImage'){assert.ok(args[0],'Image reference');draws++;for(const v of args.slice(1))assert.ok(Number.isFinite(v));}}),set:(target,key,value)=>(target[key]=value,true)});
 const canvas={clientWidth:1440,clientHeight:900,getContext:()=>context};const assets=Object.fromEntries(['wudang','lake','town','forest','snow','characters','cliff','inn','temple','hall','island','cave','bedroom','props','npcs'].map(k=>[k,{}]));
 const renderEngine=new core.GameEngine();const r=new ActualRenderer(canvas,canvas,renderEngine,assets);
 for(let i=0;i<core.QUESTS.length;i++){renderEngine.s.quest=i;renderEngine.s.map=renderEngine.q.map;renderEngine.s.phase='talk';r.draw();if(['battle','boss'].includes(renderEngine.q.type)){renderEngine.startBattle();r.draw();}if(renderEngine.q.type==='search'){renderEngine.s.phase='search';r.draw();}}

@@ -98,7 +98,7 @@ export const ERRANDS_ADDITIONS=[
    ...evidence('十二株银丝草带回海边小屋交由真儿煎药，眉儿好转后两半玉佩相合，随后赴禁地密室'),
    title:'海屋交药',map:'m33',npc:'纳兰真',sprite:1,type:'talk',act:'卷七 · 侠路寻心',when:{...good},
    objective:'把十二株银丝草交给纳兰真，为月眉儿煎药',
-   requiredItems:{silver_grass:12},consumeItems:{silver_grass:12},
+   requiredItems:{silver_grass:12},consumeItems:{silver_grass:12},requireStaging:true,hideCompanion:true,
    before:[
     ['纳兰真','你回来了。让我看看药草，十二株齐了便能煎药。',1],
     ['杨影枫','都在这里，山上采来的。我把药草交给你。',0]

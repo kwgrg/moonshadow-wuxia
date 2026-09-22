@@ -1,3 +1,4 @@
+import {RECRUITMENT_REVISIONS} from './recruitment-revisions.mjs';
 import {ERRANDS_REVISIONS,ERRANDS_ADDITIONS} from './errands-revisions.mjs';
 import {FULLFLOW_REVISIONS,FULLFLOW_ADDITIONS} from './fullflow-revisions.mjs';
 import {ROUTE_MAPS} from './routes.mjs';
@@ -28,3 +29,5 @@ for(const insertion of FULLFLOW_ADDITIONS){const index=QUESTS.findIndex(q=>q.id=
 
 for(const q of QUESTS)Object.assign(q,ERRANDS_REVISIONS[q.id]||{});
 for(const insertion of ERRANDS_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown errand insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+for(const q of QUESTS)Object.assign(q,RECRUITMENT_REVISIONS[q.id]||{});

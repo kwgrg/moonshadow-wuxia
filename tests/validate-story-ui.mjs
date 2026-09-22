@@ -233,8 +233,31 @@ for(const mode of ['new-ledger','loaded-old-state','live-old-state']){
 preset('e02');ui.engine.s.wave=2;ui.engine.startBattle(true);const lastOpponent=ui.engine.s.enemies[0];lastOpponent.hp=1;Object.assign(ui.engine.s.hero,{x:lastOpponent.x,y:lastOpponent.y+20});ui.engine.cast(0);
 const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
 assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
+// Recruitment options must repeat without showing the accepted-route aftermath.
+for(const [id,limit] of [['e05',3],['e07',2]]){
+ preset(id);ui.engine.s.phase='choice';ui.showChoice();
+ const initialCoins=ui.engine.s.coins;
+ for(let refusal=1;refusal<=limit;refusal++){
+  const seen=clickOption(1);
+  assert.equal(ui.engine.refusalCount(),refusal);
+  assert.ok(!seen.some(line=>ui.engine.q.after.some(after=>after[1]===line)),'refusal cannot narrate acceptance');
+  if(refusal<limit){assert.equal(ui.engine.s.phase,'choice');assert.equal(nodes.get('choices').children.length,2);assert.ok(nodes.get('dialogue-text').textContent.includes('已拒绝 '+refusal+' 次'));}
+ }
+ assert.equal(ui.engine.s.phase,'failed');assert.ok(nodes.get('panel-content').innerHTML.includes('此程中止'));
+ const failedSave=JSON.parse(local.get('moonshadow-journey-v3'));
+ assert.equal(failedSave.phase,'failed');assert.equal(failedSave.hero.hp,0);assert.equal(core.restoreState(failedSave).failure.questId,id);
+ assert.equal(ui.engine.s.coins,initialCoins);assert.ok(!ui.engine.s.done.includes(id));
+ nodes.get('close-panel').click();assert.equal(ui.engine.s.phase,'failed');assert.equal(ui.engine.paused,true,'panel close does not retry a fatal answer');
+ nodes.get('retry-refusal').click();assert.equal(ui.engine.s.phase,'choice');assert.equal(ui.engine.refusalCount(),limit-1);
+ clickOption(0);assert.notEqual(ui.engine.q.id,id);assert.equal(ui.engine.s.failure,null);assert.equal(ui.engine.s.done.filter(q=>q===id).length,1);
+ checks++;
+}
+// Answers must persist even when the player reloads before consequence text finishes.
+preset('e05');ui.engine.s.phase='choice';ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
+assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('dialogue-next').hidden,false);
+const interruptedAnswer=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(interruptedAnswer.phase,'failed');assert.equal(interruptedAnswer.flags.refusal_e05,3);assert.equal(core.restoreState(interruptedAnswer).hero.hp,0);drain();checks++;
 console.log(JSON.stringify({result:'PASS',checks,
-  covered:['终局与拒绝对白分流','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
+  covered:['终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 

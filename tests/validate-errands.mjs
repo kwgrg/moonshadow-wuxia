@@ -5,6 +5,7 @@ import {GameEngine,freshState,restoreState,QUESTS,distance} from '../public/runt
 // original choreography, map fidelity, combat balance, or browser presentation.
 const index=id=>QUESTS.findIndex(q=>q.id===id);
 const quest=id=>QUESTS[index(id)];
+const visibleCompanions=(game,name)=>[...game.markers.filter(actor=>actor.sprite!=null),...(game.companion?[game.companion]:[])].filter(actor=>actor.name===name);
 function create(id){
  const s=freshState();s.quest=index(id);assert.ok(s.quest>=0,id+' exists');s.map=quest(id).map;s.phase='talk';s.flags.route='good';
  const game=new GameEngine(s);Object.assign(game.s.hero,game.scene.spawn);return game;
@@ -18,17 +19,23 @@ function collect(game,marker){
 function walk(game,to,companion){
  const from=game.s.map;assert.equal(game.travel(to),true,'route is open');let steps=0;
  while(game.s.map!==to&&steps++<18000){
-  if(companion)assert.equal(game.companion?.name,companion,'escort remains present through the route');
+  if(companion)assert.equal(visibleCompanions(game,companion).length,1,'escort remains present exactly once through the route');
   game.tick(.05);
  }
  assert.equal(game.s.map,to,from+' walks to '+to);assert.ok(steps<18000);
- if(companion)assert.equal(game.companion?.name,companion,'escort arrives with the player');
+ if(companion)assert.equal(visibleCompanions(game,companion).length,1,'escort arrives with the player exactly once');
+}
+function finishStaging(game){
+ const previous=game.onEvent;game.onEvent=(name,data)=>{previous(name,data);if(name==='stagingDialogue')game.advanceStaging();};
+ for(let t=0;t<12000&&game.s.phase==='staging';t++)game.tick(.05);
+ assert.notEqual(game.s.phase,'staging','the treatment scene must release control');game.onEvent=previous;
 }
 function greetAndComplete(game){
- let interacted=false;game.onEvent=name=>{if(name==='interact')interacted=true;};
+ let interacted=false,staged=false;game.onEvent=name=>{if(name==='interact')interacted=true;if(name==='stagingStep')staged=true;};
  const marker=game.markers.find(m=>m.main&&m.kind!=='travel');assert.ok(marker);
- game.interact(marker);for(let t=0;t<1800&&!interacted;t++)game.tick(.05);
- assert.ok(interacted,'must reach the giver before handover');game.beginObjective();
+ game.interact(marker);for(let t=0;t<1800&&!interacted&&!staged;t++)game.tick(.05);
+ assert.ok(interacted||staged,'must reach the giver before handover');
+ if(!staged)game.beginObjective();finishStaging(game);
 }
 
 // The missing person cannot remain visibly following while being searched for.
@@ -67,10 +74,10 @@ collect(herbs,herbs.markers.find(m=>m.kind==='search'&&m.index===order.at(-1)));
 assert.equal(herbs.q.id,'g08_deliver');assert.equal(herbs.s.inventory.silver_grass,12);assert.equal(herbs.s.inventory.jade_half||0,0);assert.ok(!herbs.s.flags.silverGrassDelivered);
 walk(herbs,'m33');assert.equal(herbs.s.inventory.silver_grass,12,'walking home does not consume the herbs');
 const beforeHandover=saved(herbs);greetAndComplete(herbs);
-assert.equal(herbs.q.id,'g09');assert.equal(herbs.s.inventory.silver_grass,0);assert.equal(herbs.s.inventory.jade_half,2);assert.equal(herbs.s.flags.silverGrassDelivered,true);assert.equal(herbs.companion?.name,'纳兰真');
+assert.equal(herbs.q.id,'g09');assert.equal(herbs.s.inventory.silver_grass,0);assert.equal(herbs.s.inventory.jade_half,2);assert.equal(herbs.s.flags.silverGrassDelivered,true);assert.equal(herbs.s.flags.companion,'纳兰真');assert.equal(visibleCompanions(herbs,'纳兰真').length,1,'fixed healer and follower must not be drawn twice');
 assert.ok(herbs.s.done.includes('g08_deliver'));assert.ok(herbs.s.claimedRewards.includes('g08_deliver'));
 assert.equal(herbs.s.hero.exp,beforeHandover.hero.exp);assert.equal(herbs.s.coins,beforeHandover.coins,'splitting a handover adds no money or experience');
-const afterHandover=saved(herbs),restored=new GameEngine(restoreState(afterHandover));assert.equal(restored.s.inventory.jade_half,2);assert.equal(restored.s.inventory.silver_grass,0);
+const afterHandover=saved(herbs);walk(herbs,'m56','纳兰真');assert.equal(visibleCompanions(herbs,'纳兰真').length,1,'destination giver and follower must not duplicate');herbs.beginObjective();assert.equal(herbs.s.phase,'search');assert.equal(herbs.companion?.name,'纳兰真','searching beyond the giver restores ordinary following');const restored=new GameEngine(restoreState(afterHandover));assert.equal(restored.s.inventory.jade_half,2);assert.equal(restored.s.inventory.silver_grass,0);
 restored.s.quest=index('g08_deliver');restored.s.map='m33';restored.s.phase='talk';restored.completeQuest();assert.equal(restored.s.inventory.jade_half,2);assert.equal(restored.s.inventory.silver_grass,0,'duplicate handover cannot consume twice');
 
 // One missing plant must block interaction, direct start, and direct completion.
@@ -78,7 +85,7 @@ const short=create('g08_deliver');short.s.inventory.silver_grass=11;let talks=0;
 const giver=short.markers.find(m=>m.main&&m.kind!=='travel');Object.assign(short.s.hero,short.nearestOpen(giver.x,giver.y));
 assert.ok(distance(short.s.hero,giver)<135);assert.equal(short.interact(giver),false);short.beginObjective();short.completeQuest();
 assert.equal(talks,0);assert.equal(short.q.id,'g08_deliver');assert.equal(short.s.inventory.silver_grass,11);assert.equal(short.s.inventory.jade_half||0,0);assert.ok(!short.s.done.includes('g08_deliver'));assert.ok(events.some(e=>e.name==='toast'&&e.detail.text.includes('银丝草')));
-short.s.inventory.silver_grass=14;short.beginObjective();assert.equal(short.q.id,'g09');assert.equal(short.s.inventory.silver_grass,2,'only the required twelve are consumed');assert.equal(short.s.inventory.jade_half,2);
+short.s.inventory.silver_grass=14;short.beginObjective();finishStaging(short);assert.equal(short.q.id,'g09');assert.equal(short.s.inventory.silver_grass,2,'only the required twelve are consumed');assert.equal(short.s.inventory.jade_half,2);
 
 // The chamber cannot start before the two halves exist; it does not grant them.
 for(const count of [0,1]){const chamber=create('g09');chamber.s.inventory.jade_half=count;chamber.beginObjective();assert.equal(chamber.s.phase,'talk');assert.equal(chamber.s.collected,0);chamber.completeQuest();assert.equal(chamber.q.id,'g09');assert.equal(chamber.s.inventory.mother_letter||0,0);}
