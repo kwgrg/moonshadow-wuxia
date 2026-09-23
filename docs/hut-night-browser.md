@@ -39,3 +39,5 @@ hut-first-tower 独立浏览器使用一次有效章节起点：e06_first_interl
 返回段逐帧截图：e06_first_interlude-37为影枫坐而真儿隐；e06_rest-4真儿出现；e06_rest-6已走到远端；e06_rest-11影枫站起且真儿隐。之后真实继续到e07_village、map仍m34、phase=travel，即追踪入口；本轮不声称已经进村。最终evilFirstTowerInterludeComplete=true、evilZhenMissing=true、companion=null，没有第二次楼战旗标；visited仅m34，done仅首次切镜和海边醒来。金钱150、经验0、击杀0、气血300、内力180、药5、丹3、背包空、技能及好感均与起点相同。控制台0错误、0警告。
 
 截图统一在output/playwright/，前缀hut-first-tower-：cutaway.jpg、restored.jpg、report-approach.jpg、e06_first_interlude-27.jpg、e06_first_interlude-37.jpg、e06_rest-4.jpg、e06_rest-6.jpg、e06_rest-11.jpg、pursuit-ready.jpg。交锋与醒来截图已目视；首次楼战剧情缺口在此段已独立实现，未确认的原版精确操作、阵容与数值仍不作还原承诺。
+
+最终截图复核另发现：真儿已离场但任务结算前，纪事栏仍按逻辑队伍显示“纳兰真同行”。界面现遵循当前任务隐藏同伴及切镜隐藏主角的显示规则，实际队伍状态仍在任务完成时结算。修正后story-ui回归通过；另建一次临时e06_rest步骤11视觉断点，浏览器显示“真儿……已经不在这里了”时纪事栏仅“已历0段江湖”，无同行文字。该临时上下文立即关闭，不覆盖正式首次楼战的真实流程存档，也不计为通关证据。截图 hut-shore-status-visual-check.jpg。
