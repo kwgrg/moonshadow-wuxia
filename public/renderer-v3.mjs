@@ -243,14 +243,15 @@ export class Renderer {
     c.restore();
   }
   drawGroundSeatedActor(a,hero=false){
-    const c=this.ctx,sprite=hero?0:clamp(a.sprite||0,0,3);
+    const c=this.ctx,sprite=hero?0:clamp(a.sprite||0,0,3),cell=hero?null:(a.npcCell??npcCellFor(a.name));
     const colors=[['#727e88','#b4bcb8','#c0c7be77'],['#a97570','#d4b5a7','#e7c9b777'],['#88768f','#c4b3c8','#dccbdf77'],['#746b58','#bab099','#d1c3a877']][sprite];
     c.save();c.translate(a.x,a.y);this.ellipse(0,1,39,11,'#08222570');
     // Authored ground-seated robe silhouette; a bed quilt is only for resting patients.
     c.save();if(!hero&&a.direction===-1)c.scale(-1,1);
     this.polygon([[-20,-25],[-48,-5],[-36,8],[0,3],[37,8],[48,-5],[20,-25]],colors[0],colors[1],1.2);
     c.strokeStyle=colors[2];c.beginPath();c.moveTo(-39,0);c.quadraticCurveTo(0,-13,36,1);c.moveTo(-21,-17);c.lineTo(12,4);c.stroke();
-    if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],sprite*384,0,384,600,-27,-94,54,84);
+    if(cell!==null&&this.assets.npcs)c.drawImage(this.assets.npcs,(cell%4)*384,Math.floor(cell/4)*512,384,305,-43,-94,86,84);
+    else if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],sprite*384,0,384,600,-27,-94,54,84);
     c.restore();c.font='15px '+FONT;c.textAlign='center';c.fillStyle='#e4dabb';c.shadowColor='#092022';c.shadowBlur=6;c.fillText(hero?'杨影枫':a.name,0,-105);c.restore();
   }
   drawRestingActor(a){
@@ -321,6 +322,15 @@ export class Renderer {
     c.save();c.translate(source.x,source.y-67);c.rotate(angle);c.globalAlpha=strength;c.strokeStyle='#f1e2b5';c.shadowColor='#dfefdc';c.shadowBlur=15;c.lineWidth=4;c.lineCap='round';
     c.beginPath();c.ellipse(0,0,radius,32,0,-.9+progress*.65,.65+progress*.65);c.stroke();
     c.strokeStyle='#f8fff2';c.lineWidth=1.3;c.beginPath();c.moveTo(10,-23+progress*47);c.lineTo(dx?radius+12:radius,12-progress*18);c.stroke();c.restore();
+  }
+  drawPowerTransmission(){
+    const seq=this.e.s.sequence;if(seq?.questId!=='g14'||seq.cues.valleyPowerTransfer!=='flowing')return;
+    const elder=seq.actors.find(a=>a.id==='defense-meng'&&!a.hidden);if(!elder)return;
+    const hero=this.e.s.hero,c=this.ctx,time=this.e.settings.motion?this.e.time:0;
+    c.save();c.globalCompositeOperation='screen';c.strokeStyle='#d9c58b';c.lineWidth=2;c.globalAlpha=.45;
+    c.beginPath();c.moveTo(elder.x,elder.y-45);c.quadraticCurveTo((elder.x+hero.x)/2,Math.min(elder.y,hero.y)-60,hero.x,hero.y-45);c.stroke();
+    for(let i=0;i<8;i++){const t=(i/8+time*.38)%1,x=elder.x+(hero.x-elder.x)*t,y=elder.y+(hero.y-elder.y)*t-45-Math.sin(t*Math.PI)*25;this.ellipse(x,y,2.2,2.2,'#f9e8b9');}
+    c.restore();
   }
   drawStagingMood(){
     const cues=this.e.stagingPresentation?.()?.cues;if(!cues)return;
@@ -445,7 +455,7 @@ export class Renderer {
       objects.push({...prop,...(actor?{x:actor.x,y:actor.y,direction:actor.direction,sortY:actor.y+2}:{}),render:'stagingProp',cues:presentation.cues,actors:presentation.actors,definition:presentation.definition});
     }
     objects.sort((a,b)=>(a.sortY??a.y)-(b.sortY??b.y)).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else if(o.render==='stagingProp')this.drawStagingProp(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
-    drawDreamAccessories.call(this);this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();drawDreamOverlay.call(this);c.restore();this.drawMini();
+    drawDreamAccessories.call(this);this.drawPowerTransmission();this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();drawDreamOverlay.call(this);c.restore();this.drawMini();
   }
   drawMini(){
     const c=this.mctx,size=180,s=this.scene;c.clearRect(0,0,size,size);this.backgroundImage(c,size,size);c.fillStyle='#072c2c88';c.fillRect(0,0,size,size);c.lineJoin='round';c.lineCap='round';c.strokeStyle='#cfcc9c99';

@@ -95,6 +95,14 @@ function handcrafted(scene) {
       scene.title='落叶谷';scene.kind='garden';scene.art='leaf-courtyard';scene.ground=palettes.garden;
       scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};scene.objective={x:850,y:505};scene.drawRoads=false;
       scene.points=[point('leaf-court-stones','庭中石路',650,680,'石路在四间客房之前汇成宽院，山风沿檐角穿过。',{appearance:'trace',paintOnly:true}),point('leaf-court-maples','阶旁枫影',990,755,'枫影从庭边落到石阶上，来时的谷路仍在下方。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_beimo_rose_room':
+      scene.title='悲魔山庄右厢房';scene.kind='room';scene.art='leaf-rose-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:950,y:550};scene.drawRoads=false;
+      scene.points=[point('beimo-rose-window','厢房纸窗',1080,575,'院中的声音隔着窗纸传来，房门通向大厅一侧。',{appearance:'trace',paintOnly:true}),point('beimo-rose-rug','榻前空地',755,570,'床前留着可以走动的空处，门口的光落在织毯边。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_hanbo_return':
+      scene.title='寒波谷归途';scene.kind='forest';scene.art='forest-original';scene.ground=palettes.forest;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};scene.objective={x:850,y:650};scene.drawRoads=false;
+      scene.points=[point('hanbo-wind','谷中林风',650,535,'林风绕过谷口，前方山路仍向倚天山延伸。',{appearance:'trace',paintOnly:true}),point('hanbo-track','归途石径',1020,655,'来时的脚印在树影间淡去，脚下的干路仍然连通。',{appearance:'trace',paintOnly:true})];return true;
     case 'r_leaf_rose_room':
       scene.title='落叶谷蔷薇房间';scene.kind='room';scene.art='leaf-rose-room';scene.ground=palettes.room;
       scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:950,y:550};scene.drawRoads=false;
@@ -565,11 +573,15 @@ function alignPaintedGround(scene){
     scene.obstacles=[...mask.edges.map(r=>r.slice()),[320,443,440,494]];
     scene.drawRoads=false;scene.paths=[path([[650,540],[965,625],[1180,610],[1350,610]],62,'wood')];
   }
+  // The manor uses the complete temple painting. Remove its generated pools,
+  // gateway and paving together with their footprints; keep the painted mask.
+  if(scene.id==='m49'){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
-  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','m52','m16'].includes(scene.id)){
+  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','r_beimo_rose_room','r_hanbo_return','m52','m16'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
+  if(scene.id==='r_hanbo_return'){scene.spawn={x:425,y:655};scene.objective={x:850,y:650};}
   if(LANDSCAPE_ART[scene.art]||Object.values(LANDSCAPE_ART).includes(scene.art)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
     scene.atmosphere.indoor=false;
@@ -610,13 +622,16 @@ function alignPaintedGround(scene){
 
 const AUTHORED_PORTALS={
  m52:{m51:[[200,770],[350,680]]},
- m51:{r_leaf_hero_room:[[215,325],[335,445]],r_leaf_zhen_room:[[425,275],[520,425]],r_leaf_rose_room:[[1130,285],[1070,430]],r_leaf_mei_room:[[1340,365],[1230,500]],m49:[[800,945],[800,800]],m52:[[1460,560],[1370,685]],m23:[[100,535],[335,675]]},
+ m51:{r_leaf_hero_room:[[215,325],[335,445]],r_leaf_zhen_room:[[425,275],[520,425]],r_leaf_rose_room:[[1130,285],[1070,430]],r_leaf_mei_room:[[1340,365],[1230,500]],m49:[[800,945],[800,800]],m52:[[1460,560],[1370,685]],m23:[[100,535],[335,675]],r_hanbo_return:[[385,755],[500,720]]},
  r_leaf_hero_room:{m51:[[760,935],[760,810]]},
  r_leaf_zhen_room:{m51:[[780,935],[780,810]]},
  r_leaf_mei_room:{m51:[[820,935],[820,810]]},
  r_leaf_rose_room:{m51:[[750,955],[750,815]]},
- m49:{m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]]},
+ m49:{m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]],m17:[[400,435],[525,520]],r_beimo_rose_room:[[1295,590],[1175,675]],m71:[[350,710],[490,690]]},
  m50:{m49:[[385,540],[555,565]],r_beimo_hero_room:[[425,295],[535,430]],r_beimo_mei_room:[[1120,315],[1060,440]],m16:[[1020,885],[950,780]],m51:[[780,865],[785,745]]},
+ r_beimo_rose_room:{m49:[[750,955],[750,815]]},
+ r_hanbo_return:{m51:[[355,510],[430,635]],m16:[[800,940],[800,810]],m61:[[1250,410],[1165,470]]},
+ m16:{m17:[[760,935],[760,810]],r_hanbo_return:[[760,935],[760,810]]},
  r_beimo_hero_room:{m50:[[760,935],[760,810]]},
  r_beimo_mei_room:{m50:[[780,935],[780,810]]},
  m1:{r_lingjue:[[1370,865],[1285,765]]},
@@ -632,20 +647,21 @@ const AUTHORED_PORTALS={
  r_zhen_chamber:{m71:[[750,925],[750,820]]},
  r_evil_yitian:{m71:[[1250,410],[1165,470]],r_evil_ferry:[[775,915],[800,825]]},
  r_evil_ferry:{r_evil_yitian:[[345,420],[455,465]],m40:[[1295,710],[1175,700]]},
- m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
+ m40:{m31:[[345,420],[455,465]],r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
  r_island_village:{m31:[[230,595],[370,605]],m40:[[810,935],[830,815]]},
  r_mainland_dock:{m40:[[700,335],[700,455]],m41:[[710,920],[720,800]]},
  m41:{r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
  m17:{m16:[[800,940],[800,810]],m18:[[250,460],[390,515]],m49:[[1250,425],[1130,505]],m70:[[575,360],[645,485]]},
  m34:{m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
- m31:{m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
+ m31:{m60:[[750,415],[750,530]],m40:[[345,420],[455,465]],m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
  r_forbidden_path:{m31:[[775,915],[800,825]],r_forbidden_entry:[[1250,410],[1165,470]]},
  r_forbidden_entry:{r_forbidden_path:[[350,535],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
  r_forbidden_first:{r_forbidden_entry:[[830,915],[830,790]],r_forbidden_second:[[1270,410],[1160,490]]},
  r_forbidden_second:{r_forbidden_first:[[800,910],[800,790]],r_forbidden_gate:[[1100,410],[1010,505]]},
  r_forbidden_gate:{r_forbidden_second:[[800,915],[800,790]],m57:[[800,245],[800,365]]},
  m57:{r_forbidden_gate:[[725,930],[725,805]],m56:[[725,930],[725,805]],m58:[[1240,505],[1130,575]]},
- m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]]},
+ m60:{m31:[[830,915],[830,790]]},
+ m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]],r_hanbo_return:[[765,915],[760,800]]},
  r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
  r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},
  m6:{m2:[[1250,415],[1160,475]],m7:[[800,915],[800,825]]}

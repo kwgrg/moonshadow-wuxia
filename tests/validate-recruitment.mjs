@@ -4,7 +4,7 @@ import {GameEngine,freshState,restoreState,QUESTS} from '../public/runtime.mjs';
 // Focused checks for the independently authored e05/e07 refusal state machine.
 // Thresholds follow the recorded event audit; animation and UI need their own QA.
 const index=id=>QUESTS.findIndex(q=>q.id===id);
-function create(id){const s=freshState();s.quest=index(id);s.map=QUESTS[s.quest].map;s.phase='talk';s.flags.route='evil';if(id==='e05')s.flags.evilHutNightComplete=true;if(id==='e07')Object.assign(s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});const game=new GameEngine(s);Object.assign(game.s.hero,game.scene.spawn);return game;}
+function create(id){const s=freshState();s.quest=index(id);s.map=QUESTS[s.quest].map;s.phase='talk';s.flags.route='evil';if(id==='e05')Object.assign(s.flags,{evilHutNightComplete:true,evilHutReportHeard:true});if(id==='e07')Object.assign(s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});const game=new GameEngine(s);Object.assign(game.s.hero,game.scene.spawn);return game;}
 // e07 fixtures start after the separately tested pursuit and reveal, isolating recruitment.
 const snapshot=game=>JSON.parse(JSON.stringify({...game.s,questId:game.q.id}));
 function enterChoice(game){

@@ -77,3 +77,10 @@
 上文六张未确认来源的旧图已从 public/assets 移除，而不是更改它们的历史来源判定。另移除依赖旧角色图制作的 hero-kneel.png。新增独立文生图 characters-original、hero-kneel-original、forest-original、lake-original、town-original，均无图片参考输入；旧 snow/wudang 的实际逻辑别名改指已有独立资源。制作记录见 characters-original-art.md 与 landscape-original-art.md，含生成源、完整提示词、SHA与接入方法。
 
 当前31张发布PNG均有对应制作记录，清单校验结果为 DOCUMENTED_RECORDS_ONLY；这一状态不等于法律结论或对历史来源的追认。97张地图的当前背景、备用背景与预加载键均解析到现存PNG。历史文档保留旧记录，未重写旧审计事实。本轮未访问原版目录，也未建立原资源导入步骤。
+
+
+## 2026-09-23：返庄与传功增量（revision 12）
+
+继续执行用户明确的“仅参考、不直接copy”。本轮参考子任务在内存中有界只读核对原事件顺序、人数、条件和失败行为；仓库仅存独立概述、包哈希及事件定位，见 hut-return-reference.md 与 valley-defense-reference.md。没有新增原图片、地图、音频、动画、完整台词、脚本副本或导入工具。所有新增对白、舞台步骤、地图分区、坐标、战斗属性、代码均独立编写。
+
+本輪没有新增或替换发布PNG，仍为31项制作记录。受损谷院图只尝试以本项目原创leaf-courtyard.png作为生成输入，工具因本地沙箱读取故障失败；没有交付新图，也没有转用原游戏图片。该受损画面仍是未完成项。清单状态仍为DOCUMENTED_RECORDS_ONLY，不是法律认证，也不追认历史素材来源。

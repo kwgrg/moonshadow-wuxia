@@ -1,3 +1,5 @@
+import {HUT_RETURN_REVISIONS,HUT_RETURN_ADDITIONS} from './hut-return-revisions.mjs';
+import {VALLEY_DEFENSE_REVISIONS,VALLEY_DEFENSE_ADDITIONS} from './valley-defense-revisions.mjs';
 import {HUT_NIGHT_REVISIONS,HUT_NIGHT_ADDITIONS} from './hut-night-revisions.mjs';
 import {VALLEY_CARE_REVISIONS,VALLEY_CARE_ADDITIONS} from './valley-care-revisions.mjs';
 import {MANOR_NIGHT_REVISIONS,MANOR_NIGHT_ADDITIONS} from './manor-night-revisions.mjs';
@@ -79,3 +81,9 @@ for(const insertion of HUT_NIGHT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id
 const originalArtAlias={forest:'forest-original',lake:'lake-original',town:'town-original',snow:'tianchi-islet',wudang:'temple'};
 for(const region of Object.values(MAPS))if(originalArtAlias[region.art])region.art=originalArtAlias[region.art];
 MAPS.m16.art='beimo-hero-room';
+
+// Preserve the previous cursor order and encounter difficulty when inserting scenes.
+export const REVISION_ELEVEN_QUEST_IDS=QUESTS.map(q=>q.id);
+QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
+for(const q of QUESTS)Object.assign(q,HUT_RETURN_REVISIONS[q.id]||{},VALLEY_DEFENSE_REVISIONS[q.id]||{});
+for(const insertion of [...HUT_RETURN_ADDITIONS,...VALLEY_DEFENSE_ADDITIONS]){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown return or valley-defense insertion');QUESTS.splice(index,0,...insertion.quests);}

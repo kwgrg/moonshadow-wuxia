@@ -42,7 +42,8 @@ function preset(id){
   assert.notEqual(ui.engine.s.quest,-1,id+' must exist');
   ui.engine.s.map = ui.engine.q.map;
   ui.engine.s.flags.route = id.startsWith('e')?'evil':'good';
-  if(id==='e05') ui.engine.s.flags.evilHutNightComplete=true; // Recruitment fixture begins after the separately tested hut night.
+  if(id==='e05') Object.assign(ui.engine.s.flags,{evilHutNightComplete:true,evilHutReportHeard:true}); // Recruitment fixture starts after the independently tested return and message.
+  if(id==='g15') ui.engine.s.flags.valleyRescueResolved=true; // The valley-defense suite owns the preceding transmission and resolve.
   ui.engine.s.hero = {...ui.engine.s.hero,...ui.engine.nearestOpen(ui.engine.scene.objective.x,ui.engine.scene.objective.y)};
   ui.engine.paused = false;
   ui.engine.active = true;

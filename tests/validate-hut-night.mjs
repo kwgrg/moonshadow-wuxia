@@ -70,7 +70,7 @@ function stage(game,{observe=()=>{},companionMayLeave=false}={}){
  assert.equal(g.s.sequence,null,id+' must release');assert.notEqual(g.s.phase,'staging');assert.equal(g.s.map,map);assert.deepEqual(g.s.visited,visited);assert.deepEqual(resources(g),baseline.resources);if(!companionMayLeave)assert.deepEqual(reality(g),baseline);assert.equal(g.s.flags['staged_'+id],true);return {game:g,trace};
 }
 function reject(g,id){const before=resources(g);g.beginObjective();g.completeQuest();assert.equal(g.q.id,id);assert.equal(g.s.sequence,null);assert.deepEqual(resources(g),before);assert.ok(!g.s.flags['staged_'+id]);}
-assert.equal(freshState().campaignRevision,11);
+assert.equal(freshState().campaignRevision,12);
 const addedIds=['e04_departure','e04_dream','e06_first_interlude'];
 for(const id of [...addedIds,'e06_rest']){const q=QUESTS[index(id)];assert.equal(q.xp,0);assert.equal(q.money,0);assert.equal(q.requireStaging,true);assert.ok(STAGED_QUESTS[id]);}
 if(!process.argv.includes('--migration-only')){
@@ -84,7 +84,7 @@ if(!process.argv.includes('--migration-only')){
   assert.ok(!dream.some(f=>f.actors.some(a=>a.pose==='fallen')),'dream disappearance/attack is not a proven death');
   if(answer===0){const zhenShown=dream.findIndex(f=>f.visible.includes('纳兰真')),zhenGone=dream.findIndex((f,i)=>i>zhenShown&&!f.visible.includes('纳兰真')),ziGone=dream.findIndex((f,i)=>i>zhenGone&&!f.visible.includes('紫轩'));assert.ok(zhenShown>=0&&zhenGone>zhenShown&&ziGone>zhenGone,'Zhen vanishes before Zixuan');const position=dream[zhenGone].hero;assert.ok(dream.slice(zhenGone+1).some(f=>distance(f.hero,position)>30),'hero runs after the vanished figure');}
   else{const strike=dream.find(f=>f.action==='strike'&&f.actor==='hero');assert.ok(strike,'refusal includes the authored attack gesture');assert.equal(strike.actors.find(a=>a.id===strike.target)?.name,'卓非凡');}
-  assert.equal(g.q.id,'e05');assert.equal(g.s.flags.evilHutNightComplete,true);assert.ok(!g.stagingActors().some(a=>a.name==='紫轩'),'waking does not restore the departed real visitor');assert.deepEqual(reality(g),selected);
+  assert.equal(g.q.id,'e04_homecoming');assert.equal(g.s.flags.evilHutNightComplete,true);assert.ok(!g.stagingActors().some(a=>a.name==='紫轩'),'waking does not restore the departed real visitor');assert.deepEqual(reality(g),selected);
   const finished=reload(g);for(const id of ['e04',...addedIds.slice(0,2)]){finished.s.quest=index(id);finished.s.map=finished.q.map;finished.s.phase=id==='e04'?'choice':'talk';finished.completeQuest();assert.equal(finished.choose(answer),false);assert.deepEqual(reality(finished),selected);assert.equal(finished.s.done.filter(done=>done===id).length,1);}
   branchCases++;
  }
@@ -144,10 +144,10 @@ for(let revision=1;revision<=10;revision++)for(const numeric of [false,true]){
   const raw=legacy('e04',revision,numeric,{answer,phase,away,flags:{evilHutForgiven:answer===1,evilHutRefused:answer===0}}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04_departure');assert.equal(g.s.choices.e04,answer);assert.equal(g.s.flags.evilHutDecision,true);assert.equal(g.s.flags.evilHutForgiven,answer===0);assert.equal(g.s.flags.evilHutRefused,answer===1);assert.ok(!g.s.flags.evilLegacyHutNight);assert.equal(g.s.phase,away?'travel':'talk');assert.equal(g.s.sequence,null);
  }
  for(const answer of [undefined,-1,2,'0',null])for(const away of [false,true]){
-  const raw=legacy('e04',revision,numeric,{answer,phase:'after',away}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');assert.equal(g.s.flags.evilLegacyHutNight,true);assert.equal(g.s.flags.evilLegacyHutUnknown,true);assert.ok(!Object.hasOwn(g.s.choices,'e04'));assert.ok(!g.s.flags.evilHutForgiven&&!g.s.flags.evilHutRefused);assert.equal(g.s.sequence,null);
+  const raw=legacy('e04',revision,numeric,{answer,phase:'after',away}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04_homecoming');assert.equal(g.s.flags.evilLegacyHutNight,true);assert.equal(g.s.flags.evilLegacyHutUnknown,true);assert.ok(!Object.hasOwn(g.s.choices,'e04'));assert.ok(!g.s.flags.evilHutForgiven&&!g.s.flags.evilHutRefused);assert.equal(g.s.sequence,null);
  }
  for(const id of ['e04','e05','e06','e07','e11']){
-  const raw=legacy(id,revision,numeric,{done:['e04']}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,id==='e04'?'e05':id);assert.equal(g.s.flags.evilLegacyHutNight,true);assert.ok(!Object.hasOwn(g.s.choices,'e04'));if(['e07','e11'].includes(id))assert.equal(g.s.flags.evilLegacyFirstTowerInterlude,true);
+  const raw=legacy(id,revision,numeric,{done:['e04']}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,['e04','e05'].includes(id)?'e04_homecoming':id);assert.equal(g.s.flags.evilLegacyHutNight,true);assert.ok(!Object.hasOwn(g.s.choices,'e04'));if(['e07','e11'].includes(id))assert.equal(g.s.flags.evilLegacyFirstTowerInterlude,true);
  }
  if(oldTables[revision-1].includes('e06_rest')){
   for(const phase of ['talk','staging','after'])for(const away of [false,true]){
@@ -170,11 +170,11 @@ for(const revision of [1,5,10,11])for(const id of ['e04','e06_rest']){
 for(const id of ['e04','e06_rest']){
  const raw=snapshot(create(id));raw.phase='after';const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,id);assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!g.s.flags.evilLegacyFirstTowerInterlude);assert.ok(!g.s.done.includes(id));legacyCases++;
 }
-// Every revision-ten numeric identity uses the frozen table. The sole deliberate
-// cursor redirect here is the uncompleted old beach rest now owing its cutaway.
+// Every revision-ten numeric identity uses the frozen table. The explicit
+// redirects are the unfinished beach cutaway, return-message and manor defense.
 for(const [oldIndex,id] of campaign.REVISION_TEN_QUEST_IDS.entries()){
  const raw=snapshot(create(id));delete raw.questId;raw.quest=oldIndex;raw.campaignRevision=10;raw.flags.route=QUESTS[index(id)].when?.route||'good';raw.skills[8]=20;raw.flags.switch8=true;
- const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,id==='e06_rest'?'e06_first_interlude':id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
+ const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report'})[id]||id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
 }
 
 console.log(JSON.stringify({result:'PASS',branchCases,restoredSteps,midMoveRestores,timedRestores,projectionRestores,invalidSaves,legacyCases,checks:'two isolated hut dreams, real-world conservation, ordinary duel retry, first tower clash without death, shore disappearance order, exact projected origin restoration'}));

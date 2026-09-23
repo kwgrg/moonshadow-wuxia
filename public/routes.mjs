@@ -4,6 +4,8 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_beimo_rose_room:{name:'悲魔山庄右厢房',area:'大厅东侧内室',art:'leaf-rose-room',weather:'申时 · 帘外院声',poem:'一室留旧语，门外去人迟',shop:false,obstacles:[],routeOnly:true},
+ r_hanbo_return:{name:'寒波谷归途',area:'林间谷路',art:'forest-original',weather:'辰时 · 谷风微凉',poem:'归途思旧影，前路待援人',shop:false,obstacles:[],routeOnly:true},
  m52:{name:'天池',area:'雪岸与湖心岛',art:'tianchi-islet',weather:'巳时 · 湖上清寒',poem:'孤雪分深水，跃影过寒波',shop:false,obstacles:[]},
  m51:{name:'落叶谷',area:'谷中庭院',art:'leaf-courtyard',weather:'辰时 · 谷风穿庭',poem:'谷静闻归步，疏枝映客窗',shop:true,obstacles:[]},
  r_leaf_zhen_room:{name:'落叶谷真儿客房',area:'庭院客房',art:'beimo-mei-room',weather:'辰时 · 纸窗微明',poem:'灯前闻旧事，归路待人同',shop:false,obstacles:[],routeOnly:true},
@@ -95,6 +97,16 @@ const LEAF_COURT=new Set(['m51','m52',...LEAF_ROOMS]);
 const GOOD_RETURN_ROUTES=[['m51','m49'],['m49','m41'],['m41','r_mainland_dock'],['r_mainland_dock','m40','boat'],['m40','m34'],['m34','m33']];
 const GOOD_RETURN_MAPS=new Set(GOOD_RETURN_ROUTES.flatMap(([a,b])=>[a,b]));
 const GOOD_RETURN_PAIRS=new Set(GOOD_RETURN_ROUTES.map(([a,b])=>pairKey(a,b)));
+// Chapter-local corridors preserve earlier exploration while preventing a new
+// staged return or rescue from inheriting a direct historical quest jump.
+const HUT_RETURN_ROUTES=[['m16','m17'],['m17','m49'],['m49','r_beimo_rose_room'],['m49','m50'],['m50','r_beimo_hero_room'],['m49','m71']];
+const HUT_RETURN_MAPS=new Set(HUT_RETURN_ROUTES.flat());
+const HUT_RETURN_PAIRS=new Set(HUT_RETURN_ROUTES.map(([a,b])=>pairKey(a,b)));
+const HUT_RETURN_QUESTS=new Set(['e04_homecoming','e04_quarrel','e04_wait','e04_report','e05']);
+const VALLEY_DEFENSE_ROUTES=[['m60','m31'],['m31','m40'],['m40','r_mainland_dock','boat'],['r_mainland_dock','m41'],['m41','m49'],['m49','m51'],['m51','r_hanbo_return'],['r_hanbo_return','m16'],['r_hanbo_return','m61']];
+const VALLEY_DEFENSE_MAPS=new Set(VALLEY_DEFENSE_ROUTES.flatMap(([a,b])=>[a,b]));
+const VALLEY_DEFENSE_PAIRS=new Set(VALLEY_DEFENSE_ROUTES.map(([a,b])=>pairKey(a,b)));
+const VALLEY_DEFENSE_QUESTS=new Set(['g14_dock_report','g14_manor_battle','g14','g14_hanbo','g14_resolve','g15']);
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
 function matches(when,state){
@@ -142,7 +154,7 @@ export function routeEdges(state={},quests=[]){
  const itinerary=quests.filter(q=>matches(q.when,state));
  for(let i=1;i<itinerary.length;i++){
   const before=itinerary[i-1],next=itinerary[i];
-  if(before.map===next.map||((LEAF_ROOMS.includes(before.map)||LEAF_ROOMS.includes(next.map))&&before.map!=='m51'&&next.map!=='m51')||pairKey(before.map,next.map)===pairKey('m40','m33')||REPLACED.has(pairKey(before.map,next.map))||(state.flags?.route==='evil'&&pairKey(before.map,next.map)===pairKey('m57','m41')))continue;
+  if(before.map===next.map||((before.map==='r_beimo_rose_room'||next.map==='r_beimo_rose_room')&&before.map!=='m49'&&next.map!=='m49')||((LEAF_ROOMS.includes(before.map)||LEAF_ROOMS.includes(next.map))&&before.map!=='m51'&&next.map!=='m51')||pairKey(before.map,next.map)===pairKey('m40','m33')||REPLACED.has(pairKey(before.map,next.map))||(state.flags?.route==='evil'&&pairKey(before.map,next.map)===pairKey('m57','m41')))continue;
   // Hide future itineraries entirely. Merely having visited an unrelated map
   // cannot unlock another route, nor can the opposite morality branch do so.
   if(!arrived(next,state,quests))continue;
@@ -212,6 +224,43 @@ export function routeEdges(state={},quests=[]){
    }
   }
  }
+ const current=quests[questIndex(state,quests)]?.id,flags=state.flags||{};
+ if(flags.route==='evil'&&HUT_RETURN_QUESTS.has(current)){
+  const night=!!flags.evilHutNightComplete||!!flags.evilLegacyHutNight;
+  const report=!!flags.evilHutReportHeard||!!flags.evilLegacyHutReport;
+  const home=!!flags.evilHutHomecoming||report,room=!!flags.evilHutQiangweiLeft||report;
+  for(const [from,to] of HUT_RETURN_ROUTES){
+   const ready=to==='r_beimo_rose_room'||to==='m50'?home:to==='r_beimo_hero_room'?room:to==='m71'?night&&report:night;
+   edges.set(pairKey(from,to),{from,to,locked:false,...(!ready?{lockedFrom:[from],departureReason:to==='m71'?'先返庄听完真儿的消息，再前往摘星楼。':'先完成庄中的交谈，再沿房门继续。'}:{}),inferred:true,design:'authored-hut-return'});
+  }
+  for(const edge of edges.values()){
+   if(HUT_RETURN_MAPS.has(edge.from)&&HUT_RETURN_MAPS.has(edge.to)&&!HUT_RETURN_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{locked:true,reason:'沿小筑、谷路和山庄的相邻道路前行。',design:'hut-return-boundary'});
+   for(const inside of ['m16','m17'])if((edge.from===inside||edge.to===inside)&&!HUT_RETURN_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'返庄须沿小筑外的谷路前行。'});
+   if(!night||!report){
+    const outside=edge.from==='m71'?edge.to:edge.to==='m71'?edge.from:null;
+    if(outside)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),outside])],departureReason:'先结束小筑留宿和返庄传讯，再进摘星楼救人。'});
+   }
+  }
+ }
+ if((flags.route||'good')==='good'&&!flags.cultPath&&VALLEY_DEFENSE_QUESTS.has(current)){
+  const legacy=!!flags.valleyDefenseLegacy,power=!!flags.valleyPowerReceived||legacy,resolved=!!flags.valleyRescueResolved||legacy;
+  for(const [from,to,transport] of VALLEY_DEFENSE_ROUTES){
+   const ready=to==='r_hanbo_return'?power:to==='m16'?!!flags.valleyHanboReached||legacy:to==='m61'?resolved:['m41','m49'].includes(to)?!!flags.valleyManorReported||legacy:true;
+   const reason=to==='m16'?'先在寒波谷口停步，再进小筑查访。':to==='m61'?'先进小筑确认无人，再赴摘星楼救人。':['m41','m49'].includes(to)?'先在中原码头听铁云说明山庄的变故。':'先听完孟前辈的托付，再离开落叶谷。';
+   edges.set(pairKey(from,to),{from,to,locked:false,...(!ready?{lockedFrom:[from],departureReason:reason}:{}),inferred:true,design:'authored-valley-defense',...(transport?{transport,travelLabels:{m40:'乘船返回忘忧岛渡口',r_mainland_dock:'乘船前往中原码头'}}:{})});
+  }
+  for(const edge of edges.values()){
+   if(VALLEY_DEFENSE_MAPS.has(edge.from)&&VALLEY_DEFENSE_MAPS.has(edge.to)&&!VALLEY_DEFENSE_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{locked:true,reason:'沿码头、山庄、落叶谷与寒波谷的相邻道路前行。',design:'valley-defense-boundary'});
+   for(const inside of ['m60','m31','m40','r_mainland_dock','m16'])if((edge.from===inside||edge.to===inside)&&!VALLEY_DEFENSE_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'先沿当前营救行程的相邻道路前行。'});
+   if((edge.from==='m16'||edge.to==='m16')&&!VALLEY_DEFENSE_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{locked:true,reason:'这次查访须从寒波谷归途进入小筑。',design:'valley-hut-boundary'});
+   if(!power&&!['g14_dock_report','g14_manor_battle'].includes(current)){
+    const inside=[edge.from,edge.to].filter(id=>LEAF_COURT.has(id));
+    if(inside.length===1)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside[0]])],departureReason:'先接受孟前辈的托付，再离开谷中。'});
+   }
+   if(!resolved){const outside=edge.from==='m61'?edge.to:edge.to==='m61'?edge.from:null;if(outside)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),outside])],departureReason:'先在寒波谷理清行程，再进摘星楼救人。'});}
+   if(current==='g14_manor_battle'&&!flags.manorInvadersCleared&&(state.phase==='battle'||flags.staged_g14_manor_battle)&&(edge.from==='m49'||edge.to==='m49'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m49'])],departureReason:'山庄出口被来敌封住，必须清除全部来敌。'});
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -227,7 +276,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES])add(a,b);
   const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
   const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
   for(const route of ['good','evil'])for(const flags of variations)for(const edge of routeEdges({quest:quests.length,flags:{...flags,route}},quests))add(edge.from,edge.to);
