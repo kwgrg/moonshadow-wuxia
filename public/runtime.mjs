@@ -156,7 +156,7 @@ export class GameEngine{
    else if(this.s.phase==='escape')list.push({id:'escape',kind:'escape',x:q.x??scene.exit.x,y:q.y??scene.exit.y,name:q.object||'出口',main:true,sprite:null});
    else if(q.pursuit){const marker=this.pursuitMarker();if(marker)list.push(marker);}
    else if(this.canStartStaging()){const definition=this.stagingDefinition(),point=definition.startPoint||definition.trigger||definition.heroStart||scene.objective;list.push({id:'staging-start',kind:'main',x:point.x,y:point.y,name:definition.label||(q.id==='a03'?'池边石碑':q.id==='a01'?'辞别父亲':'走近酒肆'),main:true,sprite:null});}
-   else if(!['battle','training','staging'].includes(this.s.phase))list.push({id:'main',kind:'main',x:q.x??scene.objective.x,y:q.y??scene.objective.y,name:(this.s.phase==='choice'&&q.choiceSpeaker)||(revealed&&q.stagedNpc)||q.npc||q.object||'江湖纪事',main:true,sprite:this.s.phase==='choice'?(q.choiceSprite??q.sprite):revealed?(q.stagedSprite??q.sprite):q.sprite});
+   else if(!['battle','training','staging'].includes(this.s.phase))list.push({id:'main',kind:'main',x:q.x??scene.objective.x,y:q.y??scene.objective.y,name:(this.s.phase==='choice'&&q.choiceSpeaker)||(revealed&&q.stagedNpc)||q.npc||q.object||'江湖纪事',main:true,sprite:this.s.phase==='choice'?(q.choiceSprite??q.sprite):revealed?(q.stagedSprite??q.sprite):q.sprite,...(this.s.phase==='after'?q.afterMarker||{}:{})});
   }
   if(at&&q.training&&['training','battle','after'].includes(this.s.phase)){
    const t=this.ensureTraining();

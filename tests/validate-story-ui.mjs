@@ -301,6 +301,13 @@ assert.doesNotMatch(nodes.get('quest-description').textContent,/武当/);
 ui.engine.s.enemies[0].hp=0;ui.engine.markSkirmishDefeat(ui.engine.s.enemies[0]);ui.updateUi();
 assert.match(nodes.get('quest-description').textContent,/村中解围.*1 \/ 36/);checks++;
 
+// A cleared manor uses the hero's inspection prompt, not a conversation with
+// the now-defeated leader. Drive the actual skirmish outcome before updating UI.
+preset('g14_manor_battle');Object.assign(ui.engine.s.flags,{valleyManorReported:true,staged_g14_manor_battle:true});
+ui.engine.startSkirmish();for(const enemy of ui.engine.s.enemies){enemy.hp=0;ui.engine.markSkirmishDefeat(enemy);}ui.engine.checkSkirmishOutcome();assert.equal(ui.engine.s.phase,'after');ui.updateUi();
+assert.match(nodes.get('quest-description').textContent,/检视院中.*落叶谷/);assert.doesNotMatch(nodes.get('quest-description').textContent,/与丁戈交谈/);
+assert.equal(ui.engine.npc.name,'检视山庄');assert.equal(ui.engine.npc.sprite,null);checks++;
+
 // Manor answers have no deferred aftermath text: both must be saved at the
 // click, before any doorway travel or consequence animation can begin.
 for(const answer of [0,1]){
@@ -318,7 +325,7 @@ const beforeResident=JSON.stringify(ui.engine.s);assert.equal(ui.engine.interact
 assert.deepEqual(drain(),resident.dialogue.map(line=>line[1]));assert.equal(JSON.stringify(ui.engine.s),beforeResident);assert.equal(ui.engine.paused,false);assert.equal(ui.engine.companion,null);checks++;
 
 console.log(JSON.stringify({result:'PASS',checks,
-  covered:['山庄两答复立即保存与留庄闲谈无副作用','岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
+  covered:['山庄清场后检视提示不复生丁戈','山庄两答复立即保存与留庄闲谈无副作用','岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 

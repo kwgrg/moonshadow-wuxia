@@ -59,7 +59,16 @@ assert.equal(game.s.skirmish.defeatedIds.length,17);assert.equal(game.s.enemies.
 const leader=game.s.enemies.find(x=>x.id==='manor-ding-ge');kill(game,leader);assert.equal(game.s.phase,'battle','leader death does not clear the army');
 const remaining=game.s.enemies.find(x=>x.hp>0);for(const enemy of game.s.enemies)if(enemy!==remaining&&enemy.hp>0)kill(game,enemy);
 assert.equal(game.s.skirmish.defeatedIds.length,54);game.completeQuest();assert.equal(game.q.id,battleId);assert.equal(game.travel('m51'),false);
-game=reload(game);kill(game,game.s.enemies.find(x=>x.hp>0));assert.equal(game.s.phase,'after');const won=save(game);game.completeQuest();
+game=reload(game);kill(game,game.s.enemies.find(x=>x.hp>0));assert.equal(game.s.phase,'after');
+// The defeated leader must not reappear as a live conversation target. The
+// player examines the court and hears the hero's own departure monologue.
+function aftermathMarker(g){
+ const marker=g.markers.find(m=>m.id==='main');assert.ok(marker);assert.equal(marker.name,'检视山庄');assert.equal(marker.sprite,null);
+ assert(g.passable(marker.x,marker.y));assert(g.findPath(marker.x,marker.y).length);
+ assert.equal(g.markers.some(m=>m.name==='丁戈'&&!m.hidden&&m.pose!=='fallen'&&m.interactive!==false),false,'no conversational Ding Ge after his defeat');
+ assert.equal(g.s.enemies.find(enemy=>enemy.id==='manor-ding-ge').hp,0);
+}
+aftermathMarker(game);const won=save(game);const victoryReload=reload(game);assert.equal(victoryReload.s.phase,'after');aftermathMarker(victoryReload);assert.deepEqual(wealth(victoryReload),before);game.completeQuest();
 assert.equal(game.q.id,'g14');assert.equal(game.s.flags.manorInvadersCleared,true);assert.deepEqual(wealth(game),before,'55 kills and victory give no implicit XP/cash/supplies');
 // Failed state is authoritative, including simultaneous defeat and all-clear.
 let failed=new GameEngine(restoreState(pristine));for(const enemy of failed.s.enemies){enemy.hp=0;failed.markSkirmishDefeat(enemy);}

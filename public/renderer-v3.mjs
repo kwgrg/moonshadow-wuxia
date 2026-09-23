@@ -248,7 +248,7 @@ export class Renderer {
     c.save();c.translate(a.x,a.y);this.ellipse(0,1,39,11,'#08222570');
     // Authored ground-seated robe silhouette; a bed quilt is only for resting patients.
     c.save();if(!hero&&a.direction===-1)c.scale(-1,1);
-    this.polygon([[-20,-25],[-48,-5],[-36,8],[0,3],[37,8],[48,-5],[20,-25]],colors[0],colors[1],1.2);
+    c.beginPath();c.moveTo(-20,-25);c.bezierCurveTo(-27,-15,-42,-13,-42,-3);c.bezierCurveTo(-43,8,-25,10,-8,4);c.quadraticCurveTo(0,2,8,4);c.bezierCurveTo(25,10,43,8,42,-3);c.bezierCurveTo(42,-13,27,-15,20,-25);c.closePath();c.fillStyle=colors[0];c.fill();c.strokeStyle=colors[1];c.lineWidth=1.2;c.stroke();
     c.strokeStyle=colors[2];c.beginPath();c.moveTo(-39,0);c.quadraticCurveTo(0,-13,36,1);c.moveTo(-21,-17);c.lineTo(12,4);c.stroke();
     if(cell!==null&&this.assets.npcs)c.drawImage(this.assets.npcs,(cell%4)*384,Math.floor(cell/4)*512,384,305,-43,-94,86,84);
     else if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],sprite*384,0,384,600,-27,-94,54,84);

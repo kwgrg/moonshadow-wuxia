@@ -57,6 +57,8 @@ export const VALLEY_DEFENSE_ADDITIONS = [
     requiredFlags:['valleyManorReported'],requirementText:'先在中原码头听取铁云的报告，再回悲魔山庄。',
     count:55,enemy:'无忧教与霹雳堂来敌',boss:null,friendly:false,scriptedLoss:false,
     before:[],after:[['杨影枫','庄里的来敌已尽。得赶去落叶谷，看看孟前辈是否平安。',0]],
+    afterObjective:'检视院中，再动身前往落叶谷寻找孟知秋。',
+    afterMarker:{name:'检视山庄',sprite:null,x:600,y:710},
     xp:0,money:0,suppressBattleSupplies:true,
     skirmish:{enemies:MANOR_DEFENSE_ENEMIES,allies:[],positions:MANOR_DEFENSE_POSITIONS,heroStart:{x:400,y:770}},
     rewards:{flags:{manorInvadersCleared:true},companion:null},
