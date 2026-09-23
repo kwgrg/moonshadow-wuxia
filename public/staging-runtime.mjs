@@ -1,4 +1,5 @@
-import {getStagingScene} from './world.mjs';
+import {getScene,getStagingScene} from './world.mjs';
+import {MAPS} from './campaign.mjs';
 import {STAGED_QUESTS} from './staging.mjs';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const near=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
@@ -29,11 +30,12 @@ export function restoreStaging(raw,quest,state){
  const lastScene=definition.steps.slice(0,raw.step).filter(step=>step.type==='scene'&&stepMatches(step,state)).at(-1);
  const sceneKey=lastScene?.scene??null;
  if((raw.sceneKey??null)!==sceneKey||(sceneKey&&(!definition.sceneKeys?.includes(sceneKey)||!getStagingScene(sceneKey))))return null;
- const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,180,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:base.sceneKey&&base.sceneKey!==sceneKey?true:typeof saved?.hidden==='boolean'?saved.hidden:base.hidden===true};});
+ const actors=(definition.actors||[]).map(base=>{const saved=Array.isArray(raw.actors)?raw.actors.find(actor=>actor.id===base.id):null;return {...base,x:bound(saved?.x,120,1460,base.x),y:bound(saved?.y,180,950,base.y),direction:saved?.direction===-1?-1:saved?.direction===1?1:(base.direction||1),pose:poses.has(saved?.pose)?saved.pose:(base.pose||'stand'),hidden:Object.hasOwn(base,'sceneKey')&&base.sceneKey!==sceneKey?true:typeof saved?.hidden==='boolean'?saved.hidden:base.hidden===true};});
  const unpaid=definition.steps.findIndex((step,index)=>index<raw.step&&step.type==='handover'&&Object.entries(step.items).some(([id,count])=>(state.stagedHandovers[quest.id]?.[id]||0)<count));
  const step=unpaid<0?raw.step:unpaid;
- const origin=raw.origin?.map===state.map&&Number.isFinite(raw.origin.x)&&Number.isFinite(raw.origin.y)?{map:state.map,x:bound(raw.origin.x,120,1460,760),y:bound(raw.origin.y,180,950,650),direction:raw.origin.direction===-1?-1:1}:null;
- if(sceneKey==='towerInterlude'&&!origin)return null;
+ const origin=raw.origin?.map===state.map&&Number.isFinite(raw.origin.x)&&Number.isFinite(raw.origin.y)?{map:state.map,x:raw.origin.x,y:raw.origin.y,direction:raw.origin.direction===-1?-1:1}:null;
+ const needsOrigin=sceneKey&&(definition.returnToOrigin||definition.steps.some(step=>step.type==='scene'&&step.hero?.restore));
+ if(needsOrigin){if(!origin)return null;const real=getScene(state.map,MAPS[state.map]),[left,top,right,bottom]=real.bounds;if(origin.x<left||origin.x>right||origin.y<top||origin.y>bottom||real.obstacles.some(r=>origin.x>r[0]-8&&origin.x<r[2]+8&&origin.y>r[1]-8&&origin.y<r[3]+8))return null;}
  return {questId:quest.id,step,sceneKey,origin,cues:restoreCues(raw.cues,definition,state,step),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:['kneel','sit'].includes(raw.heroPose)?raw.heroPose:'stand',focus:typeof raw.focus==='string'?raw.focus:'hero'};
 }
 export const stagingMethods={
@@ -45,7 +47,7 @@ export const stagingMethods={
   for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&(this.s.flags[completeKey(id)]||(definition.legacyPersistFlag&&this.s.flags[definition.legacyPersistFlag]))&&(definition.persistFor?.includes(this.q.id)||(definition.persistFlag&&this.s.flags[definition.persistFlag])))return {definition,actors:definition.persistentActors||definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
   return null;
  },
- stagingActors(){const presentation=this.stagingPresentation();if(!presentation)return [];return presentation.actors.filter(actor=>(!actor.sceneKey||actor.sceneKey===this.s.sequence?.sceneKey)&&!actor.hidden&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest))&&!(actor.enemy&&['battle','after'].includes(this.s.phase))).map(actor=>({...actor,kind:'stagingActor',main:false,interactive:actor.interactive!==false&&actor.pose!=='fallen'}));},
+ stagingActors(){const presentation=this.stagingPresentation();if(!presentation)return [];return presentation.actors.filter(actor=>(!Object.hasOwn(actor,'sceneKey')||actor.sceneKey===(this.s.sequence?.sceneKey??null))&&!actor.hidden&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest))&&!(actor.enemy&&['battle','after'].includes(this.s.phase))).map(actor=>({...actor,kind:'stagingActor',main:false,interactive:actor.interactive!==false&&actor.pose!=='fallen'}));},
  handoverCredit(){return this.s.stagedHandovers?.[this.q.id]||{};},
  outstandingItems(items){const credit=this.handoverCredit();return Object.fromEntries(Object.entries(items||{}).map(([id,count])=>[id,Math.max(0,count-(credit[id]||0))]));},
  hasQuestItems(){return Object.entries(this.outstandingItems(this.q.requiredItems)).every(([id,count])=>(this.s.inventory[id]||0)>=count);},
@@ -56,7 +58,7 @@ export const stagingMethods={
   if(!this.canStartStaging()||this.s.sequence||!this.requireQuestItems()||!this.requireQuestFlags())return false;
   const definition=this.stagingDefinition();if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
   if(definition.heroStart)Object.assign(this.s.hero,this.nearestOpen(definition.heroStart.x,definition.heroStart.y),{direction:definition.heroStart.direction||1});
-  this.s.phase='staging';this.s.destination=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys.clear();this.meditating=false;this._stagingPrompt=null;this._stagingMove=null;this.emit('stagingStep');return true;
+  this.effects=[];this.numbers=[];this.hitTime=0;this.dashTime=0;this.s.phase='staging';this.s.destination=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys.clear();this.meditating=false;this._stagingPrompt=null;this._stagingMove=null;this.emit('stagingStep');return true;
  },
  advanceStaging(){if(!this.s.sequence)return false;this.s.sequence.step++;this.s.sequence.elapsed=0;this._stagingPrompt=null;this._stagingMove=null;this.walkTime=0;this.emit('stagingStep');return true;},
  chooseStartingDifficulty(mode){
@@ -79,7 +81,7 @@ export const stagingMethods={
    this.advanceStaging();this.emit('stagingScene');return;
   }
   if(!step||step.type==='release'){if(sequence.sceneKey)return;
-   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose='stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;this.s.phase='talk';this.walkTime=0;this.beginObjective();return;
+   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose=definition.finalHeroPose||'stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;this.s.phase='talk';this.walkTime=0;this.beginObjective();return;
   }
   if(step.type==='handover'){
    const outstanding=this.outstandingItems(step.items);

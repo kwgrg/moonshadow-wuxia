@@ -113,5 +113,5 @@ console.log(JSON.stringify({
  assets:result.assets,documented:result.documented,negativeChecks,
  sourceCoverage:result.unconfirmed.length||result.upstreamWarnings.length?'INCOMPLETE':'DOCUMENTED_RECORDS_ONLY',
  unconfirmedAssets:result.unconfirmed,unconfirmedReferenceInputs:result.upstreamWarnings,
- note:'PASS仅表示清单一致性检查通过。documented只表示有制作记录；未确认来源及上游依赖仍未解决，不证明全部来源完整、法律原创或授权。',
+ note:'PASS仅表示清单一致性检查通过。documented只表示有制作记录；任何列出的未确认来源及上游依赖仍需核实，不证明全部来源完整、法律原创或授权。',
 },null,2));

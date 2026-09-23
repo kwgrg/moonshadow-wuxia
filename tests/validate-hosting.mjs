@@ -41,6 +41,7 @@ async function checkResource([path, mimeTypes]) {
 
 const unavailablePaths = [
   '/assets/hosting-smoke-missing-file.png',
+  ...['characters','hero-kneel','forest','lake','town','snow','wudang'].map(name=>'/assets/'+name+'.png'),
   '/wrangler.jsonc',
   '/package.json',
   '/.git/config',

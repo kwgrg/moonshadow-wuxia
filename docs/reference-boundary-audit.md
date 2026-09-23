@@ -71,3 +71,9 @@
 本轮四张新增图 leaf-courtyard.png、leaf-infirmary.png、leaf-rose-room.png、tianchi-islet.png 均由内置文生图独立制作，无输入图片；[完整制作记录](valley-care-art.md)保留提示词、源文件与交付哈希。原版目录仅由有界参考子任务对小筑两梦与首次楼战作内存只读机制核验，结果为独立概述与定位元数据，见 [局部参考记录](early-evil-interludes-reference.md)；没有把读取的脚本或对白写入产品、仓库或构建。该参考增量尚未实施，不能当作新演出已完成。
 
 发布清单现33张PNG：27项documented、6项unconfirmed；六张早期图及hero-kneel的上游来源缺口未解决，不能宣称所有资源均已核原创或不存在版权风险。原版图片、地图、音频、动画、完整台词没有作为本轮产品或生成输入。本地Wrangler dry-run仅验证可部署性，本轮没有发布云端。
+
+## 2026-09-23：独立替换后的当前发布状态（revision 11）
+
+上文六张未确认来源的旧图已从 public/assets 移除，而不是更改它们的历史来源判定。另移除依赖旧角色图制作的 hero-kneel.png。新增独立文生图 characters-original、hero-kneel-original、forest-original、lake-original、town-original，均无图片参考输入；旧 snow/wudang 的实际逻辑别名改指已有独立资源。制作记录见 characters-original-art.md 与 landscape-original-art.md，含生成源、完整提示词、SHA与接入方法。
+
+当前31张发布PNG均有对应制作记录，清单校验结果为 DOCUMENTED_RECORDS_ONLY；这一状态不等于法律结论或对历史来源的追认。97张地图的当前背景、备用背景与预加载键均解析到现存PNG。历史文档保留旧记录，未重写旧审计事实。本轮未访问原版目录，也未建立原资源导入步骤。

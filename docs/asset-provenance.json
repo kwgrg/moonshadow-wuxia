@@ -88,23 +88,19 @@
       ]
     },
     {
-      "path": "public/assets/characters.png",
-      "sha256": "bf197c097a9b3886ef8228e03c73064078c2d9b89fe9af2887cb799664393042",
-      "status": "unconfirmed",
+      "path": "public/assets/characters-original.png",
+      "sha256": "35ab8f6aafd72e4de8d0704799f7c80cac5f4ef29eb7d957119ba9f9a8074235",
+      "status": "documented",
       "documents": [
         {
-          "path": "docs/reference-boundary-audit.md",
-          "kind": "audit"
-        },
-        {
-          "path": "docs/hero-kneel-art.md",
-          "kind": "indirect-claim"
+          "path": "docs/characters-original-art.md",
+          "kind": "creation-record"
         }
       ],
       "referenceAssets": [],
       "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+        "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
+        "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
       ]
     },
     {
@@ -183,23 +179,19 @@
       ]
     },
     {
-      "path": "public/assets/forest.png",
-      "sha256": "29e00c5f6a8aa2d7181f9dc63e61322f911f3634a4bd2ae058907f69931bbd62",
-      "status": "unconfirmed",
+      "path": "public/assets/forest-original.png",
+      "sha256": "cc53f598bf50b02bf96d884ded06c51ed956b624a75ace175a6fe35c5acdc2c9",
+      "status": "documented",
       "documents": [
         {
-          "path": "docs/reference-boundary-audit.md",
-          "kind": "audit"
-        },
-        {
-          "path": "docs/scene-audit.md",
-          "kind": "indirect-claim"
+          "path": "docs/landscape-original-art.md",
+          "kind": "creation-record"
         }
       ],
       "referenceAssets": [],
       "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+        "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
+        "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
       ]
     },
     {
@@ -218,21 +210,19 @@
       ]
     },
     {
-      "path": "public/assets/hero-kneel.png",
-      "sha256": "d16e8d948b50564964340ecefd839673fccfa4d9ca54fd3f225f8a66bcb40a13",
+      "path": "public/assets/hero-kneel-original.png",
+      "sha256": "3b7a4ca49fc0ba544541924fb36122f065fde52f39ceda3b3540a6547b4a3a72",
       "status": "documented",
       "documents": [
         {
-          "path": "docs/hero-kneel-art.md",
+          "path": "docs/characters-original-art.md",
           "kind": "creation-record"
         }
       ],
-      "referenceAssets": [
-        "public/assets/characters.png"
-      ],
+      "referenceAssets": [],
       "notes": [
-        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
-        "跪姿自身有制作记录，但参考输入characters.png仍为unconfirmed；其上游来源没有因此补齐。"
+        "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
+        "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
       ]
     },
     {
@@ -297,19 +287,19 @@
       ]
     },
     {
-      "path": "public/assets/lake.png",
-      "sha256": "7ffc6b2b2eaba5704aa7087644a1c62db1df7b569a774f4f72c85aeae1c1cac2",
-      "status": "unconfirmed",
+      "path": "public/assets/lake-original.png",
+      "sha256": "98ab7a9c188ccfed24ae5c8153260cd8950dc62bab1a46dc8140c30d42808b0e",
+      "status": "documented",
       "documents": [
         {
-          "path": "docs/reference-boundary-audit.md",
-          "kind": "audit"
+          "path": "docs/landscape-original-art.md",
+          "kind": "creation-record"
         }
       ],
       "referenceAssets": [],
       "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+        "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
+        "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
       ]
     },
     {
@@ -425,22 +415,6 @@
       ]
     },
     {
-      "path": "public/assets/snow.png",
-      "sha256": "a2ab673db0972b529b51bf1b2f32e4cf383e23b4b0bc229d108c54bca2ffdc9f",
-      "status": "unconfirmed",
-      "documents": [
-        {
-          "path": "docs/reference-boundary-audit.md",
-          "kind": "audit"
-        }
-      ],
-      "referenceAssets": [],
-      "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
-      ]
-    },
-    {
       "path": "public/assets/temple.png",
       "sha256": "527a69b14abbe42cc86fd3eec724b7fcc5595448a270e88d57cbdb017d2ff364",
       "status": "documented",
@@ -472,19 +446,19 @@
       ]
     },
     {
-      "path": "public/assets/town.png",
-      "sha256": "d8e77f77fbeccba61fbbdf5e7656c74838621fedc8e33899a9e978f615d7f4fa",
-      "status": "unconfirmed",
+      "path": "public/assets/town-original.png",
+      "sha256": "71f727b7c786fcf8344bf60bf85ea1880732b3ec9c03bb3ae6ee4b1ca293d019",
+      "status": "documented",
       "documents": [
         {
-          "path": "docs/reference-boundary-audit.md",
-          "kind": "audit"
+          "path": "docs/landscape-original-art.md",
+          "kind": "creation-record"
         }
       ],
       "referenceAssets": [],
       "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "2026-09-22仅查当前任务生成目录的9张PNG，无完整SHA-256匹配；没有扩展读取其他用户目录或原游戏。"
+        "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
+        "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
       ]
     },
     {
@@ -500,17 +474,6 @@
       "referenceAssets": [],
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
-      ]
-    },
-    {
-      "path": "public/assets/wudang.png",
-      "sha256": "e6830d1485deee47328bbd3eacad80f3280cf8d55d8d5c97f09c59c52be08b07",
-      "status": "unconfirmed",
-      "documents": [],
-      "referenceAssets": [],
-      "notes": [
-        "未找到这张图的直接制作来源记录，不能标记为已核原创。",
-        "全量清单复查新增发现：art-prompts.md只记录cliff/inn/temple/hall/island/cave，不包含wudang；不能借用temple的记录。"
       ]
     },
     {

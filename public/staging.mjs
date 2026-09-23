@@ -1,3 +1,4 @@
+import {HUT_NIGHT_STAGING} from './hut-night-staging.mjs';
 import {VALLEY_CARE_STAGING} from './valley-care-staging.mjs';
 import {MANOR_NIGHT_STAGING} from './manor-night-staging.mjs';
 import {EVIL_DOCKS_STAGING} from './evil-docks-staging.mjs';
@@ -182,3 +183,5 @@ Object.assign(STAGED_QUESTS,EVIL_DOCKS_STAGING);
 Object.assign(STAGED_QUESTS,MANOR_NIGHT_STAGING);
 
 Object.assign(STAGED_QUESTS,VALLEY_CARE_STAGING);
+
+Object.assign(STAGED_QUESTS,HUT_NIGHT_STAGING);

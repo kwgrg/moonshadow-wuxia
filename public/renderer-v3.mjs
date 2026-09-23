@@ -17,7 +17,7 @@ export function npcCellFor(name){
   if(/道士|道长|天星|张惟宜/.test(n))return 2;
   if(/老头|老者|老丈|长老|钓叟|纳兰潜凛|孟知秋/.test(n))return 3;
   if(/强盗|匪|刺客|黑衣|蒙面|叛众|帮凶|打手|伏兵|劫持者|追兵|守卫|塔卫|来犯|刀客/.test(n))return 6;
-  if(/弟子|执事|铁云/.test(n))return 5;
+  if(/弟子|执事|铁云|卓非凡/.test(n))return 5;
   if(/村民|路人|酒客|书生|王炜|乞丐|家丁|大夫|小叁子|李四/.test(n))return 4;
   return null;
 }
@@ -242,13 +242,16 @@ export class Renderer {
     }
     c.restore();
   }
-  drawSeatedHero(a){
-    const c=this.ctx;c.save();c.translate(a.x,a.y);this.ellipse(0,1,39,11,'#08222570');
-    // Original seated silhouette using the project hero atlas and robe folds.
-    this.polygon([[-20,-25],[-48,-5],[-36,8],[0,3],[37,8],[48,-5],[20,-25]],'#727e88','#b4bcb8',1.2);
-    c.strokeStyle='#c0c7be77';c.beginPath();c.moveTo(-39,0);c.quadraticCurveTo(0,-13,36,1);c.moveTo(-21,-17);c.lineTo(12,4);c.stroke();
-    if(this.assets.characters)c.drawImage(this.assets.characters,0,0,384,600,-27,-94,54,84);
-    c.font='15px '+FONT;c.textAlign='center';c.fillStyle='#e4dabb';c.shadowColor='#092022';c.shadowBlur=6;c.fillText('杨影枫',0,-105);c.restore();
+  drawGroundSeatedActor(a,hero=false){
+    const c=this.ctx,sprite=hero?0:clamp(a.sprite||0,0,3);
+    const colors=[['#727e88','#b4bcb8','#c0c7be77'],['#a97570','#d4b5a7','#e7c9b777'],['#88768f','#c4b3c8','#dccbdf77'],['#746b58','#bab099','#d1c3a877']][sprite];
+    c.save();c.translate(a.x,a.y);this.ellipse(0,1,39,11,'#08222570');
+    // Authored ground-seated robe silhouette; a bed quilt is only for resting patients.
+    c.save();if(!hero&&a.direction===-1)c.scale(-1,1);
+    this.polygon([[-20,-25],[-48,-5],[-36,8],[0,3],[37,8],[48,-5],[20,-25]],colors[0],colors[1],1.2);
+    c.strokeStyle=colors[2];c.beginPath();c.moveTo(-39,0);c.quadraticCurveTo(0,-13,36,1);c.moveTo(-21,-17);c.lineTo(12,4);c.stroke();
+    if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],sprite*384,0,384,600,-27,-94,54,84);
+    c.restore();c.font='15px '+FONT;c.textAlign='center';c.fillStyle='#e4dabb';c.shadowColor='#092022';c.shadowBlur=6;c.fillText(hero?'杨影枫':a.name,0,-105);c.restore();
   }
   drawRestingActor(a){
     const c=this.ctx,sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
@@ -257,7 +260,7 @@ export class Renderer {
     c.save();c.translate(a.renderAt?.x??a.x,a.renderAt?.y??a.y);c.scale(a.renderScale||1,a.renderScale||1);
     c.save();c.translate(-8-22*rise,-38+18*rise);c.rotate(-Math.PI/2*(1-rise));
     if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-26,-75,52,82);
-    else if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,600,-26,-75,52,82);
+    else if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],clamp(a.sprite||0,0,3)*384,0,384,600,-26,-75,52,82);
     c.restore();
     const quilt=c.createLinearGradient(0,-40,0,4);quilt.addColorStop(0,'#777886');quilt.addColorStop(.55,'#555d72');quilt.addColorStop(1,'#353d51');
     this.polygon([[-17-25*rise,-40+11*rise],[73,-29],[88,-7],[39,6],[-20-25*rise,-13]],quilt,'#a6a4a3',1);
@@ -299,7 +302,7 @@ export class Renderer {
     c.save();c.rotate(side*Math.PI*.485*progress);c.scale(1,1-.13*progress);c.filter=`saturate(${1-.55*progress}) brightness(${1-.2*progress})`;
     if(ownArt)c.drawImage(ownArt,0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
     else if(atlas)c.drawImage(this.assets.npcs,(cell%4)*384,Math.floor(cell/4)*512,384,512,-width/2,-height*.93,width,height);
-    else if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,1024,-width/2,-height,width,height);
+    else if(this.assets['characters-original'])c.drawImage(this.assets['characters-original'],clamp(a.sprite||0,0,3)*384,0,384,1024,-width/2,-height,width,height);
     c.restore();c.font=`14px ${FONT}`;c.textAlign='center';c.shadowColor='#091b22';c.shadowBlur=6;c.fillStyle='#c8c5bb';c.fillText(a.name,side*43*progress,-height-13+progress*(height-31));c.restore();
   }
   drawStagingStrike(){
@@ -352,7 +355,7 @@ export class Renderer {
     const poseStep=this.e.s.sequence&&this.e.stagingDefinition()?.steps[this.e.s.sequence.step];
     if(a.renderAt&&a.pose==='stand'&&poseStep?.type==='pose'&&poseStep.actor===a.id){const t=clamp(this.e.s.sequence.elapsed/(poseStep.duration||1),0,1);a={...a,x:a.renderAt.x+(a.x-a.renderAt.x)*t,y:a.renderAt.y+(a.y-a.renderAt.y)*t};}
     if(a.pose==='fallen'){this.drawFallenActor(a);return;}
-    if(hero&&a.pose==='sit'){this.drawSeatedHero(a);return;}
+    if(a.pose==='sit'&&(hero||a.groundSeated)){this.drawGroundSeatedActor(a,hero);return;}
     if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:(a.npcCell??npcCellFor(a.name)),useNpcAtlas=npcCell!==null&&this.assets.npcs;
@@ -368,7 +371,7 @@ export class Renderer {
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
     if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
     else if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
-    else if(this.assets.characters){if(kneeling&&this.assets['hero-kneel']){const w=height*936/1176;c.drawImage(this.assets['hero-kneel'],164,35,936,1176,-w/2,-height,w,height);}else c.drawImage(this.assets.characters,sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
+    else if(this.assets['characters-original']){if(kneeling&&this.assets['hero-kneel-original']){const w=height*854/1360;c.drawImage(this.assets['hero-kneel-original'],64,96,854,1360,-w/2,-height,w,height);}else c.drawImage(this.assets['characters-original'],sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
     const crowded=(this.e.s.enemies.length+this.allies.length)>16,visibleLabel=hero||a.hp===undefined||!crowded||a.boss||this.labelledUnits?.has(a.id)||(!a.ally&&this.e.attackTarget?.id===a.id);
     if(visibleLabel){
     c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle=hero?'#f2e8c5':a.ally?'#b7e4c2':a.hp!==undefined?'#eed4bd':'#f1d898';c.fillText(hero?(this.e.q.playAs||'杨影枫'):(a.displayName||a.name),0,-height-12-lift);c.shadowBlur=0;c.shadowOffsetY=0;

@@ -177,6 +177,8 @@ function handcrafted(scene) {
         {...chest('road-rest',1085,805,'歇脚石旁留有一份行路人交换的干粮。',0),name:'歇脚石',reward:{potions:1},appearance:'bundle'}
       ];
       return true;
+    case 'm16':
+      scene.kind='room';scene.art='beimo-hero-room';scene.maskArt='beimo-hero-room';scene.ground=palettes.room;scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.spawn={x:760,y:810};scene.objective={x:930,y:575};scene.points=[point('hut-window','纸窗微光',1010,650,'窗纸隔着外面的风，屋里的一切仍静静留在原处。',{appearance:'trace',paintOnly:true}),point('hut-door','小筑门槛',760,810,'屋门连着来时的路，沿阶而下可以继续赶路。',{appearance:'trace',paintOnly:true})];return true;
     case 'r_wudang':
       scene.title='武当登山道';scene.kind='mountain';scene.art='forest';scene.ground=palettes.mountain;
       scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
@@ -363,6 +365,7 @@ function generatedLayout(scene) {
   scene.points=scene.points.map(p=>({...p,y:Math.max(scene.bounds[1]+35,p.y)}));
 }
 
+const LANDSCAPE_ART={forest:'forest-original',lake:'lake-original',town:'town-original'};
 const cache=new Map();
 
 /** Immutable-by-convention layout. The engine stores discoveries in its save state. */
@@ -373,6 +376,7 @@ export function getScene(mapId,region={}) {
   const scene=baseScene(mapId,region);
   if(!handcrafted(scene))generatedLayout(scene);
   alignPaintedGround(scene);
+  scene.art=LANDSCAPE_ART[scene.art]||scene.art;scene.fallbackArt=LANDSCAPE_ART[scene.fallbackArt]||scene.fallbackArt;
   attachPortals(scene);
   for(const p of scene.points) {
 
@@ -382,12 +386,14 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
 // receive route endpoints, or expose discoveries that can leak into a real save.
 const DREAM_SCENES={
+ hutForgivenessDream:{title:'花影迷梦',kind:'garden',art:'lake-original',spawn:{x:750,y:740},objective:{x:920,y:520}},
+ hutRefusalDream:{title:'花影迷梦',kind:'garden',art:'lake-original',spawn:{x:750,y:740},objective:{x:920,y:520}},
  weddingDream:{title:'梦中婚堂',kind:'hall',art:'wedding-dream',spawn:{x:780,y:650},objective:{x:870,y:630}},
  lakeDream:{title:'梦中天池',kind:'shore',art:'lake-dream',spawn:{x:730,y:790},objective:{x:900,y:550}}
 };
@@ -405,10 +411,10 @@ export function getDreamScene(key){
 let towerSceneCache=null;
 export function getStagingScene(key){
  const dream=getDreamScene(key);if(dream)return dream;
- if(key!=='towerInterlude')return null;
+ if(!['towerInterlude','towerFirstInterlude'].includes(key))return null;
  if(!towerSceneCache){const scene={...baseScene('staging:towerInterlude',{name:'摘星楼交锋',weather:'亥时 · 灯火沉沉',art:'hall'}),kind:'hall',art:'hall',cinematicName:'摘星楼交锋',hidePlayer:true,ground:palettes.hall,atmosphere:{light:'night',weather:'clear',indoor:true,particles:'dust'},objective:{x:930,y:520},drawRoads:false,props:[],points:[],paths:[],portals:{}};
  alignPaintedGround(scene);towerSceneCache=scene;}
- const scene=towerSceneCache;return {...scene,bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(rectangle=>rectangle.slice()),props:[],points:[],paths:[],portals:{}};
+ const scene=towerSceneCache;return {...scene,...(key==='towerFirstInterlude'?{id:'staging:towerFirstInterlude',cinematicName:'摘星楼 · 风波又起'}:{}),bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(rectangle=>rectangle.slice()),props:[],points:[],paths:[],portals:{}};
 }
 
 // Match the painted ground before exposing a layout to the engine. These masks
@@ -436,6 +442,11 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    // Independently generated 2026-09-23 landscapes. The perimeter follows
+    // visible trunks, bank rocks and market facades, not the old open rectangle.
+    forest:{bounds:[150,280,1450,980],polygon:[[620,365],[820,285],[1090,275],[1190,205],[1290,205],[1290,300],[1350,330],[1310,440],[1420,520],[1360,650],[1280,715],[1150,765],[1000,800],[880,870],[850,980],[710,980],[690,870],[635,790],[515,730],[400,670],[340,565],[220,475],[160,425],[240,395],[380,430],[460,400]],spawn:{x:780,y:875},exit:{x:1250,y:410},solids:[]},
+    lake:{bounds:[170,300,1400,980],polygon:[[370,330],[650,330],[900,330],[1140,350],[1300,320],[1340,410],[1270,520],[1230,630],[1120,735],[1020,790],[890,830],[855,980],[700,980],[670,865],[550,800],[455,765],[375,695],[360,610],[255,550],[180,485],[190,410],[270,370]],spawn:{x:790,y:870},exit:{x:800,y:940},solids:[]},
+    town:{bounds:[200,280,1450,980],polygon:[[280,320],[1210,330],[1310,280],[1370,330],[1340,420],[1450,510],[1380,570],[1280,600],[1240,760],[1080,780],[1070,870],[800,870],[780,980],[570,980],[580,900],[510,870],[420,820],[300,750],[220,665],[220,555],[270,490],[265,400]],spawn:{x:720,y:840},exit:{x:1250,y:410},solids:[]},
     'leaf-courtyard':{bounds:[20,235,1520,1024],polygon:[[160,300],[280,300],[315,365],[340,335],[365,245],[465,245],[500,305],[615,285],[980,285],[1065,245],[1195,245],[1230,335],[1270,325],[1380,340],[1395,430],[1500,440],[1520,440],[1520,600],[1445,630],[1455,700],[1340,760],[1170,790],[1040,800],[995,850],[995,1024],[600,1024],[600,850],[520,810],[360,805],[245,745],[205,680],[160,630],[40,610],[20,590],[20,475],[120,450],[190,435],[150,385]],spawn:{x:800,y:800},exit:{x:800,y:945},solids:[[170,540,285,625],[1270,540,1420,625],[535,180,1045,315]]},
     'leaf-rose-room':{bounds:[80,270,1480,1024],polygon:[[720,310],[845,295],[1070,335],[1120,470],[1310,495],[1450,520],[1440,715],[1340,840],[1280,930],[1030,930],[1000,1024],[450,1024],[450,900],[340,850],[260,790],[140,740],[95,560],[110,485],[215,505],[330,485],[690,520]],spawn:{x:750,y:815},exit:{x:750,y:955},solids:[[180,100,720,440],[250,380,610,475],[80,280,250,515],[1120,170,1460,425],[1190,315,1330,495]]},
     'leaf-infirmary':{bounds:[120,240,1440,985],polygon:[[455,280],[770,250],[865,265],[920,300],[910,485],[1150,560],[1290,580],[1360,650],[1380,790],[1150,830],[1050,860],[1040,980],[680,980],[635,850],[380,865],[300,745],[180,655],[130,570],[160,470],[430,510]],spawn:{x:820,y:810},exit:{x:820,y:935},solids:[[120,270,420,500],[900,170,1390,525],[470,160,780,270],[1290,405,1445,600]]},
@@ -459,6 +470,8 @@ function alignPaintedGround(scene){
     ...outsideFloor([[1010,330],[1150,305],[1305,315],[1355,360],[1440,375],[1440,480],[1360,520],[1180,555],[1060,520],[960,500],[890,505],[840,480],[910,420],[930,370]],[830,285,1460,580]),
     [140,285,640,480],[640,285,830,880],[830,580,1460,880]
   ]};
+  for(const [oldKey,newKey] of Object.entries(LANDSCAPE_ART))masks[newKey]=masks[oldKey];
+  const artAlias={forest:'forest-original',lake:'lake-original',town:'town-original',snow:'tianchi-islet',wudang:'temple'};if(artAlias[scene.fallbackArt])scene.fallbackArt=artAlias[scene.fallbackArt];
   const mask=masks[scene.maskArt||scene.art];
   if(!mask)return;
   scene.bounds=mask.bounds.slice();scene.spawn={...mask.spawn};scene.exit={...mask.exit};
@@ -554,8 +567,22 @@ function alignPaintedGround(scene){
   }
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
-  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','m52'].includes(scene.id)){
+  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','m52','m16'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
+  }
+  if(LANDSCAPE_ART[scene.art]||Object.values(LANDSCAPE_ART).includes(scene.art)){
+    scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
+    scene.atmosphere.indoor=false;
+    if(scene.art==='forest'){
+      scene.sidePositions={gather_ginger:{x:1110,y:710},gather_garlic:{x:1110,y:710}};
+      if(scene.id==='m6'){scene.points[1].x=510;scene.points[1].y=460;scene.points[2].x=1110;scene.points[2].y=750;}
+      for(const p of scene.points){if(p.id==='wayside-cache'){p.x=1060;p.y=735;}if(p.id==='far-corner'){p.x=1200;p.y=435;}if(p.id==='local-inscription'){p.x=425;p.y=535;}if(p.id==='water-notes'){Object.assign(p,{name:'远处溪声',x:650,y:455,text:'溪水藏在北侧树林之后，脚下的干燥山径在林间向两侧分开。',appearance:'trace',paintOnly:true});}}
+    }else if(scene.art==='lake'){
+      for(const p of scene.points){if(p.id==='wayside-cache'){p.x=1060;p.y=710;}if(p.id==='far-corner'){Object.assign(p,{name:'花间石径',x:1240,y:445,text:'石径从岸边转入花林，走到转角仍能望见远处的湖光。',appearance:'trace',paintOnly:true});}if(p.id==='local-inscription'){Object.assign(p,{name:'岸边落英',x:635,y:425,text:'花瓣沿风落在草地上，前方石岸隔开清水与行路的空地。',appearance:'trace',paintOnly:true});}}
+    }else if(scene.art==='town'){
+      scene.sidePositions={gather_fishhook:{x:1060,y:740}};
+      for(const p of scene.points){if(p.id==='wayside-cache'){p.x=1010;p.y=805;}if(p.id==='far-corner'){p.x=1250;p.y=425;}if(p.id==='local-inscription'){p.x=360;p.y=455;}}
+    }
   }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
   const project=p=>{
@@ -608,11 +635,12 @@ const AUTHORED_PORTALS={
  m40:{r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
  r_island_village:{m31:[[230,595],[370,605]],m40:[[810,935],[830,815]]},
  r_mainland_dock:{m40:[[700,335],[700,455]],m41:[[710,920],[720,800]]},
- m41:{r_mainland_dock:[[1250,415],[1160,475]],m49:[[800,915],[800,800]]},
+ m41:{r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
+ m17:{m16:[[800,940],[800,810]],m18:[[250,460],[390,515]],m49:[[1250,425],[1130,505]],m70:[[575,360],[645,485]]},
  m34:{m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
  m31:{m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
  r_forbidden_path:{m31:[[775,915],[800,825]],r_forbidden_entry:[[1250,410],[1165,470]]},
- r_forbidden_entry:{r_forbidden_path:[[375,620],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
+ r_forbidden_entry:{r_forbidden_path:[[350,535],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
  r_forbidden_first:{r_forbidden_entry:[[830,915],[830,790]],r_forbidden_second:[[1270,410],[1160,490]]},
  r_forbidden_second:{r_forbidden_first:[[800,910],[800,790]],r_forbidden_gate:[[1100,410],[1010,505]]},
  r_forbidden_gate:{r_forbidden_second:[[800,915],[800,790]],m57:[[800,245],[800,365]]},

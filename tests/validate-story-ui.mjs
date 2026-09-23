@@ -42,6 +42,7 @@ function preset(id){
   assert.notEqual(ui.engine.s.quest,-1,id+' must exist');
   ui.engine.s.map = ui.engine.q.map;
   ui.engine.s.flags.route = id.startsWith('e')?'evil':'good';
+  if(id==='e05') ui.engine.s.flags.evilHutNightComplete=true; // Recruitment fixture begins after the separately tested hut night.
   ui.engine.s.hero = {...ui.engine.s.hero,...ui.engine.nearestOpen(ui.engine.scene.objective.x,ui.engine.scene.objective.y)};
   ui.engine.paused = false;
   ui.engine.active = true;

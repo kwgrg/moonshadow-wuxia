@@ -167,7 +167,8 @@ for(const [choiceIndex,expectedEvil] of [[0,-1],[1,2]]) {
   assert.equal(events.filter(e=>e.name==='choice').length,1);
   assert.equal(game.choose(choiceIndex),true);
   assert.equal(game.s.flags.evil,expectedEvil);
-  assert.equal(game.q.id,'e05');
+  assert.equal(game.q.id,'e04_departure');
+  assert.ok(!game.s.flags.evilHutNightComplete,'answering cannot bypass the new departure and dream');
   assert.equal(game.s.kills,0,'the surviving talk partner is not counted as killed');
   checks++;
 }
@@ -215,7 +216,7 @@ for(const [oldIndex,id] of REVISION_TWO_QUEST_IDS.entries()) {
   delete raw.questId;
   const restored=restoreState(raw);
   assert.equal(QUESTS[restored.quest].id,id,`${id}: revision-two numeric index`);
-  assert.equal(restored.campaignRevision,10);
+  assert.equal(restored.campaignRevision,11);
 }
 checks++;
 

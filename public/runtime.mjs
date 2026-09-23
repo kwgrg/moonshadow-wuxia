@@ -1,3 +1,4 @@
+import {migrateHutNight} from './hut-night-migration.mjs';
 import {migrateValleyCare} from './valley-care-migration.mjs';
 import {partyMethods} from './travel-party.mjs';
 import {jumpMethods} from './jump-runtime.mjs';
@@ -9,7 +10,7 @@ import {restoreStaging,restoreStagedHandovers,stagingMethods,hasStagingBranch} f
 import {restoreSkirmish,skirmishMethods} from './skirmish-runtime.mjs';
 import {recruitmentMethods} from './recruitment-runtime.mjs';
 import {exitsFor,shortestRoute} from './routes.mjs';
-import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS, REVISION_EIGHT_QUEST_IDS, REVISION_NINE_QUEST_IDS } from './campaign.mjs';
+import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS, REVISION_EIGHT_QUEST_IDS, REVISION_NINE_QUEST_IDS, REVISION_TEN_QUEST_IDS } from './campaign.mjs';
 export { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS };
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const distance=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
@@ -20,9 +21,9 @@ const choiceFlagsMatch=(q,state)=>{const answer=recordedChoice(q,state);return a
 // A recorded answer owns its static branch state. Resuming it never repeats
 // score, items, skills, healing, or any other cumulative choice effect.
 function repairChoiceAssignments(q,state,answer){const effects=q.choice.options[answer].effects||{};Object.assign(state.flags,effects.flags||{});if(effects.companion!==undefined)state.flags.companion=effects.companion;}
-export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:10,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
+export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:11,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
 export function restoreState(raw){
- if(raw&&!raw.questId&&raw.campaignRevision!==10){const ids=raw.campaignRevision===9?REVISION_NINE_QUEST_IDS:raw.campaignRevision===8?REVISION_EIGHT_QUEST_IDS:raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
+ if(raw&&!raw.questId&&raw.campaignRevision!==11){const ids=raw.campaignRevision===10?REVISION_TEN_QUEST_IDS:raw.campaignRevision===9?REVISION_NINE_QUEST_IDS:raw.campaignRevision===8?REVISION_EIGHT_QUEST_IDS:raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
  if(raw?.questId){const index=QUESTS.findIndex(q=>q.id===raw.questId);if(index<0)throw new Error('存档中的任务不在当前流程中');raw={...raw,quest:index};}
  if(!raw||raw.version!==3||!Number.isInteger(raw.quest)||!QUESTS[raw.quest]||!MAPS[raw.map]||!raw.hero)throw new Error('此存档不属于当前流程版本');
  const s=freshState(),h=raw.hero;
@@ -72,6 +73,7 @@ export function restoreState(raw){
  raw=migrateEvilDocks(raw,s,QUESTS,REVISION_SEVEN_QUEST_IDS,MAPS,getScene);
  raw=migrateManorNight(raw,s,QUESTS,REVISION_EIGHT_QUEST_IDS,MAPS,getScene);
  raw=migrateValleyCare(raw,s,QUESTS,REVISION_NINE_QUEST_IDS,MAPS,getScene);
+ raw=migrateHutNight(raw,s,QUESTS,REVISION_TEN_QUEST_IDS);
  s.collectedIds=Array.isArray(raw.collectedIds)?[...new Set(raw.collectedIds.filter(i=>Number.isInteger(i)&&i>=0&&i<(QUESTS[s.quest].count||1)))]:Array.from({length:Math.min(s.collected,QUESTS[s.quest].count||1)},(_,i)=>i);s.collected=s.collectedIds.length;
  if(QUESTS[s.quest].id==='e13'&&!s.flags.switch8){s.quest=QUESTS.findIndex(q=>q.id==='eTower6');s.collected=0;s.collectedIds=[];s.phase='travel';}
  s.ending=ENDINGS[raw.ending]?raw.ending:null;s.completed=!!s.ending;s.phase=s.completed?'complete':s.map!==QUESTS[s.quest].map?'travel':s.phase;
@@ -102,6 +104,8 @@ export function restoreState(raw){
  const rule=QUESTS[s.quest].refusalRule,key='refusal_'+(rule?.key||QUESTS[s.quest].id);
  if(rule?.outcome==='fatal'&&raw.failure?.kind==='refusal'&&raw.failure.questId===QUESTS[s.quest].id&&Number(s.flags[key])>=rule.limit){s.failure={kind:'refusal',questId:QUESTS[s.quest].id,hpBefore:clamp(Number(raw.failure.hpBefore)||s.hero.maxHp*.25,1,s.hero.maxHp)};s.flags[key]=rule.limit;s.phase='failed';s.hero.hp=0;s.enemies=[];s.sequence=null;s.destination=null;}
  else if(s.phase==='failed')s.phase='talk';
+ // Rebuild the earned shore rest pose; arbitrary saved poses are not trusted.
+ if(!s.sequence&&s.phase==='talk'&&s.map===current.map&&current.id==='e06_rest'&&(s.flags.evilFirstTowerInterludeComplete||s.flags.evilLegacyFirstTowerInterlude))s.hero.pose='sit';
  return s;
 }
 export class GameEngine{
@@ -120,6 +124,7 @@ export class GameEngine{
   if(this.s.map==='m40'&&this.s.flags.evilIslandCleared&&['e08_departure','e08'].includes(this.q.id))scene={...scene,atmosphere:{...scene.atmosphere,light:'day'}};
   if(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')){const morning=this.s.flags.evilManorNightComplete||this.s.flags.evilLegacyManorNight||this.s.sequence?.cues.manorDaybreak;scene={...scene,atmosphere:{...scene.atmosphere,light:morning?'day':'night'}};}
   if(this.s.flags.route==='good'&&(this.s.flags.valleyCareStarted||this.s.flags.valleyLegacyCarePrelude)&&['m51','m52','r_leaf_hero_room','r_leaf_mei_room','r_leaf_zhen_room','r_leaf_rose_room'].includes(this.s.map)&&!this.hasReachedQuest('g08')){const cue=this.s.sequence?.cues.valleyCareLight,night=cue?cue==='night':!this.s.flags.valleyCareMorning&&(this.s.flags.valleyCareNight||this.s.flags.valleyLegacyCarePrelude);return {...scene,atmosphere:{...scene.atmosphere,light:night?'night':'day'}};}
+  if(this.s.map==='m16'&&this.s.flags.route==='evil'&&['e04_departure','e04_dream','e05'].includes(this.q.id)){const morning=this.s.sequence?.cues.hutTime==='morning'||this.s.flags.evilHutNightComplete||this.s.flags.evilLegacyHutNight;scene={...scene,atmosphere:{...scene.atmosphere,light:morning?'day':'night'}};}
   if(this.s.map!==this.q.map)return scene;
   const title=this.q.title,night=this.q.sceneLight==='night'||/夜/.test(title)||(this.q.choiceAfterDark&&this.s.phase==='choice'),rain=/雨/.test(title);
   return night||rain?{...scene,atmosphere:{...scene.atmosphere,light:night?'night':scene.atmosphere.light,weather:rain?'rain':scene.atmosphere.weather}}:scene;
@@ -173,7 +178,7 @@ export class GameEngine{
   if(!['battle','staging'].includes(this.s.phase)){
    if(this.region.shop&&!(this.s.flags.route==='good'&&(this.q.id==='g06'||this.s.flags.valleyCareStarted||this.s.flags.valleyLegacyCarePrelude)&&!this.s.flags.valleyCareSettled&&this.s.map==='m51')&&!(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')))list.push({id:'shop',kind:'shop',x:650,y:650,name:'行脚商人',sprite:0});
    for(const exit of this.exits()){const portal=scene.portals?.[exit.to];if(portal)list.push({...exit,...portal.exit,kind:'travel',name:exit.locked?'暂未通行 · '+MAPS[exit.to].name:(exit.travelLabel||'前往 '+MAPS[exit.to].name),sprite:null,main:!exit.locked&&exit.to===this.routeTo(this.s.destination||q.map)[1]});}
-   for(const side of SIDE_QUESTS.filter(q=>q.map===this.s.map&&!this.s.sideDone.includes(q.id)))list.push({id:side.id,kind:'side',x:side.x||570,y:side.y||780,name:side.npc,sprite:side.sprite??null});
+   for(const side of SIDE_QUESTS.filter(q=>q.map===this.s.map&&!this.s.sideDone.includes(q.id)))list.push({id:side.id,kind:'side',x:scene.sidePositions?.[side.id]?.x??side.x??570,y:scene.sidePositions?.[side.id]?.y??side.y??780,name:side.npc,sprite:side.sprite??null});
    for(const point of scene.points)list.push({...point,sprite:null,main:false,opened:this.s.opened.includes(this.s.map+':'+point.id)});
   }
   if(!this.s.sequence&&!this.s.completed)list.push(...this.jumpMarkers());
