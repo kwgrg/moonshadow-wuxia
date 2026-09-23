@@ -42,10 +42,10 @@ export const stagingMethods={
  stagingPresentation(){
   const current=this.stagingDefinition();
   if(current)return {definition:current,actors:this.s.sequence?.actors||((this.s.flags[completeKey(this.q.id)]||this.s.flags[this.q.legacyStagingFlag])?current.finalActors:null)||current.actors||[],cues:this.s.sequence?.cues||((this.s.flags[completeKey(this.q.id)]||this.s.flags[this.q.legacyStagingFlag])?current.finalCues:{})||{}};
-  for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&this.s.flags[completeKey(id)]&&(definition.persistFor?.includes(this.q.id)||(definition.persistFlag&&this.s.flags[definition.persistFlag])))return {definition,actors:definition.persistentActors||definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
+  for(const [id,definition] of Object.entries(STAGED_QUESTS).reverse())if(this.s.map===definition.map&&(this.s.flags[completeKey(id)]||(definition.legacyPersistFlag&&this.s.flags[definition.legacyPersistFlag]))&&(definition.persistFor?.includes(this.q.id)||(definition.persistFlag&&this.s.flags[definition.persistFlag])))return {definition,actors:definition.persistentActors||definition.finalActors||definition.actors||[],cues:definition.finalCues||{}};
   return null;
  },
- stagingActors(){const presentation=this.stagingPresentation();if(!presentation)return [];return presentation.actors.filter(actor=>(!actor.sceneKey||actor.sceneKey===this.s.sequence?.sceneKey)&&!actor.hidden&&!(actor.enemy&&['battle','after'].includes(this.s.phase))).map(actor=>({...actor,kind:'stagingActor',main:false,interactive:actor.pose!=='fallen'}));},
+ stagingActors(){const presentation=this.stagingPresentation();if(!presentation)return [];return presentation.actors.filter(actor=>(!actor.sceneKey||actor.sceneKey===this.s.sequence?.sceneKey)&&!actor.hidden&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest))&&!(actor.enemy&&['battle','after'].includes(this.s.phase))).map(actor=>({...actor,kind:'stagingActor',main:false,interactive:actor.interactive!==false&&actor.pose!=='fallen'}));},
  handoverCredit(){return this.s.stagedHandovers?.[this.q.id]||{};},
  outstandingItems(items){const credit=this.handoverCredit();return Object.fromEntries(Object.entries(items||{}).map(([id,count])=>[id,Math.max(0,count-(credit[id]||0))]));},
  hasQuestItems(){return Object.entries(this.outstandingItems(this.q.requiredItems)).every(([id,count])=>(this.s.inventory[id]||0)>=count);},

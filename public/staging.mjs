@@ -1,3 +1,4 @@
+import {MANOR_NIGHT_STAGING} from './manor-night-staging.mjs';
 import {EVIL_DOCKS_STAGING} from './evil-docks-staging.mjs';
 import {NIGHT_DREAM_STAGING} from './night-dream-staging.mjs';
 import {FORBIDDEN_STAGING} from './forbidden-staging.mjs';
@@ -176,3 +177,5 @@ Object.assign(STAGED_QUESTS,FORBIDDEN_STAGING);
 Object.assign(STAGED_QUESTS,NIGHT_DREAM_STAGING);
 
 Object.assign(STAGED_QUESTS,EVIL_DOCKS_STAGING);
+
+Object.assign(STAGED_QUESTS,MANOR_NIGHT_STAGING);

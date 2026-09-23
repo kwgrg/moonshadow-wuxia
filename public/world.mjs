@@ -86,6 +86,19 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'm50':
+      scene.title='悲魔山庄后花园';scene.kind='garden';scene.art='beimo-garden-day';scene.ground=palettes.garden;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};scene.objective={x:780,y:680};scene.drawRoads=false;
+      scene.points=[point('beimo-garden-stones','园中石径',630,590,'石径连接两侧客房与前院回廊，砖面被往来的脚步磨得发亮。',{appearance:'trace',paintOnly:true}),point('beimo-garden-breeze','临池微风',1050,710,'水面藏在栏边树影之后，园中的风吹动檐下悬灯。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_beimo_hero_room':
+      scene.title='悲魔山庄影枫卧房';scene.kind='room';scene.art='beimo-hero-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:620,y:450};scene.drawRoads=false;
+      scene.points=[point('beimo-hero-bedside','床前灯影',640,425,'灯影映在床侧木地板上，门外的脚步声隔着窗纸传来。',{appearance:'trace',paintOnly:true}),point('beimo-hero-desk','书案前',1130,515,'桌上留着纸笔，回房的人却没有提笔的心绪。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_beimo_mei_room':
+      scene.title='悲魔山庄月眉儿客房';scene.kind='room';scene.art='beimo-mei-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:805,y:490};scene.drawRoads=false;
+      scene.points=[point('beimo-mei-tea','茶桌旁',590,470,'圆桌上的茶具映着烛火，谈话声在关好的窗边低下来。',{appearance:'trace',paintOnly:true}),point('beimo-mei-curtain','帘前静影',1070,535,'床帘垂在一侧，细软的布影落到床前。',{appearance:'trace',paintOnly:true})];return true;
+
     case 'r_island_village':{
       scene.title='忘忧岛村落';scene.kind='village';scene.art='island-village';scene.ground=palettes.village;
       scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};scene.objective={x:450,y:540};scene.drawRoads=false;
@@ -344,7 +357,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -398,6 +411,9 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'beimo-garden-day':{bounds:[80,245,1380,1020],polygon:[[350,280],[485,260],[515,310],[630,330],[770,310],[875,300],[1000,320],[1080,260],[1190,260],[1240,340],[1290,365],[1310,455],[1245,525],[1220,630],[1260,680],[1190,760],[1110,845],[1040,940],[950,1000],[830,920],[720,850],[600,765],[480,690],[365,610],[245,540],[125,465],[80,400],[190,390],[325,350]],spawn:{x:555,y:565},exit:{x:385,y:540},solids:[[500,220,630,310],[760,205,1030,290],[1240,745,1380,1020]]},
+    'beimo-hero-room':{bounds:[130,235,1440,980],polygon:[[610,260],[1170,250],[1230,330],[1180,500],[1340,520],[1380,650],[1400,800],[1190,800],[1160,970],[310,970],[285,795],[150,785],[135,610],[210,520],[220,450],[420,440],[590,410]],spawn:{x:760,y:810},exit:{x:760,y:935},solids:[[155,95,610,380],[225,325,430,405],[1200,160,1440,450]]},
+    'beimo-mei-room':{bounds:[150,230,1400,980],polygon:[[550,250],[940,235],[1010,280],[1000,420],[1190,440],[1280,520],[1380,570],[1370,710],[1220,770],[1200,860],[1020,880],[1000,980],[570,980],[535,895],[375,865],[275,795],[210,700],[155,610],[160,440],[550,440]],spawn:{x:780,y:810},exit:{x:780,y:935},solids:[[200,200,530,420],[1000,90,1380,400],[1240,350,1370,505]]},
     'island-village':{bounds:[110,270,1430,980],polygon:[[470,285],[745,285],[800,305],[960,330],[1170,370],[1250,410],[1300,490],[1280,550],[1380,600],[1310,710],[1350,770],[1220,835],[955,865],[910,980],[745,980],[735,820],[650,780],[500,720],[345,660],[130,625],[120,550],[230,570],[305,535],[260,485],[130,435],[135,375],[300,335]],spawn:{x:400,y:620},exit:{x:810,y:935},solids:[]},
     'mainland-dock':{bounds:[190,225,1350,980],polygon:[[600,245],[730,245],[775,330],[800,390],[1210,405],[1270,450],[1270,550],[1200,640],[1200,790],[1050,800],[995,860],[940,980],[420,980],[455,865],[330,805],[325,680],[200,615],[210,510],[355,435],[520,400],[590,400]],spawn:{x:700,y:455},exit:{x:710,y:920},solids:[]},
     'zhen-chamber':{bounds:[150,230,1430,950],polygon:[[455,290],[1030,290],[1140,360],[1210,400],[1220,630],[1350,700],[1370,810],[1190,845],[950,845],[950,950],[550,950],[550,845],[280,845],[255,750],[275,585],[325,430],[450,425]],spawn:{x:750,y:820},exit:{x:750,y:925},solids:[[555,240,1000,320],[180,250,450,420],[1230,350,1430,640],[1090,330,1150,370]]},
@@ -503,7 +519,7 @@ function alignPaintedGround(scene){
   }
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
-  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock'].includes(scene.id)){
+  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
@@ -531,6 +547,10 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ m49:{m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]]},
+ m50:{m49:[[385,540],[555,565]],r_beimo_hero_room:[[425,295],[535,430]],r_beimo_mei_room:[[1120,315],[1060,440]],m16:[[1020,885],[950,780]],m51:[[780,865],[785,745]]},
+ r_beimo_hero_room:{m50:[[760,935],[760,810]]},
+ r_beimo_mei_room:{m50:[[780,935],[780,810]]},
  m1:{r_lingjue:[[1370,865],[1285,765]]},
  r_lingjue:{m1:[[1250,420],[1165,470]],m2:[[775,915],[800,825]]},
  m2:{r_lingjue:[[365,755],[480,745]],m3:[[1150,620],[1080,680]],m6:[[875,795],[840,695]]},

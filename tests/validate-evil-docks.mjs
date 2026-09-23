@@ -78,7 +78,7 @@ function stage(game,{projection=false,beforeTick=()=>{}}={}){
  return g;
 }
 
-assert.equal(freshState().campaignRevision,8);
+assert.equal(freshState().campaignRevision,9);
 // Start at the existing post-duel decision; the preceding reveal/duel has its own tests.
 let game=create('e07',{staged_e07:true});game.s.phase='choice';Object.assign(game.s.hero,{hp:31,mp:41,stamina:12});
 const initial=economy(game);assert.equal(game.choose(0),true);assert.equal(game.q.id,'e08_interlude');
@@ -185,7 +185,7 @@ assert.equal(getScene('m40',MAPS.m40).atmosphere.light,originalDockLight,'daylig
 // completed answer again, even though that answer has real score/flag effects.
 for(const spec of [
  {id:'e08',flags:{evilIslandFarewell:true,staged_e08:true},recorded:0,replay:1},
- {id:'e09',flags:{evilZixuanDead:true},recorded:1,replay:0},
+ {id:'e09',flags:{evilLegacyManorPrelude:true},recorded:1,replay:0},
 ]){
  const stale=create(spec.id,spec.flags);stale.s.phase='choice';stale.s.choices[spec.id]=spec.recorded;
  stale.s.done.push(spec.id);stale.s.claimedRewards.push(spec.id);stale.s.flags.evil=11;stale.s.affection.mei=4;
@@ -202,7 +202,7 @@ for(const answer of [0,1]){
   assert.ok(!active.s.flags.evilZixuanDead,'the choice alone does not commit the death');
   const body=active.s.sequence.actors.find(actor=>actor.id==='mainland-zixuan');if(body.pose==='fallen'){fallenSeen=true;assert.equal(active.stagingActors().find(actor=>actor.id===body.id).interactive,false);}
  }});
- assert.ok(fallenSeen);assert.equal(g.q.id,'e09');assert.equal(g.s.flags.evilZixuanDead,true);assert.equal(g.s.flags.companion,'月眉儿');
+ assert.ok(fallenSeen);assert.equal(g.q.id,'e09_report');assert.equal(g.s.flags.evilZixuanDead,true);assert.equal(g.s.flags.companion,'月眉儿');
  assert.ok(g.s.done.includes(resultId));assert.ok(!g.s.done.includes(otherId));assert.ok(!g.s.flags['staged_'+otherId]);assert.deepEqual(economy(g),baseline);
  assert.equal(g.s.enemies.length,0);assert.equal(g.s.skirmish,null);
  for(let revisit=0;revisit<2;revisit++){
@@ -223,7 +223,7 @@ for(const flags of [{},{evilIslandFarewell:true},{evilLegacyIslandPassage:true},
   const blocked=new GameEngine(restoreState(invalid));assert.equal(blocked.s.sequence,null);blocked.beginObjective();assert.equal(blocked.s.phase,'talk');}
 }
 for(const authorized of [false,true]){
- const g=create('e09',authorized?{evilLegacyZixuanOutcome:true}:{});g.beginObjective();assert.equal(g.s.phase,authorized?'choice':'talk','e09 requires a completed current or explicit historical dock result');
+ const g=create('e09_report',authorized?{evilLegacyZixuanOutcome:true}:{});g.beginObjective();assert.equal(g.s.phase,authorized?'staging':'talk','the manor report requires a completed current or explicit historical dock result');
 }
 for(const key of ['m61','lakeDream','invalidProjection']){
  const corrupt=copy(projectionSaves[0]);corrupt.sequence.sceneKey=key;const loaded=new GameEngine(restoreState(corrupt));
@@ -249,7 +249,7 @@ function legacy(id,revision,numeric,{choice=null,done=false}={}){
  return {raw,budget:economy(g)};
 }
 function noInventedEvents(g,raw,budget){
- assert.equal(g.s.campaignRevision,8);assert.deepEqual(economy(g),budget);assert.equal(g.s.flags.evil,raw.flags.evil);
+ assert.equal(g.s.campaignRevision,9);assert.deepEqual(economy(g),budget);assert.equal(g.s.flags.evil,raw.flags.evil);
  assert.deepEqual(g.s.done,raw.done);assert.deepEqual(g.s.claimedRewards,raw.claimedRewards);
  for(const id of newEvents){assert.ok(!g.s.done.includes(id));assert.ok(!g.s.claimedRewards.includes(id));assert.ok(!g.s.flags['staged_'+id]);}
  assert.equal(g.s.skirmish,null);assert.ok(!g.s.flags.evilTowerInterludeComplete&&!g.s.flags.evilIslandCleared&&!g.s.flags.evilIslandFarewell);
@@ -264,7 +264,7 @@ for(let revision=1;revision<=7;revision++)for(const numeric of [false,true]){
  }
  for(const choice of [null,0,1]){
   const {raw,budget}=legacy('e09',revision,numeric,{choice,done:true}),g=new GameEngine(restoreState(raw));noInventedEvents(g,raw,budget);
-  assert.equal(g.q.id,'e09');assert.equal(g.s.map,'m49');assert.equal(g.s.flags.evilLegacyZixuanOutcome,true);assert.equal(g.s.flags.evilZixuanDead,true);
+  assert.equal(g.q.id,'e09');assert.equal(g.s.map,'m50');assert.equal(g.s.flags.evilLegacyManorPrelude,true);assert.equal(g.s.flags.evilLegacyZixuanOutcome,true);assert.equal(g.s.flags.evilZixuanDead,true);
   if(choice===null){assert.equal(g.s.flags.evilLegacyZixuanUnknown,true);assert.ok(!g.s.flags.evilZixuanKill&&!g.s.flags.evilZixuanRefuse);}
   else{assert.equal(g.s.flags.evilZixuanRefuse,choice===0);assert.equal(g.s.flags.evilZixuanKill,choice===1);}
   legacyCases++;
@@ -278,12 +278,12 @@ for(const flags of [{evilZixuanKill:true},{evilZixuanKill:true,evilZixuanRefuse:
 // task-completion entry was never recorded. A conflict must not ask again.
 for(const flags of [{evilZixuanKill:true},{evilZixuanKill:true,evilZixuanRefuse:true}]){
  const {raw,budget}=legacy('e08',7,false,{choice:0});Object.assign(raw.flags,flags);const g=new GameEngine(restoreState(raw));noInventedEvents(g,raw,budget);
- assert.equal(g.q.id,'e09');assert.equal(g.s.map,'m41');assert.equal(g.s.flags.evilLegacyZixuanUnknown,true);assert.equal(g.s.flags.evilZixuanDead,true);
+ assert.equal(g.q.id,'e09_report');assert.equal(g.s.map,'m41');assert.ok(!g.s.flags.evilLegacyManorPrelude);assert.equal(g.s.flags.evilLegacyZixuanUnknown,true);assert.equal(g.s.flags.evilZixuanDead,true);
  assert.ok(!g.s.flags.evilZixuanKill&&!g.s.flags.evilZixuanRefuse);assert.equal(g.s.flags.evil,9);legacyCases++;
 }
 for(const choice of [null,0,1]){
  const {raw,budget}=legacy('e08',7,false,{choice,done:true}),g=new GameEngine(restoreState(raw));noInventedEvents(g,raw,budget);
- assert.equal(g.q.id,'e09','a completed old dock task must not resume its already-decided menu');assert.equal(g.s.flags.evilZixuanDead,true);assert.equal(g.s.sequence,null);legacyCases++;
+ assert.equal(g.q.id,'e09_report','a completed old dock task must not resume its already-decided menu or skip the new manor report');assert.equal(g.s.flags.evilZixuanDead,true);assert.equal(g.s.sequence,null);legacyCases++;
 }
 const preDock=legacy('e08',7,false);preDock.raw.phase='talk';const untouched=new GameEngine(restoreState(preDock.raw));
 assert.equal(untouched.q.id,'e08');assert.equal(untouched.s.phase,'talk');assert.ok(!untouched.s.flags.evilLegacyDocksPrelude);assert.equal(untouched.s.sequence,null);

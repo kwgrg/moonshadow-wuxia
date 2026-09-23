@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-09-22",
+  "reviewedAt": "2026-09-23",
   "scope": "All public PNG files; public/assets currently accepts PNG only.",
   "statusMeaning": {
     "documented": "具有对应交付文件、制作方法和完整提示词的制作记录；仅表示文档状态，不是法律原创、授权或所有上游来源已确认。",
@@ -22,6 +22,54 @@
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
         "该制作记录没有保留可直接复核的生成源文件绝对路径；本清单哈希仅绑定当前交付文件。"
+      ]
+    },
+    {
+      "path": "public/assets/beimo-garden-day.png",
+      "sha256": "a62d98c9fe7c42d1b208b25d0004d8529ca870a004db6901d8bc0be46b1e7664",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/manor-night-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 独立文生图，无输入图；完整提示词、生成源和交付哈希见制作记录。",
+        "documented仅表示制作记录存在，不代表原版相似度或法律认证。"
+      ]
+    },
+    {
+      "path": "public/assets/beimo-hero-room.png",
+      "sha256": "44e7de8b60da584f5c84f87b79db33ba882e560c54c739aea3120fe107149843",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/manor-night-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 独立文生图，无输入图；完整提示词、生成源和交付哈希见制作记录。",
+        "documented仅表示制作记录存在，不代表原版相似度或法律认证。"
+      ]
+    },
+    {
+      "path": "public/assets/beimo-mei-room.png",
+      "sha256": "615c708a9900d6870e2bc9e22df43eb60c8c3b4291fa2fc0e72b038e22a492a9",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/manor-night-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 独立文生图，无输入图；完整提示词、生成源和交付哈希见制作记录。",
+        "documented仅表示制作记录存在，不代表原版相似度或法律认证。"
       ]
     },
     {

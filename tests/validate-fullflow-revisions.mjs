@@ -175,7 +175,7 @@ for(const [choiceIndex,expectedEvil] of [[0,-1],[1,2]]) {
 // Learn before the night attack, equip/use the move, then lose and retry. Its
 // proficiency and unlock history must survive retry rather than be granted anew.
 {
-  const {game,events}=at('e10_teaching');
+  const {game,events}=at('e10_teaching');game.s.flags.evilLegacyManorNight=true;
   assert.equal(Object.hasOwn(game.s.skills,8),false);
   game.beginObjective();
   assert.equal(game.q.id,'e10');
@@ -215,7 +215,7 @@ for(const [oldIndex,id] of REVISION_TWO_QUEST_IDS.entries()) {
   delete raw.questId;
   const restored=restoreState(raw);
   assert.equal(QUESTS[restored.quest].id,id,`${id}: revision-two numeric index`);
-  assert.equal(restored.campaignRevision,8);
+  assert.equal(restored.campaignRevision,9);
 }
 checks++;
 

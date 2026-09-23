@@ -1,9 +1,12 @@
 /**
- * Independently authored travel topology. Only the opening sequence has been
- * checked against the reference. Later links express the web quest itinerary;
- * they are not claims about the original game's map adjacency.
+ * Independently authored travel topology. Bounded event-order audits are
+ * documented separately; these links express the playable web itinerary.
+ * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ m50:{name:'悲魔山庄后花园',area:'内苑园路',art:'beimo-garden-day',weather:'辰时 · 园中微风',poem:'灯照曲径深，夜语待天明',shop:true,obstacles:[]},
+ r_beimo_hero_room:{name:'悲魔山庄影枫卧房',area:'内苑客房',art:'beimo-hero-room',weather:'亥时 · 一灯未眠',poem:'旧事难入梦，推门月色深',shop:false,obstacles:[],routeOnly:true},
+ r_beimo_mei_room:{name:'悲魔山庄月眉儿客房',area:'东侧客房',art:'beimo-mei-room',weather:'亥时 · 灯下夜谈',poem:'园路通灯火，隔帘语未休',shop:false,obstacles:[],routeOnly:true},
  r_island_village:{name:'忘忧岛村落',area:'村中广场',art:'island-village',weather:'辰时 · 海风入村',poem:'村路闻惊语，归舟待息尘',shop:false,obstacles:[],routeOnly:true},
  r_mainland_dock:{name:'中原码头',area:'临江石岸',art:'mainland-dock',weather:'申时 · 江风渐起',poem:'舟回人未定，旧事到江边',shop:false,obstacles:[],routeOnly:true},
  m31:{name:'忘忧岛村南',area:'临水村路',art:'island',weather:'辰时 · 村路微风',poem:'潮声落屋后，去影入疏林',shop:false,obstacles:[]},
@@ -38,7 +41,7 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
 
 // These links are independent web staging. A ferry is an explicit voyage,
 // while the mountain connector must be walked on both sides of the journey.
@@ -75,6 +78,9 @@ const DOCK_ROUTES=[
 ];
 const ISLAND_CORRIDOR=new Set(['m57','r_forbidden_gate','r_forbidden_second','r_forbidden_first','r_forbidden_entry','r_forbidden_path','m31','r_island_village','m40','r_mainland_dock','m41']);
 const ISLAND_PAIRS=new Set([...FORBIDDEN_ROUTES.slice(2),...DOCK_ROUTES].map(([a,b])=>pairKey(a,b)));
+const MANOR_ROUTES=[['m49','m50'],['m50','r_beimo_hero_room'],['m50','r_beimo_mei_room']];
+const MANOR_MAPS=new Set(['m49','m50','r_beimo_hero_room','r_beimo_mei_room']);
+const MANOR_NIGHT_QUESTS=new Set(['e09_first_wake','e09','e09_part','e09_sleepless','e09_second_meeting','e09_room_talk','e09_morning']);
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
 function matches(when,state){
@@ -97,7 +103,7 @@ function finished(id,state,quests){
  return (state.done||[]).includes(id)||(i>=0&&questIndex(state,quests)>i);
 }
 
-/** Undirected edges, including closed nearby passages for in-world feedback. */
+/** Physical edges; lockedFrom optionally closes departure from one endpoint. */
 export function routeEdges(state={},quests=[]){
  const edges=new Map();
  for(const [from,to,requires,reason] of OPENING){
@@ -145,6 +151,26 @@ export function routeEdges(state={},quests=[]){
    }
   }
  }
+ if(state.flags?.route==='evil'){
+  const report=quests.find(q=>q.id==='e09_report'),current=quests[questIndex(state,quests)]?.id,flags=state.flags;
+  if(report&&arrived(report,state,quests)){
+   const legacy=!!flags.evilLegacyManorNight,complete=!!flags.evilManorNightComplete||legacy;
+   const reported=!!flags.evilManorReported||!!flags.evilLegacyManorPrelude||complete;
+   const exclusive=!!flags.evilMeiEscorted!==!!flags.evilMeiAlone;
+   const roomReady=complete||(!!flags.evilManorDecision&&exclusive&&(flags.evilMeiEscorted||(flags.evilMeiAlone&&flags.evilMeiSecondMet)));
+   for(const [from,to] of MANOR_ROUTES){const locked=to==='r_beimo_mei_room'?!roomReady:!reported;edges.set(pairKey(from,to),{from,to,locked,reason:locked?'先办完当前的交谈，再沿园路进房。':'',inferred:true,design:'authored-manor-night'});}
+   const nightActive=!complete&&(flags.evilManorNightStarted||flags.evilLegacyManorPrelude||MANOR_NIGHT_QUESTS.has(current));
+   if(nightActive)for(const edge of edges.values()){
+    const inside=[edge.from,edge.to].filter(id=>MANOR_MAPS.has(id));
+    if(inside.length===1)Object.assign(edge,{lockedFrom:[...(edge.lockedFrom||[]),inside[0]],departureReason:'夜间的事情尚未了结，先留在庄内。'});
+   }
+   // Morning departure goes through the manor gate. The old early-story
+   // garden/valley connection becomes available again after the teaching visit.
+   if(nightActive||current==='e09_morning'||current==='e10_teaching'){
+    for(const edge of edges.values())if((edge.from==='m50'&&!MANOR_MAPS.has(edge.to))||(edge.to==='m50'&&!MANOR_MAPS.has(edge.from)))Object.assign(edge,{lockedFrom:[...(edge.lockedFrom||[]),'m50'],departureReason:'出庄须先回前院，再沿庄门前往落叶谷。'});
+   }
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -160,7 +186,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES])add(a,b);
   const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
   const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
   for(const route of ['good','evil'])for(const flags of variations)for(const edge of routeEdges({quest:quests.length,flags:{...flags,route}},quests))add(edge.from,edge.to);
@@ -173,7 +199,7 @@ export function routeNeighbors(mapId,quests=[]){
 export function exitsFor(mapId,state={},quests=[]){
  return routeEdges(state,quests).filter(e=>e.from===mapId||e.to===mapId).map(e=>{
   const to=e.from===mapId?e.to:e.from;
-  return {...e,id:`route:${mapId}:${to}`,to,exitKey:to,entryKey:mapId,label:ROUTE_MAPS[to]?.name||to,...(e.transport==='boat'?{travelLabel:e.travelLabels?.[to]||(to==='m40'?'乘船前往忘忧岛渡口':'乘船返回倚天山渡头')}:{})};
+  return {...e,locked:!!e.locked||!!e.lockedFrom?.includes(mapId),reason:e.lockedFrom?.includes(mapId)?e.departureReason:e.reason,id:`route:${mapId}:${to}`,to,exitKey:to,entryKey:mapId,label:ROUTE_MAPS[to]?.name||to,...(e.transport==='boat'?{travelLabel:e.travelLabels?.[to]||(to==='m40'?'乘船前往忘忧岛渡口':'乘船返回倚天山渡头')}:{})};
  });
 }
 
@@ -185,7 +211,7 @@ export function shortestRoute(from,to,state={},quests=[]){
   const route=queue.shift(),here=route.at(-1);
   for(const edge of edges){
    const next=edge.from===here?edge.to:edge.to===here?edge.from:null;
-   if(!next||seen.has(next))continue;
+   if(!next||seen.has(next)||edge.lockedFrom?.includes(here))continue;
    const candidate=[...route,next];if(next===to)return candidate;
    seen.add(next);queue.push(candidate);
   }

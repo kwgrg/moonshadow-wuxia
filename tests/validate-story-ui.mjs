@@ -299,8 +299,24 @@ assert.doesNotMatch(nodes.get('quest-description').textContent,/武当/);
 ui.engine.s.enemies[0].hp=0;ui.engine.markSkirmishDefeat(ui.engine.s.enemies[0]);ui.updateUi();
 assert.match(nodes.get('quest-description').textContent,/村中解围.*1 \/ 36/);checks++;
 
+// Manor answers have no deferred aftermath text: both must be saved at the
+// click, before any doorway travel or consequence animation can begin.
+for(const answer of [0,1]){
+ preset('e09');ui.engine.s.phase='choice';Object.assign(ui.engine.s.flags,{evilManorFirstWoke:true,evilManorNightStarted:true,staged_e09:true,evil:9});ui.engine.s.affection.mei=4;
+ const money=ui.engine.s.coins,xp=ui.engine.s.hero.exp;ui.showChoice();nodes.get('choices').children[answer].click();
+ const raw=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(raw.questId,answer===0?'e09_room_talk':'e09_part');assert.equal(raw.choices.e09,answer);
+ assert.equal(raw.flags.evil,9+(answer===0?2:-1));assert.equal(raw.affection.mei,4+(answer===0?1:0));assert.equal(raw.coins,money);assert.equal(raw.hero.exp,xp);
+ const restored=new core.GameEngine(core.restoreState(raw));assert.equal(restored.choose(answer),false);assert.equal(restored.s.flags.evil,raw.flags.evil);assert.equal(restored.s.affection.mei,raw.affection.mei);checks++;
+}
+// The real residentDialogue UI finishes without invoking the current teaching
+// objective, issuing rewards or making the resident follow the player.
+preset('e10_teaching');ui.engine.s.map='m50';ui.engine.s.phase='travel';Object.assign(ui.engine.s.flags,{evilManorNightStarted:true,evilManorNightComplete:true,evilMeiStaysAtManor:true,staged_e09_morning:true,companion:null});
+const resident=ui.engine.markers.find(marker=>marker.name==='月眉儿');assert.ok(resident?.dialogue?.length);Object.assign(ui.engine.s.hero,{x:resident.x,y:resident.y});
+const beforeResident=JSON.stringify(ui.engine.s);assert.equal(ui.engine.interact(resident),true);assert.equal(nodes.get('dialogue').hidden,false);
+assert.deepEqual(drain(),resident.dialogue.map(line=>line[1]));assert.equal(JSON.stringify(ui.engine.s),beforeResident);assert.equal(ui.engine.paused,false);assert.equal(ui.engine.companion,null);checks++;
+
 console.log(JSON.stringify({result:'PASS',checks,
-  covered:['岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
+  covered:['山庄两答复立即保存与留庄闲谈无副作用','岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 

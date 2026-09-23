@@ -1,3 +1,4 @@
+import {migrateManorNight} from './manor-night-migration.mjs';
 import {migrateEvilDocks} from './evil-docks-migration.mjs';
 import {restorePursuit,pursuitMethods} from './pursuit-runtime.mjs';
 import { getScene, getStagingScene } from './world.mjs';
@@ -5,14 +6,14 @@ import {restoreStaging,restoreStagedHandovers,stagingMethods,hasStagingBranch} f
 import {restoreSkirmish,skirmishMethods} from './skirmish-runtime.mjs';
 import {recruitmentMethods} from './recruitment-runtime.mjs';
 import {exitsFor,shortestRoute} from './routes.mjs';
-import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS } from './campaign.mjs';
+import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS, REVISION_EIGHT_QUEST_IDS } from './campaign.mjs';
 export { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS };
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const distance=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
 const copy=o=>JSON.parse(JSON.stringify(o));
-export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:8,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
+export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:9,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
 export function restoreState(raw){
- if(raw&&!raw.questId&&raw.campaignRevision!==8){const ids=raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
+ if(raw&&!raw.questId&&raw.campaignRevision!==9){const ids=raw.campaignRevision===8?REVISION_EIGHT_QUEST_IDS:raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
  if(raw?.questId){const index=QUESTS.findIndex(q=>q.id===raw.questId);if(index<0)throw new Error('存档中的任务不在当前流程中');raw={...raw,quest:index};}
  if(!raw||raw.version!==3||!Number.isInteger(raw.quest)||!QUESTS[raw.quest]||!MAPS[raw.map]||!raw.hero)throw new Error('此存档不属于当前流程版本');
  const s=freshState(),h=raw.hero;
@@ -31,7 +32,7 @@ export function restoreState(raw){
  for(const k of Object.keys(s.affection))s.affection[k]=clamp(Number(raw.affection?.[k])||0,-99,99);
  for(const [key,value] of Object.entries(raw.flags||{}))if(/^[a-zA-Z][\w-]{0,50}$/.test(key)&&['string','number','boolean'].includes(typeof value))s.flags[key]=value;
  if((raw.campaignRevision||1)<3&&s.done.includes('g08_deliver'))s.flags.silverGrassDelivered=true;
- for(const [key,value] of Object.entries(raw.choices||{}))if(QUESTS.some(q=>q.id===key)&&Number.isInteger(value))s.choices[key]=clamp(value,0,10);
+ for(const [key,value] of Object.entries(raw.choices||{})){const q=QUESTS.find(q=>q.id===key);if(Number.isInteger(value)&&value>=0&&q?.choice?.options?.[value])s.choices[key]=value;}
  // Preserve historical progress as a legacy summary, without pretending the new scenes were played.
  if((raw.campaignRevision||1)<5&&s.flags.route==='evil'){
   const id=QUESTS[s.quest].id,passed=s.done.includes('e06')||s.quest>=QUESTS.findIndex(q=>q.id==='e07');
@@ -60,6 +61,7 @@ export function restoreState(raw){
   }
  }
  raw=migrateEvilDocks(raw,s,QUESTS,REVISION_SEVEN_QUEST_IDS,MAPS,getScene);
+ raw=migrateManorNight(raw,s,QUESTS,REVISION_EIGHT_QUEST_IDS,MAPS,getScene);
  s.collectedIds=Array.isArray(raw.collectedIds)?[...new Set(raw.collectedIds.filter(i=>Number.isInteger(i)&&i>=0&&i<(QUESTS[s.quest].count||1)))]:Array.from({length:Math.min(s.collected,QUESTS[s.quest].count||1)},(_,i)=>i);s.collected=s.collectedIds.length;
  if(QUESTS[s.quest].id==='e13'&&!s.flags.switch8){s.quest=QUESTS.findIndex(q=>q.id==='eTower6');s.collected=0;s.collectedIds=[];s.phase='travel';}
  s.ending=ENDINGS[raw.ending]?raw.ending:null;s.completed=!!s.ending;s.phase=s.completed?'complete':s.map!==QUESTS[s.quest].map?'travel':s.phase;
@@ -75,6 +77,8 @@ export function restoreState(raw){
  s.destination=MAPS[raw.destination]?raw.destination:null;
  const progress=raw.objectiveProgress;if(progress?.questId===QUESTS[s.quest].id&&['talk','search','return','after','choice','training','pursuit'].includes(progress.phase))s.objectiveProgress={questId:progress.questId,phase:progress.phase,collectedIds:Array.isArray(progress.collectedIds)?[...new Set(progress.collectedIds.filter(i=>Number.isInteger(i)&&i>=0&&i<(QUESTS[s.quest].count||1)))]:[]};
  if(s.objectiveProgress?.phase==='pursuit'&&!s.pursuit)s.objectiveProgress.phase='talk';
+ // A pending answer cannot be completed by restoring an obsolete after phase.
+ if(QUESTS[s.quest].id==='e09'&&!Object.hasOwn(s.choices,'e09')&&!s.flags.evilManorDecision){const phase=s.flags.staged_e09||s.flags.evilLegacyManorPrelude?'choice':'talk';if(s.phase==='after')s.phase=phase;if(s.objectiveProgress?.phase==='after')s.objectiveProgress.phase=phase;}
  if(s.phase==='battle'||s.phase==='escape'||(['search','return'].includes(s.phase)&&QUESTS[s.quest].timeLimit)){s.phase='talk';s.collected=0;s.collectedIds=[];}
  restoreSkirmish(raw,QUESTS[s.quest],s);
  if(s.skirmish)s.cooldowns=SKILLS.map((skill,id)=>clamp(Number(raw.cooldowns?.[id])||0,0,skill?.cooldown||0));
@@ -90,12 +94,14 @@ export class GameEngine{
  ensureTraining(){if(!this.q.training)return null;if(this.s.training?.questId!==this.q.id)this.s.training={questId:this.q.id,defeated:[],active:null,master:false};return this.s.training;}
  trainingName(index){return Number.isInteger(index)?'武当弟子·'+(this.q.training?.names?.[index]||String(index+1)):'武当弟子';}
  get region(){return MAPS[this.s.map];}
+ hasReachedQuest(id){const index=QUESTS.findIndex(q=>q.id===id);return index>=0&&(this.s.quest>=index||this.s.done.includes(id));}
  get scene(){
   const dream=this.stagingScene();if(dream)return dream;
   let scene=getScene(this.s.map,this.region);
   if(scene.mechanism?.closedFootprint&&!this.s.flags.evilGateOpened&&!this.s.sequence?.cues.gateOpen)scene={...scene,obstacles:[...scene.obstacles,scene.mechanism.closedFootprint]};
   // Keep the newly staged island return in daylight without changing earlier visits.
   if(this.s.map==='m40'&&this.s.flags.evilIslandCleared&&['e08_departure','e08'].includes(this.q.id))scene={...scene,atmosphere:{...scene.atmosphere,light:'day'}};
+  if(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')){const morning=this.s.flags.evilManorNightComplete||this.s.flags.evilLegacyManorNight||this.s.sequence?.cues.manorDaybreak;scene={...scene,atmosphere:{...scene.atmosphere,light:morning?'day':'night'}};}
   if(this.s.map!==this.q.map)return scene;
   const title=this.q.title,night=this.q.sceneLight==='night'||/夜/.test(title)||(this.q.choiceAfterDark&&this.s.phase==='choice'),rain=/雨/.test(title);
   return night||rain?{...scene,atmosphere:{...scene.atmosphere,light:night?'night':scene.atmosphere.light,weather:rain?'rain':scene.atmosphere.weather}}:scene;
@@ -103,7 +109,7 @@ export class GameEngine{
  stagingScene(){const sequence=this.s.sequence,definition=this.stagingDefinition();return this.s.phase==='staging'&&definition?.sceneKeys?.includes(sequence?.sceneKey)?getStagingScene(sequence.sceneKey):null;}
  get chapter(){const m=this.region,q=this.q;return {...m,name:q.title,number:q.act,banner:m.name,place:m.name+' · '+m.area,quest:q.title,npc:q.npc||'江湖纪事',npcX:q.x??this.scene.objective.x,npcY:q.y??this.scene.objective.y,sprite:q.sprite||0,enemies:q.count||3,enemyName:q.enemy||'敌方武人'};}
  get npc(){return this.markers.find(m=>m.main)||this.markers[0]||{x:1000,y:600,name:'江湖路',sprite:0,kind:'travel'};}
- get companion(){const mainName=this.s.phase==='choice'?(this.q.choiceSpeaker||this.q.npc):this.q.npc,hasMainActor=this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===this.s.flags.companion;return !this.scene.hidePlayer&&!hasMainActor&&!this.q.hideCompanion&&!(this.stagingPresentation()?.actors||[]).some(actor=>actor.name===this.s.flags.companion)&&this.s.flags.companion&&!this.s.completed&&this.s.flags.companion!==this.q.playAs?{x:this.followPosition.x,y:this.followPosition.y,name:this.s.flags.companion,sprite:['紫轩','月眉儿'].includes(this.s.flags.companion)?2:1,direction:this.s.hero.direction}:null;}
+ get companion(){const mainName=this.s.phase==='choice'?(this.q.choiceSpeaker||this.q.npc):this.q.npc,hasMainActor=this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===this.s.flags.companion;return !this.scene.hidePlayer&&!hasMainActor&&!this.q.hideCompanion&&!(this.stagingPresentation()?.actors||[]).some(actor=>actor.name===this.s.flags.companion&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest)))&&this.s.flags.companion&&!this.s.completed&&this.s.flags.companion!==this.q.playAs?{x:this.followPosition.x,y:this.followPosition.y,name:this.s.flags.companion,sprite:['紫轩','月眉儿'].includes(this.s.flags.companion)?2:1,direction:this.s.hero.direction}:null;}
  get searchPoints(){
   const defaults=[[1120,640],[680,760],[1270,850],[840,565],[440,580],[970,830],[620,540],[1220,480],[360,790],[1030,690],[780,890],[1330,730]];
   return Array.from({length:this.q.count||1},(_,index)=>{
@@ -144,7 +150,7 @@ export class GameEngine{
   }
   list.push(...stagedActors.filter(actor=>!list.some(marker=>marker.name===actor.name)));
   if(!['battle','staging'].includes(this.s.phase)){
-   if(this.region.shop)list.push({id:'shop',kind:'shop',x:650,y:650,name:'行脚商人',sprite:0});
+   if(this.region.shop&&!(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')))list.push({id:'shop',kind:'shop',x:650,y:650,name:'行脚商人',sprite:0});
    for(const exit of this.exits()){const portal=scene.portals?.[exit.to];if(portal)list.push({...exit,...portal.exit,kind:'travel',name:exit.locked?'暂未通行 · '+MAPS[exit.to].name:(exit.travelLabel||'前往 '+MAPS[exit.to].name),sprite:null,main:!exit.locked&&exit.to===this.routeTo(this.s.destination||q.map)[1]});}
    for(const side of SIDE_QUESTS.filter(q=>q.map===this.s.map&&!this.s.sideDone.includes(q.id)))list.push({id:side.id,kind:'side',x:side.x||570,y:side.y||780,name:side.npc,sprite:side.sprite??null});
    for(const point of scene.points)list.push({...point,sprite:null,main:false,opened:this.s.opened.includes(this.s.map+':'+point.id)});
@@ -224,7 +230,7 @@ export class GameEngine{
   if(distance(this.s.hero,m)>135){if(this.approach(m))this.autoInteract=m.id;else this.emit('toast',{text:'这里暂时走不过去，请从另一侧接近。'});return false;}
   this.autoInteract=null;this.target=null;this.waypoints=[];
   if(m.kind==='pursuit'&&this.s.phase==='pursuit')return this.followPursuit();
-  if(m.kind==='stagingActor'){if(this.canStartStaging())return this.startStaging();this.emit('toast',{text:'此刻没有新的交谈。'});return false;}
+  if(m.kind==='stagingActor'){if(this.canStartStaging())return this.startStaging();if(m.dialogue?.length){this.emit('residentDialogue',{lines:m.dialogue});return true;}this.emit('toast',{text:'此刻没有新的交谈。'});return false;}
   if(m.kind==='training'){if(this.ensureTraining()?.defeated.includes(m.opponentIndex)){this.emit('toast',{text:'这一场已经切磋过了，请另择对手。'});return false;}return this.challengeTraining(m.opponentIndex);}
   if(m.kind==='master')return this.challengeTraining(null);
   if(m.kind==='trainingObserver'){this.emit('toast',{text:'先与五名不同的弟子切磋，再来请教张惟宜。'});return false;}
@@ -268,7 +274,7 @@ export class GameEngine{
  }
  applyEffects(effects={}){for(const [k,v] of Object.entries(effects.flags||{}))this.s.flags[k]=v;for(const [k,v] of Object.entries(effects.affection||{}))if(k in this.s.affection)this.s.affection[k]+=v;this.s.flags.moral+=(effects.moral||0);this.s.flags.evil+=(effects.evil||0);for(const id of effects.skills||[])this.unlock(id);for(const [id,count] of Object.entries(effects.items||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(0,(this.s.inventory[id]||0)+count);if(effects.companion!==undefined)this.s.flags.companion=effects.companion;if(effects.recover===true&&!this.s.failure&&!this.s.skirmish?.failed){this.s.hero.hp=this.s.hero.maxHp;this.s.hero.mp=this.s.hero.maxMp;this.s.hero.stamina=100;}}
  puzzleCorrect(index){const p=this.q.switchPuzzle;return !!p&&index===((this.s.flags.evil||0)>=p.evilThreshold?p.highCorrectIndex:p.lowCorrectIndex);}
- choose(index){if(this.s.failure||this.s.skirmish?.failed||this.s.done.includes(this.q.id)||!this.requireQuestFlags())return false;const options=this.q.choice?.options;if(this.s.phase!=='choice'||!options||!Number.isInteger(index)||!options[index])return false;const choice=options[index],puzzle=this.q.switchPuzzle;
+ choose(index){if(this.q.id==='e09'&&Object.hasOwn(this.s.choices,'e09'))return false;if(this.s.failure||this.s.skirmish?.failed||this.s.done.includes(this.q.id)||!this.requireQuestFlags())return false;if(this.q.requireStaging&&!this.s.flags['staged_'+this.q.id]&&!this.s.flags[this.q.legacyStagingFlag])return false;const options=this.q.choice?.options;if(this.s.phase!=='choice'||!options||!Number.isInteger(index)||!options[index])return false;const choice=options[index],puzzle=this.q.switchPuzzle;
   if(puzzle){
    if(this.puzzleCorrect(index)){this.s.flags[puzzle.successFlag]=true;this.s.choices[this.q.id]=index;this.completeQuest();}
    else{this.s.claimedRewards=[...new Set([...(this.s.claimedRewards||[]),...this.s.done])];for(const key of puzzle.resetFlags)this.s.flags[key]=false;this.s.done=this.s.done.filter(id=>!/^eSwitch[1-8]$/.test(id));this.s.quest=QUESTS.findIndex(q=>q.id===puzzle.retryQuestId);this.s.phase=this.s.map===this.q.map?'talk':'travel';this.s.collected=0;this.s.collectedIds=[];this.target=null;this.waypoints=[];this.autoInteract=null;this.emit('quest');}
@@ -276,7 +282,7 @@ export class GameEngine{
   }
   this.s.choices[this.q.id]=index;if(this.resolveRefusal(index))return true;this.applyEffects(choice.effects);if(this.q.repeatRefusal&&index===1){this.s.flags.refusals=(this.s.flags.refusals||0)+1;if(this.s.flags.refusals<4){this.emit('choice');return true;}this.s.flags.forsake=true;}if(choice.ending){this.finish(choice.ending);return true;}if(this.q.choiceBeforeObjective){this.beginObjective();return true;}this.completeQuest();return true;}
  completeQuest(){
-  if(this.s.failure||this.s.skirmish?.failed||this.s.completed||this.s.sequence||this.s.map!==this.q.map)return;const q=this.q;if(q.pursuit&&(!this.s.pursuit?.finished||this.s.pursuit.questId!==q.id||this.s.phase!=='pursuit'))return;if(q.skirmish&&(!this.s.skirmish?.finished||this.s.phase!=='after'))return;if(q.refusalRule&&(this.s.phase!=='choice'||!Object.hasOwn(this.s.choices,q.id)||(this.s.choices[q.id]===(q.refusalRule.refuseIndex??1)&&this.refusalCount()<q.refusalRule.limit)))return;if(q.requireStaging&&!this.s.flags['staged_'+q.id]&&!this.s.flags[q.legacyStagingFlag]&&!this.s.done.includes(q.id))return;if(!this.requireQuestItems()||(!this.s.claimedRewards?.includes(q.id)&&!this.requireItems(this.outstandingItems(q.consumeItems))))return;if(q.training&&this.s.phase!=='after'){this.emit('toast',{text:'本次试剑尚未结束。'});return;}if(!this.requireQuestFlags())return;if(this.s.done.includes(q.id))return;this.s.done.push(q.id);const claimed=this.s.claimedRewards??=[];const firstReward=!claimed.includes(q.id);if(firstReward){claimed.push(q.id);for(const [id,count] of Object.entries(this.outstandingItems(q.consumeItems)))this.s.inventory[id]-=count;this.applyEffects(q.rewards);for(const [id,count] of Object.entries(q.ensureItems||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(this.s.inventory[id]||0,count);this.gainExp(q.xp??65);this.s.coins+=q.money??15;if(!q.suppressBattleSupplies&&(q.type==='battle'||q.type==='boss')){this.s.potions++;this.s.elixirs++;}}else{for(const [key,value] of Object.entries(q.rewards?.flags||{}))this.s.flags[key]=value;}
+  if(this.s.failure||this.s.skirmish?.failed||this.s.completed||this.s.sequence||this.s.map!==this.q.map)return;const q=this.q;if(q.id==='e09'){const answer=this.s.choices.e09;if(!this.s.flags.evilManorDecision||![0,1].includes(answer)||this.s.flags.evilMeiEscorted!==(answer===0)||this.s.flags.evilMeiAlone!==(answer===1))return;}if(q.pursuit&&(!this.s.pursuit?.finished||this.s.pursuit.questId!==q.id||this.s.phase!=='pursuit'))return;if(q.skirmish&&(!this.s.skirmish?.finished||this.s.phase!=='after'))return;if(q.refusalRule&&(this.s.phase!=='choice'||!Object.hasOwn(this.s.choices,q.id)||(this.s.choices[q.id]===(q.refusalRule.refuseIndex??1)&&this.refusalCount()<q.refusalRule.limit)))return;if(q.requireStaging&&!this.s.flags['staged_'+q.id]&&!this.s.flags[q.legacyStagingFlag]&&!this.s.done.includes(q.id))return;if(!this.requireQuestItems()||(!this.s.claimedRewards?.includes(q.id)&&!this.requireItems(this.outstandingItems(q.consumeItems))))return;if(q.training&&this.s.phase!=='after'){this.emit('toast',{text:'本次试剑尚未结束。'});return;}if(!this.requireQuestFlags())return;if(this.s.done.includes(q.id))return;this.s.done.push(q.id);const claimed=this.s.claimedRewards??=[];const firstReward=!claimed.includes(q.id);if(firstReward){claimed.push(q.id);for(const [id,count] of Object.entries(this.outstandingItems(q.consumeItems)))this.s.inventory[id]-=count;this.applyEffects(q.rewards);for(const [id,count] of Object.entries(q.ensureItems||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(this.s.inventory[id]||0,count);this.gainExp(q.xp??65);this.s.coins+=q.money??15;if(!q.suppressBattleSupplies&&(q.type==='battle'||q.type==='boss')){this.s.potions++;this.s.elixirs++;}}else{for(const [key,value] of Object.entries(q.rewards?.flags||{}))this.s.flags[key]=value;}
   if(q.setRoute){const affection=Object.values(this.s.affection).reduce((a,b)=>a+b,0);this.s.flags.route=affection>=2||(affection>=0&&this.s.flags.moral>=0)?'good':'evil';this.s.flags.companion=this.s.flags.route==='evil'?null:'纳兰真';}
   if(q.endingId){this.finish(q.endingId);return;}if(q.ending){this.finish(chooseEnding(this.s));return;}
   this.s.objectiveProgress=null;this.s.pursuit=null;this._pursuitPath=null;this._pursuitFollow=false;this.s.destination=null;this.s.allies=[];this.s.skirmish=null;this.s.quest++;while(QUESTS[this.s.quest]&&((QUESTS[this.s.quest].when&&!this.matches(QUESTS[this.s.quest].when))||this.s.done.includes(QUESTS[this.s.quest].id))){this.s.quest++;}

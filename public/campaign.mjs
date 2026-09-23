@@ -1,3 +1,4 @@
+import {MANOR_NIGHT_REVISIONS,MANOR_NIGHT_ADDITIONS} from './manor-night-revisions.mjs';
 import {EVIL_DOCKS_REVISIONS,EVIL_DOCKS_ADDITIONS} from './evil-docks-revisions.mjs';
 import {FORBIDDEN_REVISIONS,FORBIDDEN_ADDITIONS} from './forbidden-revisions.mjs';
 import {EVIL_DUNGEON_REVISIONS,EVIL_DUNGEON_ADDITIONS} from './evil-dungeon-revisions.mjs';
@@ -57,3 +58,7 @@ Object.assign(QUESTS.find(q=>q.id==='e06_night_visit'),{map:'r_zhen_chamber',obj
 export const REVISION_SEVEN_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const q of QUESTS)Object.assign(q,EVIL_DOCKS_REVISIONS[q.id]||{});
 for(const insertion of EVIL_DOCKS_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown evil-docks insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+export const REVISION_EIGHT_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,MANOR_NIGHT_REVISIONS[q.id]||{});
+for(const insertion of MANOR_NIGHT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown manor-night insertion');QUESTS.splice(index,0,...insertion.quests);}
