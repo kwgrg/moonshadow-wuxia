@@ -86,6 +86,31 @@ function solid(scene, object, rectangle) {
 
 function handcrafted(scene) {
   switch (scene.id) {
+    case 'm52':
+      scene.title='天池';scene.kind='shore';scene.art='tianchi-islet';scene.fallbackArt='snow';scene.ground=palettes.shore;
+      scene.atmosphere={light:'day',weather:'snow',indoor:false,particles:'dust'};scene.objective={x:1180,y:390};scene.drawRoads=false;
+      scene.jumps=[{id:'tianchi-gap',a:{x:550,y:550},b:{x:920,y:450},name:'跃过湖水'}];
+      scene.points=[point('tianchi-snow-bank','岸边积雪',430,580,'积雪止于岩岸，前方的深水将岸边与湖心雪地隔开。',{appearance:'trace',paintOnly:true}),point('tianchi-islet-view','湖心雪地',1260,460,'岛上只有风吹过积雪的声音，来时的岸边隔水可望。',{appearance:'trace',paintOnly:true})];return true;
+    case 'm51':
+      scene.title='落叶谷';scene.kind='garden';scene.art='leaf-courtyard';scene.ground=palettes.garden;
+      scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};scene.objective={x:850,y:505};scene.drawRoads=false;
+      scene.points=[point('leaf-court-stones','庭中石路',650,680,'石路在四间客房之前汇成宽院，山风沿檐角穿过。',{appearance:'trace',paintOnly:true}),point('leaf-court-maples','阶旁枫影',990,755,'枫影从庭边落到石阶上，来时的谷路仍在下方。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_leaf_rose_room':
+      scene.title='落叶谷蔷薇房间';scene.kind='room';scene.art='leaf-rose-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:950,y:550};scene.drawRoads=false;
+      scene.points=[point('leaf-rose-rug','榻前织毯',755,570,'织毯铺在床前，行走的空处一直留到房门。',{appearance:'trace',paintOnly:true}),point('leaf-rose-desk','书案旁',1080,575,'纸窗映亮案边的木纹，搁好的笔墨没有挪动。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_leaf_mei_room':
+      scene.title='落叶谷眉儿病房';scene.kind='room';scene.art='leaf-infirmary';scene.ground=palettes.room;
+      scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:950,y:640};scene.drawRoads=false;
+      scene.points=[point('leaf-mei-bedside','病榻前',1090,610,'榻前留着照料伤者的空地，杯盏收在近旁木柜上。',{appearance:'trace',paintOnly:true}),point('leaf-mei-window','窗下清光',535,535,'日光透过窗格，安静地落在桌边的地板上。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_leaf_zhen_room':
+      scene.title='落叶谷真儿客房';scene.kind='room';scene.art='beimo-mei-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:805,y:490};scene.drawRoads=false;
+      scene.points=[point('leaf-zhen-tea','茶桌旁',590,470,'一壶清茶放在桌边，来人沿空出的木地板走到床帘前。',{appearance:'trace',paintOnly:true}),point('leaf-zhen-window','纸窗微光',1070,535,'窗纸透进柔和的光，隔壁院中的脚步声清晰可闻。',{appearance:'trace',paintOnly:true})];return true;
+    case 'r_leaf_hero_room':
+      scene.title='落叶谷影枫客房';scene.kind='room';scene.art='beimo-hero-room';scene.ground=palettes.room;
+      scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};scene.objective={x:620,y:450};scene.drawRoads=false;
+      scene.points=[point('leaf-hero-bedside','床边木地板',640,425,'床边留着供人起身的空处，外衣挂在近旁木架上。',{appearance:'trace',paintOnly:true}),point('leaf-hero-desk','窗边书案',1130,515,'案上的纸笔收得整齐，透过纸窗只能看见模糊的院影。',{appearance:'trace',paintOnly:true})];return true;
     case 'm50':
       scene.title='悲魔山庄后花园';scene.kind='garden';scene.art='beimo-garden-day';scene.ground=palettes.garden;
       scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};scene.objective={x:780,y:680};scene.drawRoads=false;
@@ -357,7 +382,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room'];
+export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -411,6 +436,9 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'leaf-courtyard':{bounds:[20,235,1520,1024],polygon:[[160,300],[280,300],[315,365],[340,335],[365,245],[465,245],[500,305],[615,285],[980,285],[1065,245],[1195,245],[1230,335],[1270,325],[1380,340],[1395,430],[1500,440],[1520,440],[1520,600],[1445,630],[1455,700],[1340,760],[1170,790],[1040,800],[995,850],[995,1024],[600,1024],[600,850],[520,810],[360,805],[245,745],[205,680],[160,630],[40,610],[20,590],[20,475],[120,450],[190,435],[150,385]],spawn:{x:800,y:800},exit:{x:800,y:945},solids:[[170,540,285,625],[1270,540,1420,625],[535,180,1045,315]]},
+    'leaf-rose-room':{bounds:[80,270,1480,1024],polygon:[[720,310],[845,295],[1070,335],[1120,470],[1310,495],[1450,520],[1440,715],[1340,840],[1280,930],[1030,930],[1000,1024],[450,1024],[450,900],[340,850],[260,790],[140,740],[95,560],[110,485],[215,505],[330,485],[690,520]],spawn:{x:750,y:815},exit:{x:750,y:955},solids:[[180,100,720,440],[250,380,610,475],[80,280,250,515],[1120,170,1460,425],[1190,315,1330,495]]},
+    'leaf-infirmary':{bounds:[120,240,1440,985],polygon:[[455,280],[770,250],[865,265],[920,300],[910,485],[1150,560],[1290,580],[1360,650],[1380,790],[1150,830],[1050,860],[1040,980],[680,980],[635,850],[380,865],[300,745],[180,655],[130,570],[160,470],[430,510]],spawn:{x:820,y:810},exit:{x:820,y:935},solids:[[120,270,420,500],[900,170,1390,525],[470,160,780,270],[1290,405,1445,600]]},
     'beimo-garden-day':{bounds:[80,245,1380,1020],polygon:[[350,280],[485,260],[515,310],[630,330],[770,310],[875,300],[1000,320],[1080,260],[1190,260],[1240,340],[1290,365],[1310,455],[1245,525],[1220,630],[1260,680],[1190,760],[1110,845],[1040,940],[950,1000],[830,920],[720,850],[600,765],[480,690],[365,610],[245,540],[125,465],[80,400],[190,390],[325,350]],spawn:{x:555,y:565},exit:{x:385,y:540},solids:[[500,220,630,310],[760,205,1030,290],[1240,745,1380,1020]]},
     'beimo-hero-room':{bounds:[130,235,1440,980],polygon:[[610,260],[1170,250],[1230,330],[1180,500],[1340,520],[1380,650],[1400,800],[1190,800],[1160,970],[310,970],[285,795],[150,785],[135,610],[210,520],[220,450],[420,440],[590,410]],spawn:{x:760,y:810},exit:{x:760,y:935},solids:[[155,95,610,380],[225,325,430,405],[1200,160,1440,450]]},
     'beimo-mei-room':{bounds:[150,230,1400,980],polygon:[[550,250],[940,235],[1010,280],[1000,420],[1190,440],[1280,520],[1380,570],[1370,710],[1220,770],[1200,860],[1020,880],[1000,980],[570,980],[535,895],[375,865],[275,795],[210,700],[155,610],[160,440],[550,440]],spawn:{x:780,y:810},exit:{x:780,y:935},solids:[[200,200,530,420],[1000,90,1380,400],[1240,350,1370,505]]},
@@ -424,6 +452,13 @@ function alignPaintedGround(scene){
     'forbidden-chamber':{bounds:[180,300,1420,950],polygon:[[340,345],[200,610],[400,850],[650,948],[800,948],[1110,905],[1400,700],[1300,390],[1200,340]],spawn:{x:725,y:805},exit:{x:725,y:930},solids:[[927,330,1060,390]]}
   };
   for(const [key,definition] of Object.entries(paintedFloors))masks[key]={bounds:definition.bounds,spawn:definition.spawn,exit:definition.exit,edges:[...outsideFloor(definition.polygon,definition.bounds),...definition.solids]};
+  // Two disconnected painted platforms. Each footprint is authored from this
+  // generated image; the full-height middle water strip cannot be walked/dashed.
+  masks['tianchi-islet']={bounds:[140,285,1460,880],spawn:{x:350,y:680},exit:{x:200,y:770},edges:[
+    ...outsideFloor([[190,520],[330,510],[480,535],[580,520],[610,550],[565,610],[575,685],[550,720],[470,740],[425,785],[300,790],[220,835],[180,825],[150,745],[185,690],[170,635]],[140,480,640,880]),
+    ...outsideFloor([[1010,330],[1150,305],[1305,315],[1355,360],[1440,375],[1440,480],[1360,520],[1180,555],[1060,520],[960,500],[890,505],[840,480],[910,420],[930,370]],[830,285,1460,580]),
+    [140,285,640,480],[640,285,830,880],[830,580,1460,880]
+  ]};
   const mask=masks[scene.maskArt||scene.art];
   if(!mask)return;
   scene.bounds=mask.bounds.slice();scene.spawn={...mask.spawn};scene.exit={...mask.exit};
@@ -519,7 +554,7 @@ function alignPaintedGround(scene){
   }
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
-  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(scene.id)){
+  if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','m52'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
   const open=(x,y)=>x>=scene.bounds[0]+12&&x<=scene.bounds[2]-12&&y>=scene.bounds[1]+12&&y<=scene.bounds[3]-12&&!scene.obstacles.some(r=>x>r[0]-12&&x<r[2]+12&&y>r[1]-12&&y<r[3]+12);
@@ -547,6 +582,12 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ m52:{m51:[[200,770],[350,680]]},
+ m51:{r_leaf_hero_room:[[215,325],[335,445]],r_leaf_zhen_room:[[425,275],[520,425]],r_leaf_rose_room:[[1130,285],[1070,430]],r_leaf_mei_room:[[1340,365],[1230,500]],m49:[[800,945],[800,800]],m52:[[1460,560],[1370,685]],m23:[[100,535],[335,675]]},
+ r_leaf_hero_room:{m51:[[760,935],[760,810]]},
+ r_leaf_zhen_room:{m51:[[780,935],[780,810]]},
+ r_leaf_mei_room:{m51:[[820,935],[820,810]]},
+ r_leaf_rose_room:{m51:[[750,955],[750,815]]},
  m49:{m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]]},
  m50:{m49:[[385,540],[555,565]],r_beimo_hero_room:[[425,295],[535,430]],r_beimo_mei_room:[[1120,315],[1060,440]],m16:[[1020,885],[950,780]],m51:[[780,865],[785,745]]},
  r_beimo_hero_room:{m50:[[760,935],[760,810]]},

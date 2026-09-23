@@ -67,7 +67,14 @@ const legacy=state('e08',{evilLegacyIslandPassage:true});assert.deepEqual(shorte
 assert.deepEqual(shortestRoute('r_mainland_dock','m41',state('e09',{evilLegacyZixuanOutcome:true}),QUESTS),['r_mainland_dock','m41']);
 assert.ok(shortestRoute('m40','m41',{quest:QUESTS.length,flags:{route:'good'}},QUESTS).length,'good route historical travel is preserved');
 const out=exitsFor('m40',sailed,QUESTS).find(exit=>exit.to==='r_mainland_dock'),back=exitsFor('r_mainland_dock',sailed,QUESTS).find(exit=>exit.to==='m40');assert.equal(out.transport,'boat');assert.equal(out.travelLabel,'乘船前往中原码头');assert.equal(back.travelLabel,'乘船返回忘忧岛渡口');
-for(const id of ['r_island_village','r_mainland_dock'])assert.ok(!routeEdges({quest:QUESTS.length,flags:{route:'good'}},QUESTS).some(edge=>edge.from===id||edge.to===id),'evil island scenes do not leak into the good itinerary');
+// The mainland dock is now also used by the good-route care return. The island
+// bandit village remains evil-only, and the good voyage keeps its own gates.
+assert.ok(!routeEdges({quest:QUESTS.length,flags:{route:'good'}},QUESTS).some(edge=>edge.from==='r_island_village'||edge.to==='r_island_village'),'evil island village does not leak into the good itinerary');
+const goodCare={quest:index('g06_confide'),flags:{route:'good',valleyCareStarted:true,valleyCareRefused:true,valleyCareConsidered:false}};
+assert.deepEqual(shortestRoute('m51','r_mainland_dock',goodCare,QUESTS),[],'shared dock cannot skip the care loop');
+const goodVoyage={quest:index('g07_island'),flags:{route:'good',valleyMeiAwake:true,valleyCareBoarded:true}};
+assert.deepEqual(shortestRoute('r_mainland_dock','m40',goodVoyage,QUESTS),['r_mainland_dock','m40']);
+assert.equal(exitsFor('r_mainland_dock',goodVoyage,QUESTS).find(exit=>exit.to==='m40').transport,'boat');
 // Walk the real engine across each adjacent scene after its prerequisite has
 // been earned; this catches valid graph edges with disconnected portal feet.
 function walkLeg(from,to,id,flags,expected){

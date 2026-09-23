@@ -61,7 +61,7 @@ function stage(game,observe=()=>{},onDialogue=()=>{}){
  assert.deepEqual(budget(g),baseline);assert.deepEqual(scores(g),score);return g;
 }
 
-assert.equal(freshState().campaignRevision,9);
+assert.equal(freshState().campaignRevision,10);
 for(const id of manorIds){const q=QUESTS[index(id)];assert.equal(q.xp,0);assert.equal(q.money,0);assert.ok(q.requireStaging);}
 if(!migrationOnly){
 let g=create('e09_report');const initial=lastingBudget(g);g.s.map='m41';g.s.visited=['m41'];
@@ -170,7 +170,7 @@ function preserved(restored,raw){
  // Resource comparisons do not resolve a historical numerical quest index.
  assert.deepEqual(budget(restored),budget({s:raw}));assert.deepEqual(scores(restored),scores({s:raw}));
  assert.deepEqual(restored.s.done,raw.done);assert.deepEqual(restored.s.claimedRewards,raw.claimedRewards||raw.done);
- assert.equal(restored.s.campaignRevision,9);
+ assert.equal(restored.s.campaignRevision,10);
  for(const id of addedIds){assert.ok(!restored.s.done.includes(id));assert.ok(!restored.s.claimedRewards.includes(id));assert.ok(!restored.s.flags['staged_'+id]);}
  assert.equal(restored.s.sequence,null);assert.equal(restored.s.skirmish,null);
  const again=reload(restored);assert.deepEqual(budget(again),budget(restored));assert.deepEqual(scores(again),scores(restored));assert.equal(again.q.id,restored.q.id);assert.deepEqual(again.s.done,restored.s.done);

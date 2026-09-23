@@ -1,3 +1,4 @@
+import {VALLEY_CARE_REVISIONS,VALLEY_CARE_ADDITIONS} from './valley-care-revisions.mjs';
 import {MANOR_NIGHT_REVISIONS,MANOR_NIGHT_ADDITIONS} from './manor-night-revisions.mjs';
 import {EVIL_DOCKS_REVISIONS,EVIL_DOCKS_ADDITIONS} from './evil-docks-revisions.mjs';
 import {FORBIDDEN_REVISIONS,FORBIDDEN_ADDITIONS} from './forbidden-revisions.mjs';
@@ -62,3 +63,11 @@ for(const insertion of EVIL_DOCKS_ADDITIONS){const index=QUESTS.findIndex(q=>q.i
 export const REVISION_EIGHT_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const q of QUESTS)Object.assign(q,MANOR_NIGHT_REVISIONS[q.id]||{});
 for(const insertion of MANOR_NIGHT_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown manor-night insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+// Keep revision-nine cursor indices and enemy strength independent of new care scenes.
+export const REVISION_NINE_QUEST_IDS=QUESTS.map(q=>q.id);
+QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
+for(const q of QUESTS)Object.assign(q,VALLEY_CARE_REVISIONS[q.id]||{});
+for(const insertion of VALLEY_CARE_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw new Error('Unknown valley-care insertion');QUESTS.splice(index,0,...insertion.quests);}
+Object.assign(SIDE_QUESTS.find(q=>q.id==='side7'),{x:1310,y:450});
+const lakeHerb=QUESTS.find(q=>q.id==='b05');if(lakeHerb?.searchPoints?.[0])Object.assign(lakeHerb.searchPoints[0],{x:1180,y:505});

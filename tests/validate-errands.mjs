@@ -62,7 +62,7 @@ const rewardBefore={exp:duplicate.s.hero.exp,coins:duplicate.s.coins};duplicate.
 assert.equal(duplicate.s.skills[6],mastery);assert.deepEqual({exp:duplicate.s.hero.exp,coins:duplicate.s.coins},rewardBefore);
 
 // Collect in an arbitrary order. Save with eleven plants, reload, then finish.
-let herbs=create('g08');herbs.s.flags.companion='纳兰真';assert.equal(herbs.companion,null);herbs.beginObjective();assert.equal(herbs.s.phase,'search');
+let herbs=create('g08');herbs.s.flags.valleyCareSettled=true;herbs.s.flags.companion='纳兰真';assert.equal(herbs.companion,null);herbs.beginObjective();assert.equal(herbs.s.phase,'search');
 const order=[11,2,8,0,6,3,10,4,1,9,5,7];let firstMarker;
 for(const i of order.slice(0,11)){
  const marker=herbs.markers.find(m=>m.kind==='search'&&m.index===i);assert.ok(marker);if(!firstMarker)firstMarker=marker;collect(herbs,marker);

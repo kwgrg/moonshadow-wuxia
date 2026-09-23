@@ -32,14 +32,24 @@ for(const [id,region] of Object.entries(MAPS)){
  engine.s.map=id;engine.s.hero={...engine.s.hero,...scene.spawn};engine.s.phase='travel';
  assert.ok(engine.passable(scene.spawn.x,scene.spawn.y),`${id}: 出生点在障碍中`);
  for(const p of [scene.objective,scene.exit,...scene.points]){
-  engine.s.hero={...engine.s.hero,...scene.spawn};
-  assert.ok(engine.approach(p),`${id}: ${p.name||'主线/出口'} 无法接近`);
-  // Check every segment, so paths cannot silently cut through collision corners.
-  let previous={...scene.spawn};
-  for(const next of [engine.target,...engine.waypoints]){
-   assert.ok(engine.clearSegment(previous,next),`${id}: 路径穿过实心障碍`);previous=next;
+  engine.s.hero={...engine.s.hero,...scene.spawn,stamina:100};
+  let origin={...scene.spawn},last=origin,reached=false;
+  for(let leg=0;leg<=(scene.jumps?.length||0);leg++){
+   assert.ok(engine.approach(p),id+': '+(p.name||'主线/出口')+' 无法接近');
+   // Every walking segment remains collision-safe. A distant objective may
+   // require an explicit authored leap, never an inferred walking bridge.
+   last=origin;
+   for(const next of [engine.target,...engine.waypoints].filter(Boolean)){
+    assert.ok(engine.clearSegment(last,next),id+': 路径穿过实心障碍');last=next;
+   }
+   if(distance(last,p)<135){reached=true;break;}
+   const jump=(scene.jumps||[]).flatMap(def=>['a','b'].map(side=>({def,side,from:def[side]}))).find(({from})=>distance(last,from)<100);
+   assert.ok(jump,id+': 远处交互点没有可抵达的起跳岸');Object.assign(engine.s.hero,last);
+   assert.equal(engine.startJump(jump.def.id,jump.side),true,id+': 起跳需要满足实际距离与落点条件');
+   for(let tick=0;tick<30&&engine.jump;tick++)engine.tick(.05);
+   assert.equal(engine.jump,null,id+': 跳跃必须实际落地');assert.ok(engine.passable(engine.s.hero.x,engine.s.hero.y));origin={x:engine.s.hero.x,y:engine.s.hero.y};
   }
-  assert.ok(distance(previous,p)<135,`${id}: 交互点距离不足`);reachablePoints++;
+  assert.ok(reached,id+': 交互点距离不足');reachablePoints++;
  }
 }
 assert.ok(sceneSignatures.size>=20,'仅改名字或颜色不能算不同场景布局');
@@ -55,7 +65,8 @@ const saved=restoreState(JSON.parse(JSON.stringify({...chestGame.s,questId:chest
 assert.ok(saved.opened.includes(chestGame.s.map+':'+chest.id));
 
 // Search objects can be found in any order; saved progress identifies real objects.
-const searchGame=new GameEngine();searchGame.s.quest=QUESTS.findIndex(q=>q.type==='search'&&(q.count||1)>2);
+const searchGame=new GameEngine();searchGame.s.quest=QUESTS.findIndex(q=>q.id==='g08');
+Object.assign(searchGame.s.flags,{route:'good',valleyCareSettled:true});
 searchGame.s.map=searchGame.q.map;searchGame.beginObjective();
 const last=searchGame.markers.filter(m=>m.kind==='search').at(-1);
 searchGame.s.hero={...searchGame.s.hero,...searchGame.nearestOpen(last.x-35,last.y+25)};

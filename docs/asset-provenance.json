@@ -313,6 +313,54 @@
       ]
     },
     {
+      "path": "public/assets/leaf-courtyard.png",
+      "sha256": "dcb06d5687d04397cce2a50ae9dd9822a6f430b877528542ef9e4423e9f2f050",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/valley-care-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
+        "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
+      ]
+    },
+    {
+      "path": "public/assets/leaf-infirmary.png",
+      "sha256": "b3e3823d614b30c2849c202d2977007c3ae5c0990b13971a0456bd711c9f4c77",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/valley-care-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
+        "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
+      ]
+    },
+    {
+      "path": "public/assets/leaf-rose-room.png",
+      "sha256": "35901290975bf2902cb333111eea1a2af99318e5e22ecd88fd67554c5889438b",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/valley-care-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
+        "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
+      ]
+    },
+    {
       "path": "public/assets/mainland-dock.png",
       "sha256": "5afc723b8d03c7557c38f07dc5530d08708857d50871a72db008594efadd764b",
       "status": "documented",
@@ -405,6 +453,22 @@
       "referenceAssets": [],
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/tianchi-islet.png",
+      "sha256": "cabd4e81088a5078b622e0f029f8c61ca414adf3fe968380db9b3e9a14019a28",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/valley-care-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
+        "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
       ]
     },
     {

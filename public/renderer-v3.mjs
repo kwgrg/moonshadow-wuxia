@@ -18,7 +18,7 @@ export function npcCellFor(name){
   if(/老头|老者|老丈|长老|钓叟|纳兰潜凛|孟知秋/.test(n))return 3;
   if(/强盗|匪|刺客|黑衣|蒙面|叛众|帮凶|打手|伏兵|劫持者|追兵|守卫|塔卫|来犯|刀客/.test(n))return 6;
   if(/弟子|执事|铁云/.test(n))return 5;
-  if(/村民|路人|酒客|书生|乞丐|家丁|大夫|小叁子|李四/.test(n))return 4;
+  if(/村民|路人|酒客|书生|王炜|乞丐|家丁|大夫|小叁子|李四/.test(n))return 4;
   return null;
 }
 // Scene footprints drive collision; this renderer draws their visible objects.
@@ -254,9 +254,10 @@ export class Renderer {
     const c=this.ctx,sequence=this.e.s.sequence,step=sequence&&this.e.stagingPresentation?.()?.definition.steps[sequence.step];
     const rising=a.pose==='sit'&&step?.type==='pose'&&step.actor===a.id;
     let rise=a.pose==='sit'?1:0;if(rising)rise=clamp(sequence.elapsed/(step.duration||1),0,1);rise=rise*rise*(3-2*rise);
-    c.save();c.translate(a.x,a.y);
+    c.save();c.translate(a.renderAt?.x??a.x,a.renderAt?.y??a.y);c.scale(a.renderScale||1,a.renderScale||1);
     c.save();c.translate(-8-22*rise,-38+18*rise);c.rotate(-Math.PI/2*(1-rise));
-    if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,600,-26,-75,52,82);
+    if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-26,-75,52,82);
+    else if(this.assets.characters)c.drawImage(this.assets.characters,clamp(a.sprite||0,0,3)*384,0,384,600,-26,-75,52,82);
     c.restore();
     const quilt=c.createLinearGradient(0,-40,0,4);quilt.addColorStop(0,'#777886');quilt.addColorStop(.55,'#555d72');quilt.addColorStop(1,'#353d51');
     this.polygon([[-17-25*rise,-40+11*rise],[73,-29],[88,-7],[39,6],[-20-25*rise,-13]],quilt,'#a6a4a3',1);
@@ -348,13 +349,15 @@ export class Renderer {
   }
   drawActor(a,hero=false){
     if(a.hidden)return;
+    const poseStep=this.e.s.sequence&&this.e.stagingDefinition()?.steps[this.e.s.sequence.step];
+    if(a.renderAt&&a.pose==='stand'&&poseStep?.type==='pose'&&poseStep.actor===a.id){const t=clamp(this.e.s.sequence.elapsed/(poseStep.duration||1),0,1);a={...a,x:a.renderAt.x+(a.x-a.renderAt.x)*t,y:a.renderAt.y+(a.y-a.renderAt.y)*t};}
     if(a.pose==='fallen'){this.drawFallenActor(a);return;}
     if(hero&&a.pose==='sit'){this.drawSeatedHero(a);return;}
     if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:(a.npcCell??npcCellFor(a.name)),useNpcAtlas=npcCell!==null&&this.assets.npcs;
     const kneeling=a.pose==='kneel',c=this.ctx,height=kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=(hero?142:height)*384/1024;
-    const bob=hero&&this.e.walkTime?Math.sin(this.e.walkTime)*2:Math.sin(this.e.time*1.5+a.x)*.5,lift=hero&&this.e.dashTime>0?Math.sin(this.e.dashTime/.6*Math.PI)*27:0;
+    const bob=hero&&this.e.walkTime?Math.sin(this.e.walkTime)*2:Math.sin(this.e.time*1.5+a.x)*.5,lift=a.jumpHeight??(hero&&this.e.dashTime>0?Math.sin(this.e.dashTime/.6*Math.PI)*27:0);
     c.save();c.translate(a.x,a.y);this.ellipse(0,0,width*.67,9,'#02172066');
     if(hero){this.ellipse(0,0,29,10,null,'#c2e6ceaa',1.2);this.ellipse(0,0,34,13,null,'#a1d5bd35');}else if(a.ally)this.ellipse(0,1,23,7,null,'#71cbaa88',1.1);
     c.save();c.translate(0,-lift+bob);if(a.direction===-1)c.scale(-1,1);if(hero&&this.e.hitTime>0)c.rotate(Math.sin(this.e.hitTime*10)*.07);
@@ -430,7 +433,7 @@ export class Renderer {
     const markers=this.e.markers,ids=new Set(markers.flatMap(m=>[m.id,m.id?.replace(`${this.e.s.map}:`,'')]));
     const objects=s.props.filter(p=>!['pool','rug'].includes(p.kind)).map(p=>({...p,render:'prop'}));
     for(const p of s.points){if(ids.has(p.id))continue;objects.push({...p,kind:p.appearance||p.kind,opened:(this.e.s.opened||[]).includes(`${this.e.s.map}:${p.id}`),render:'point'});}
-    if(!s.hidePlayer)objects.push({...this.e.s.hero,hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});if(this.e.companion)objects.push({...this.e.companion,render:'actor'});for(const ally of this.allies)if(ally.hp>0&&!ally.hidden)objects.push({...ally,ally:true,render:'actor'});
+    if(!s.hidePlayer)objects.push({...this.e.s.hero,...this.e.renderJump(),hero:true,render:'actor'});for(const m of markers)objects.push({...m,render:m.sprite!==null&&m.sprite!==undefined?'actor':'marker'});for(const e of this.e.s.enemies.filter(e=>e.hp>0))objects.push({...e,render:'actor'});for(const companion of this.e.companions)objects.push({...companion,render:'actor'});for(const ally of this.allies)if(ally.hp>0&&!ally.hidden)objects.push({...ally,ally:true,render:'actor'});
     const presentation=this.e.stagingPresentation?.();
     if(presentation)for(const prop of presentation.definition.props||[]){
       if(Object.hasOwn(prop,'sceneKey')&&prop.sceneKey!==(this.e.s.sequence?.sceneKey??null))continue;

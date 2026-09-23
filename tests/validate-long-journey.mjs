@@ -5,11 +5,21 @@ const stats=[];
 for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
 assert.equal(new Set(QUESTS.map(q=>q.id)).size,QUESTS.length);
 function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(id==='g20')return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
+// The lake now has two disconnected walking surfaces. The simulation must
+// perform the same authored leap as the player before continuing on foot.
+function crossGap(game,goal){
+ if(!goal||!game.scene.jumps?.length||game.findPath(goal.x,goal.y).length)return;
+ const leap=game.scene.jumps.flatMap(def=>['a','b'].map(side=>({def,side,from:def[side],to:def[side==='a'?'b':'a']}))).find(({from,to})=>game.findPath(from.x,from.y).length&&game.findPath(goal.x,goal.y,to).length);
+ assert.ok(leap,game.q.id+' has a real leap to the destination platform');assert.equal(game.moveTo(leap.from.x,leap.from.y),true);
+ for(let n=0;n<5000&&distance(game.s.hero,leap.from)>45;n++)game.tick(.05);
+ assert.ok(distance(game.s.hero,leap.from)<100,'walk reaches takeoff');assert.equal(game.startJump(leap.def.id,leap.side),true);
+ for(let n=0;n<30&&game.jump;n++)game.tick(.05);assert.equal(game.jump,null);assert.ok(game.findPath(goal.x,goal.y).length,'land before continuing on foot');
+}
 for(const difficulty of ['normal','story']) for(const outcome of ['reunion','three','zhen_good','cult','alone','family']){
  const g=new GameEngine();g.settings.difficulty=difficulty;let transitions=0,battles=0,defeats=0;g.onEvent=(event)=>{if(event==='defeat')defeats++;if(event==='stagingDialogue')g.advanceStaging();if(event==='startingDifficulty')g.chooseStartingDifficulty(difficulty);};
  while(!g.s.completed&&transitions++<1000){const q=g.q;
-  if(g.s.map!==q.map){assert.equal(g.travel(q.map),true,q.id+' route open');for(let t=0;t<18000&&g.s.map!==q.map;t++)g.tick(.05);assert.equal(g.s.map,q.map,q.id+' walking route arrives');continue;}
-  if(g.s.phase==='talk')g.beginObjective();if(g.s.phase==='staging'){for(let t=0;t<5000&&g.s.phase==='staging';t++)g.tick(.05);assert.notEqual(g.s.phase,'staging',q.id+' staging releases');continue;}
+  if(g.s.map!==q.map){crossGap(g,g.scene.portals?.[g.routeTo(q.map)[1]]?.exit);assert.equal(g.travel(q.map),true,q.id+' route open');for(let t=0;t<18000&&g.s.map!==q.map;t++)g.tick(.05);assert.equal(g.s.map,q.map,q.id+' walking route arrives');continue;}
+  if(g.s.phase==='talk'){crossGap(g,g.stagingDefinition()?.startPoint||g.scene.objective);g.beginObjective();}if(g.s.phase==='staging'){for(let t=0;t<5000&&g.s.phase==='staging';t++)g.tick(.05);assert.notEqual(g.s.phase,'staging',q.id+' staging releases');continue;}
   if(g.s.phase==='pursuit'){assert.equal(g.followPursuit(),true,q.id+' following starts through the pursuit action');for(let t=0;t<18000&&g.q.id===q.id&&g.s.phase==='pursuit';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,q.id+' pursuit must reach its real exit');continue;}
   if(g.s.phase==='training'){const opponent=g.markers.find(m=>m.kind==='master')||g.markers.find(m=>m.kind==='training'&&!m.defeated);assert.ok(opponent);g.interact(opponent);for(let n=0;n<1200&&g.s.phase==='training';n++)g.tick(.05);assert.equal(g.s.phase,'battle');}
   if(g.s.phase==='choice'){assert.equal(g.choose(option(g,outcome)),true);continue;}
@@ -26,7 +36,7 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
    if(q.battleBeforeChoice){assert.equal(g.s.phase,'choice');g.choose(option(g,outcome));continue;}
    assert.equal(g.s.phase,'after',`${outcome} ${q.id} battle should complete (hp ${g.s.hero.hp}, tick ${ticks})`);
   }
-  if(g.s.phase==='search'){let safety=0;while(g.s.phase==='search'&&safety++<40){const marker=g.markers.find(m=>m.main);assert.ok(marker,q.id);g.interact(marker);for(let t=0;t<500&&g.autoInteract;t++)g.tick(.05);assert.equal(g.autoInteract,null,`${q.id} pathfinding reaches collectible`);}if(g.s.phase==='return'){g.interact(g.markers.find(m=>m.kind==='return'));for(let t=0;t<1000&&g.s.phase==='return';t++)g.tick(.05);}assert.equal(g.s.phase,'after',q.id);}
+  if(g.s.phase==='search'){let safety=0;while(g.s.phase==='search'&&safety++<40){const marker=g.markers.find(m=>m.main);assert.ok(marker,q.id);crossGap(g,marker);g.interact(marker);for(let t=0;t<500&&g.autoInteract;t++)g.tick(.05);assert.equal(g.autoInteract,null,`${q.id} pathfinding reaches collectible`);}if(g.s.phase==='return'){g.interact(g.markers.find(m=>m.kind==='return'));for(let t=0;t<1000&&g.s.phase==='return';t++)g.tick(.05);}assert.equal(g.s.phase,'after',q.id);}
   if(g.s.phase==='after')g.completeQuest();
   assert.equal(defeats,0,`${outcome} ${q.id} should not softlock`);
   if(transitions%17===0){const restored=restoreState(JSON.parse(JSON.stringify(g.s)));assert.equal(restored.quest,g.s.quest);assert.equal(restored.map,g.s.map);}

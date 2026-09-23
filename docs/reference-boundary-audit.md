@@ -65,3 +65,9 @@
 用户再次明确仅参考、不直接复制。本轮没有访问原游戏目录，基于现有概述独立实现山庄夜行；新图为beimo-garden-day.png、beimo-hero-room.png、beimo-mei-room.png，均无输入图独立生成，完整记录见 [制作记录](manor-night-art.md)。未采用的首张暮色图已从本轮发布资源移除，生成源未删除。
 
 当前发布清单29张PNG，其中23项documented、6项unconfirmed；原有上游依赖缺口不变。静态目录只含游戏静态资源；本轮代码/配置改动未发现读取、复制、解包或导入原目录的代码，也无发布目录软链接。此范围检查不代表已完成全部历史对象取证或法律认证。没有向云端部署。
+
+## 2026-09-23 落叶谷救治增量
+
+本轮四张新增图 leaf-courtyard.png、leaf-infirmary.png、leaf-rose-room.png、tianchi-islet.png 均由内置文生图独立制作，无输入图片；[完整制作记录](valley-care-art.md)保留提示词、源文件与交付哈希。原版目录仅由有界参考子任务对小筑两梦与首次楼战作内存只读机制核验，结果为独立概述与定位元数据，见 [局部参考记录](early-evil-interludes-reference.md)；没有把读取的脚本或对白写入产品、仓库或构建。该参考增量尚未实施，不能当作新演出已完成。
+
+发布清单现33张PNG：27项documented、6项unconfirmed；六张早期图及hero-kneel的上游来源缺口未解决，不能宣称所有资源均已核原创或不存在版权风险。原版图片、地图、音频、动画、完整台词没有作为本轮产品或生成输入。本地Wrangler dry-run仅验证可部署性，本轮没有发布云端。

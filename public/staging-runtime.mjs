@@ -54,7 +54,7 @@ export const stagingMethods={
  canStartStaging(){return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
  startStaging(){
   if(!this.canStartStaging()||this.s.sequence||!this.requireQuestItems()||!this.requireQuestFlags())return false;
-  const definition=this.stagingDefinition();this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
+  const definition=this.stagingDefinition();if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
   if(definition.heroStart)Object.assign(this.s.hero,this.nearestOpen(definition.heroStart.x,definition.heroStart.y),{direction:definition.heroStart.direction||1});
   this.s.phase='staging';this.s.destination=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys.clear();this.meditating=false;this._stagingPrompt=null;this._stagingMove=null;this.emit('stagingStep');return true;
  },

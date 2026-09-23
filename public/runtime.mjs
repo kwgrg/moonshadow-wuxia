@@ -1,3 +1,6 @@
+import {migrateValleyCare} from './valley-care-migration.mjs';
+import {partyMethods} from './travel-party.mjs';
+import {jumpMethods} from './jump-runtime.mjs';
 import {migrateManorNight} from './manor-night-migration.mjs';
 import {migrateEvilDocks} from './evil-docks-migration.mjs';
 import {restorePursuit,pursuitMethods} from './pursuit-runtime.mjs';
@@ -6,14 +9,20 @@ import {restoreStaging,restoreStagedHandovers,stagingMethods,hasStagingBranch} f
 import {restoreSkirmish,skirmishMethods} from './skirmish-runtime.mjs';
 import {recruitmentMethods} from './recruitment-runtime.mjs';
 import {exitsFor,shortestRoute} from './routes.mjs';
-import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS, REVISION_EIGHT_QUEST_IDS } from './campaign.mjs';
+import { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS, chooseEnding, LEGACY_QUEST_IDS, REVISION_TWO_QUEST_IDS, REVISION_THREE_QUEST_IDS, REVISION_FOUR_QUEST_IDS, REVISION_FIVE_QUEST_IDS, REVISION_SIX_QUEST_IDS, REVISION_SEVEN_QUEST_IDS, REVISION_EIGHT_QUEST_IDS, REVISION_NINE_QUEST_IDS } from './campaign.mjs';
 export { QUESTS, MAPS, SKILLS, ITEMS, ENDINGS, SIDE_QUESTS };
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const distance=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
 const copy=o=>JSON.parse(JSON.stringify(o));
-export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:9,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
+const singleChoice=q=>!!q.choice&&!q.refusalRule&&!q.repeatRefusal&&!q.switchPuzzle;
+const recordedChoice=(q,state)=>{const answer=state.choices[q.id];return Number.isInteger(answer)&&q.choice?.options?.[answer]?answer:null;};
+const choiceFlagsMatch=(q,state)=>{const answer=recordedChoice(q,state);return answer!==null&&Object.entries(q.choice.options[answer].effects?.flags||{}).every(([key,value])=>state.flags[key]===value);};
+// A recorded answer owns its static branch state. Resuming it never repeats
+// score, items, skills, healing, or any other cumulative choice effect.
+function repairChoiceAssignments(q,state,answer){const effects=q.choice.options[answer].effects||{};Object.assign(state.flags,effects.flags||{});if(effects.companion!==undefined)state.flags.companion=effects.companion;}
+export function freshState(){const spawn=getScene(QUESTS[0].map,MAPS[QUESTS[0].map]).spawn;return {version:3,campaignRevision:10,quest:0,map:QUESTS[0].map,phase:'talk',stage:0,wave:0,training:null,sequence:null,pursuit:null,stagedHandovers:{},failure:null,destination:null,objectiveProgress:null,hero:{x:spawn.x,y:spawn.y,hp:300,maxHp:300,mp:180,maxMp:180,stamina:100,level:1,exp:0,direction:1},potions:5,elixirs:3,coins:150,kills:0,choices:{},flags:{moral:0,evil:0},affection:{zhen:0,zi:0,mei:0,wei:0},inventory:{},equipment:{weapon:'family_sword',armor:'cotton_robe'},skills:{1:0,3:0},hotbar:[1,3,null,null,null],cooldowns:Array(SKILLS.length).fill(0),enemies:[],allies:[],skirmish:null,visited:[QUESTS[0].map],done:[],claimedRewards:[],sideDone:[],opened:[],collectedIds:[],collected:0,completed:false,ending:null,playTime:0};}
 export function restoreState(raw){
- if(raw&&!raw.questId&&raw.campaignRevision!==9){const ids=raw.campaignRevision===8?REVISION_EIGHT_QUEST_IDS:raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
+ if(raw&&!raw.questId&&raw.campaignRevision!==10){const ids=raw.campaignRevision===9?REVISION_NINE_QUEST_IDS:raw.campaignRevision===8?REVISION_EIGHT_QUEST_IDS:raw.campaignRevision===7?REVISION_SEVEN_QUEST_IDS:raw.campaignRevision===6?REVISION_SIX_QUEST_IDS:raw.campaignRevision===5?REVISION_FIVE_QUEST_IDS:raw.campaignRevision===4?REVISION_FOUR_QUEST_IDS:raw.campaignRevision===3?REVISION_THREE_QUEST_IDS:raw.campaignRevision===2?REVISION_TWO_QUEST_IDS:LEGACY_QUEST_IDS;if(ids[raw.quest])raw={...raw,questId:ids[raw.quest]};}
  if(raw?.questId){const index=QUESTS.findIndex(q=>q.id===raw.questId);if(index<0)throw new Error('存档中的任务不在当前流程中');raw={...raw,quest:index};}
  if(!raw||raw.version!==3||!Number.isInteger(raw.quest)||!QUESTS[raw.quest]||!MAPS[raw.map]||!raw.hero)throw new Error('此存档不属于当前流程版本');
  const s=freshState(),h=raw.hero;
@@ -37,7 +46,7 @@ export function restoreState(raw){
  if((raw.campaignRevision||1)<5&&s.flags.route==='evil'){
   const id=QUESTS[s.quest].id,passed=s.done.includes('e06')||s.quest>=QUESTS.findIndex(q=>q.id==='e07');
   if(passed){for(const key of ['evilQiangweiDecision','evilQiangweiDead','evilFamilyHeard','evilNightPassed','evilEscortStarted','evilFerryReady','evilIslandArrived','evilZhenMissing'])s.flags[key]=true;s.flags.evilLegacyJourney=true;}
-  if(id==='e06'&&!s.done.includes('e06')){s.phase=s.map===QUESTS[s.quest].map?'talk':'travel';delete s.choices.e06;}
+  if(id==='e06'&&!s.done.includes('e06')){s.phase=s.map===QUESTS[s.quest].map?'talk':'travel';raw={...raw,sequence:null,objectiveProgress:null};delete s.flags.staged_e06;}
  }
  // Older saves already at the revealed encounter keep that history explicitly;
  // do not claim that newly authored pursuit/staging was played or grant its rewards.
@@ -62,6 +71,7 @@ export function restoreState(raw){
  }
  raw=migrateEvilDocks(raw,s,QUESTS,REVISION_SEVEN_QUEST_IDS,MAPS,getScene);
  raw=migrateManorNight(raw,s,QUESTS,REVISION_EIGHT_QUEST_IDS,MAPS,getScene);
+ raw=migrateValleyCare(raw,s,QUESTS,REVISION_NINE_QUEST_IDS,MAPS,getScene);
  s.collectedIds=Array.isArray(raw.collectedIds)?[...new Set(raw.collectedIds.filter(i=>Number.isInteger(i)&&i>=0&&i<(QUESTS[s.quest].count||1)))]:Array.from({length:Math.min(s.collected,QUESTS[s.quest].count||1)},(_,i)=>i);s.collected=s.collectedIds.length;
  if(QUESTS[s.quest].id==='e13'&&!s.flags.switch8){s.quest=QUESTS.findIndex(q=>q.id==='eTower6');s.collected=0;s.collectedIds=[];s.phase='travel';}
  s.ending=ENDINGS[raw.ending]?raw.ending:null;s.completed=!!s.ending;s.phase=s.completed?'complete':s.map!==QUESTS[s.quest].map?'travel':s.phase;
@@ -77,8 +87,15 @@ export function restoreState(raw){
  s.destination=MAPS[raw.destination]?raw.destination:null;
  const progress=raw.objectiveProgress;if(progress?.questId===QUESTS[s.quest].id&&['talk','search','return','after','choice','training','pursuit'].includes(progress.phase))s.objectiveProgress={questId:progress.questId,phase:progress.phase,collectedIds:Array.isArray(progress.collectedIds)?[...new Set(progress.collectedIds.filter(i=>Number.isInteger(i)&&i>=0&&i<(QUESTS[s.quest].count||1)))]:[]};
  if(s.objectiveProgress?.phase==='pursuit'&&!s.pursuit)s.objectiveProgress.phase='talk';
- // A pending answer cannot be completed by restoring an obsolete after phase.
- if(QUESTS[s.quest].id==='e09'&&!Object.hasOwn(s.choices,'e09')&&!s.flags.evilManorDecision){const phase=s.flags.staged_e09||s.flags.evilLegacyManorPrelude?'choice':'talk';if(s.phase==='after')s.phase=phase;if(s.objectiveProgress?.phase==='after')s.objectiveProgress.phase=phase;}
+ // Unanswered or inconsistent after-states must resume their decision/prelude.
+ const current=QUESTS[s.quest];
+ if(singleChoice(current)&&!s.done.includes(current.id)){
+  const answer=recordedChoice(current,s),ready=!current.requireStaging||s.flags['staged_'+current.id]||s.flags[current.legacyStagingFlag];
+  if(answer===null||!choiceFlagsMatch(current,s)){
+   const phase=!ready||(answer===null&&current.battleBeforeChoice)?'talk':'choice';
+   if(s.phase==='after')s.phase=phase;if(s.objectiveProgress?.phase==='after')s.objectiveProgress.phase=phase;
+  }
+ }
  if(s.phase==='battle'||s.phase==='escape'||(['search','return'].includes(s.phase)&&QUESTS[s.quest].timeLimit)){s.phase='talk';s.collected=0;s.collectedIds=[];}
  restoreSkirmish(raw,QUESTS[s.quest],s);
  if(s.skirmish)s.cooldowns=SKILLS.map((skill,id)=>clamp(Number(raw.cooldowns?.[id])||0,0,skill?.cooldown||0));
@@ -88,7 +105,7 @@ export function restoreState(raw){
  return s;
 }
 export class GameEngine{
- constructor(state=freshState()){this.s=state;this.target=null;this.waypoints=[];this.keys=new Set();this.effects=[];this.numbers=[];this.time=0;this.paused=!!state.failure||!!state.skirmish?.failed;this.active=true;this.attackTarget=null;this.onEvent=()=>{};this.hitTime=0;this.dashTime=0;this.walkTime=0;this.attackAngle=0;this.autoInteract=null;this.meditating=false;this.settings={difficulty:'normal',controls:'modern',quality:'high',volume:.35,motion:true};this.followPosition={x:730,y:780};Object.assign(this.s.hero,this.nearestOpen(this.s.hero.x,this.s.hero.y));this.repairSkirmishPositions?.();}
+ constructor(state=freshState()){this.s=state;this.target=null;this.waypoints=[];this.keys=new Set();this.effects=[];this.numbers=[];this.time=0;this.paused=!!state.failure||!!state.skirmish?.failed;this.active=true;this.attackTarget=null;this.onEvent=()=>{};this.hitTime=0;this.dashTime=0;this.walkTime=0;this.attackAngle=0;this.autoInteract=null;this.meditating=false;this.settings={difficulty:'normal',controls:'modern',quality:'high',volume:.35,motion:true};this.followPosition={x:730,y:780};Object.assign(this.s.hero,this.nearestOpen(this.s.hero.x,this.s.hero.y));this.resetParty();this.repairSkirmishPositions?.();}
  get q(){return QUESTS[this.s.quest]}
  get encounter(){if(this.q.training){const t=this.ensureTraining();return {...this.q,waves:null,count:1,type:t.master?'boss':'battle',boss:t.master?this.q.boss:null,enemy:t.master?this.q.boss:this.trainingName(t.active),scriptedLoss:t.master,friendly:true};}const wave=this.q.waves?.[this.s.wave||0];return wave?{...this.q,...wave,type:wave.boss?'boss':'battle',boss:wave.boss||null,scriptedLoss:!!wave.scriptedLoss}:this.q;}
  ensureTraining(){if(!this.q.training)return null;if(this.s.training?.questId!==this.q.id)this.s.training={questId:this.q.id,defeated:[],active:null,master:false};return this.s.training;}
@@ -102,6 +119,7 @@ export class GameEngine{
   // Keep the newly staged island return in daylight without changing earlier visits.
   if(this.s.map==='m40'&&this.s.flags.evilIslandCleared&&['e08_departure','e08'].includes(this.q.id))scene={...scene,atmosphere:{...scene.atmosphere,light:'day'}};
   if(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')){const morning=this.s.flags.evilManorNightComplete||this.s.flags.evilLegacyManorNight||this.s.sequence?.cues.manorDaybreak;scene={...scene,atmosphere:{...scene.atmosphere,light:morning?'day':'night'}};}
+  if(this.s.flags.route==='good'&&(this.s.flags.valleyCareStarted||this.s.flags.valleyLegacyCarePrelude)&&['m51','m52','r_leaf_hero_room','r_leaf_mei_room','r_leaf_zhen_room','r_leaf_rose_room'].includes(this.s.map)&&!this.hasReachedQuest('g08')){const cue=this.s.sequence?.cues.valleyCareLight,night=cue?cue==='night':!this.s.flags.valleyCareMorning&&(this.s.flags.valleyCareNight||this.s.flags.valleyLegacyCarePrelude);return {...scene,atmosphere:{...scene.atmosphere,light:night?'night':'day'}};}
   if(this.s.map!==this.q.map)return scene;
   const title=this.q.title,night=this.q.sceneLight==='night'||/夜/.test(title)||(this.q.choiceAfterDark&&this.s.phase==='choice'),rain=/雨/.test(title);
   return night||rain?{...scene,atmosphere:{...scene.atmosphere,light:night?'night':scene.atmosphere.light,weather:rain?'rain':scene.atmosphere.weather}}:scene;
@@ -109,7 +127,10 @@ export class GameEngine{
  stagingScene(){const sequence=this.s.sequence,definition=this.stagingDefinition();return this.s.phase==='staging'&&definition?.sceneKeys?.includes(sequence?.sceneKey)?getStagingScene(sequence.sceneKey):null;}
  get chapter(){const m=this.region,q=this.q;return {...m,name:q.title,number:q.act,banner:m.name,place:m.name+' · '+m.area,quest:q.title,npc:q.npc||'江湖纪事',npcX:q.x??this.scene.objective.x,npcY:q.y??this.scene.objective.y,sprite:q.sprite||0,enemies:q.count||3,enemyName:q.enemy||'敌方武人'};}
  get npc(){return this.markers.find(m=>m.main)||this.markers[0]||{x:1000,y:600,name:'江湖路',sprite:0,kind:'travel'};}
- get companion(){const mainName=this.s.phase==='choice'?(this.q.choiceSpeaker||this.q.npc):this.q.npc,hasMainActor=this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===this.s.flags.companion;return !this.scene.hidePlayer&&!hasMainActor&&!this.q.hideCompanion&&!(this.stagingPresentation()?.actors||[]).some(actor=>actor.name===this.s.flags.companion&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest)))&&this.s.flags.companion&&!this.s.completed&&this.s.flags.companion!==this.q.playAs?{x:this.followPosition.x,y:this.followPosition.y,name:this.s.flags.companion,sprite:['紫轩','月眉儿'].includes(this.s.flags.companion)?2:1,direction:this.s.hero.direction}:null;}
+ get partyNames(){return this.travelPartyNames();}
+ get companions(){return this.travelCompanions();}
+ get companion(){return this.companions[0]||null;}
+
  get searchPoints(){
   const defaults=[[1120,640],[680,760],[1270,850],[840,565],[440,580],[970,830],[620,540],[1220,480],[360,790],[1030,690],[780,890],[1330,730]];
   return Array.from({length:this.q.count||1},(_,index)=>{
@@ -145,16 +166,17 @@ export class GameEngine{
     // A dialogue target keeps its identity but occupies the actor's final footpoint.
     // Fallen actors remain scenery and must not become standing quest targets.
     if(actor.interactive===false||actor.pose==='fallen')list.splice(mainIndex,1);
-    else for(const key of ['x','y','direction','pose','sprite','npcCell'])if(Object.hasOwn(actor,key))main[key]=actor[key];
+    else for(const key of ['x','y','direction','pose','sprite','npcCell','renderAt','renderScale'])if(Object.hasOwn(actor,key))main[key]=actor[key];
    }
   }
   list.push(...stagedActors.filter(actor=>!list.some(marker=>marker.name===actor.name)));
   if(!['battle','staging'].includes(this.s.phase)){
-   if(this.region.shop&&!(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')))list.push({id:'shop',kind:'shop',x:650,y:650,name:'行脚商人',sprite:0});
+   if(this.region.shop&&!(this.s.flags.route==='good'&&(this.q.id==='g06'||this.s.flags.valleyCareStarted||this.s.flags.valleyLegacyCarePrelude)&&!this.s.flags.valleyCareSettled&&this.s.map==='m51')&&!(this.s.flags.route==='evil'&&this.s.flags.evilManorNightStarted&&['m49','m50','r_beimo_hero_room','r_beimo_mei_room'].includes(this.s.map)&&!this.hasReachedQuest('e10')))list.push({id:'shop',kind:'shop',x:650,y:650,name:'行脚商人',sprite:0});
    for(const exit of this.exits()){const portal=scene.portals?.[exit.to];if(portal)list.push({...exit,...portal.exit,kind:'travel',name:exit.locked?'暂未通行 · '+MAPS[exit.to].name:(exit.travelLabel||'前往 '+MAPS[exit.to].name),sprite:null,main:!exit.locked&&exit.to===this.routeTo(this.s.destination||q.map)[1]});}
    for(const side of SIDE_QUESTS.filter(q=>q.map===this.s.map&&!this.s.sideDone.includes(q.id)))list.push({id:side.id,kind:'side',x:side.x||570,y:side.y||780,name:side.npc,sprite:side.sprite??null});
    for(const point of scene.points)list.push({...point,sprite:null,main:false,opened:this.s.opened.includes(this.s.map+':'+point.id)});
   }
+  if(!this.s.sequence&&!this.s.completed)list.push(...this.jumpMarkers());
   return list;
  }
  emit(type,data={}){this.onEvent(type,data);}
@@ -187,9 +209,8 @@ export class GameEngine{
   }
   return true;
  }
- findPath(x,y){
+ findPath(x,y,origin=this.s.hero){
   if(!this.passable(x,y))return [];
-  const origin=this.s.hero;
   if(this.clearSegment(origin,{x,y}))return [{x,y}];
   const [left,top,right,bottom]=this.scene.bounds,step=30,key=(a,b)=>a+','+b;
   const gridPoint=([a,b])=>({x:left+a*step,y:top+b*step});
@@ -224,11 +245,12 @@ export class GameEngine{
   for(const p of options)if(this.moveTo(p.x,p.y))return true;
   return false;
  }
- moveTo(x,y){if(this.s.failure||this.s.sequence)return false;this.waypoints=this.findPath(x,y);this.target=this.waypoints.shift()||null;this.attackTarget=null;this.meditating=false;return !!this.target;}
- interact(marker=null){if(this.paused||this.s.phase==='staging')return false;const m=marker||this.markers.filter(m=>m.main).sort((a,b)=>distance(this.s.hero,a)-distance(this.s.hero,b))[0]||this.npc;if(!m||m.interactive===false||m.hidden||m.pose==='fallen')return false;
+ moveTo(x,y){if(this.s.failure||this.s.sequence||this.jump)return false;this.waypoints=this.findPath(x,y);if(!this.waypoints.length)this.waypoints=this.pathToJumpFor({x,y});this.target=this.waypoints.shift()||null;this.attackTarget=null;this.meditating=false;return !!this.target;}
+ interact(marker=null){if(this.paused||this.s.phase==='staging'||this.jump)return false;const m=marker||this.markers.filter(m=>m.main).sort((a,b)=>distance(this.s.hero,a)-distance(this.s.hero,b))[0]||this.npc;if(!m||m.interactive===false||m.hidden||m.pose==='fallen')return false;
   if(this.s.completed&&!['travel','inspect','chest'].includes(m.kind)){this.emit('ending');return true;}if(this.s.phase==='battle'){this.emit('toast',{text:'先解决眼前的对手。'});return false;}
   if(distance(this.s.hero,m)>135){if(this.approach(m))this.autoInteract=m.id;else this.emit('toast',{text:'这里暂时走不过去，请从另一侧接近。'});return false;}
   this.autoInteract=null;this.target=null;this.waypoints=[];
+  if(m.kind==='jump')return this.startJump(m.jumpId,m.side);
   if(m.kind==='pursuit'&&this.s.phase==='pursuit')return this.followPursuit();
   if(m.kind==='stagingActor'){if(this.canStartStaging())return this.startStaging();if(m.dialogue?.length){this.emit('residentDialogue',{lines:m.dialogue});return true;}this.emit('toast',{text:'此刻没有新的交谈。'});return false;}
   if(m.kind==='training'){if(this.ensureTraining()?.defeated.includes(m.opponentIndex)){this.emit('toast',{text:'这一场已经切磋过了，请另择对手。'});return false;}return this.challengeTraining(m.opponentIndex);}
@@ -269,12 +291,20 @@ export class GameEngine{
   if(this.q.skirmish)return this.startSkirmish();
   if(this.q.training){const t=this.ensureTraining();if(t.active===null&&!t.master){this.s.phase='training';return false;}}
   if(!nextWave)this.s.wave=0;
-  this.s.phase='battle';this.s.enemies=[];this.target=null;this.waypoints=[];this.attackTarget=null;const q=this.encounter,count=q.count||3,tier=Math.max(1,Math.floor(this.s.quest/9)+1);
+  this.s.phase='battle';this.s.enemies=[];this.target=null;this.waypoints=[];this.attackTarget=null;const q=this.encounter,count=q.count||3,tier=this.q.encounterTier??Math.max(1,Math.floor(this.s.quest/9)+1);
   for(let i=0;i<count;i++){const boss=(q.type==='boss'||q.boss)&&i===count-1;const hp=q.scriptedLoss?8000:(boss?430:120)+tier*(boss?125:35);this.s.enemies.push({id:i,...this.nearestOpen(760+(i%4)*155,580+Math.floor(i/4)*110+(i%2)*50),hp,maxHp:hp,attackTimer:1.5+i*.4,telegraph:0,role:boss?'master':q.friendly?'sword':i%3===1?'ranged':i%3===2?'brute':'sword',skillTimer:2.5+i*.65,sprite:q.enemySprite??(q.friendly?0:3),name:boss?(q.boss||q.npc||'首领'):(q.enemy||'敌方武人'),boss,direction:-1,flash:0,tier,telegraphZone:null});}if(this.q.training&&this.s.enemies.length===1){const t=this.ensureTraining(),position=t.master?this.scene.objective:this.scene.trainingPositions?.[t.active];if(position)Object.assign(this.s.enemies[0],this.nearestOpen(position.x,position.y));}else{const actors=(this.stagingDefinition()?.actors||[]).filter(actor=>actor.enemy);for(let i=0;i<Math.min(actors.length,this.s.enemies.length);i++)Object.assign(this.s.enemies[i],this.nearestOpen(actors[i].x,actors[i].y),{name:actors[i].name});}this.emit('battle');
  }
  applyEffects(effects={}){for(const [k,v] of Object.entries(effects.flags||{}))this.s.flags[k]=v;for(const [k,v] of Object.entries(effects.affection||{}))if(k in this.s.affection)this.s.affection[k]+=v;this.s.flags.moral+=(effects.moral||0);this.s.flags.evil+=(effects.evil||0);for(const id of effects.skills||[])this.unlock(id);for(const [id,count] of Object.entries(effects.items||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(0,(this.s.inventory[id]||0)+count);if(effects.companion!==undefined)this.s.flags.companion=effects.companion;if(effects.recover===true&&!this.s.failure&&!this.s.skirmish?.failed){this.s.hero.hp=this.s.hero.maxHp;this.s.hero.mp=this.s.hero.maxMp;this.s.hero.stamina=100;}}
  puzzleCorrect(index){const p=this.q.switchPuzzle;return !!p&&index===((this.s.flags.evil||0)>=p.evilThreshold?p.highCorrectIndex:p.lowCorrectIndex);}
- choose(index){if(this.q.id==='e09'&&Object.hasOwn(this.s.choices,'e09'))return false;if(this.s.failure||this.s.skirmish?.failed||this.s.done.includes(this.q.id)||!this.requireQuestFlags())return false;if(this.q.requireStaging&&!this.s.flags['staged_'+this.q.id]&&!this.s.flags[this.q.legacyStagingFlag])return false;const options=this.q.choice?.options;if(this.s.phase!=='choice'||!options||!Number.isInteger(index)||!options[index])return false;const choice=options[index],puzzle=this.q.switchPuzzle;
+ choose(index){
+  const q=this.q,options=q.choice?.options;
+  if(this.s.map!==q.map||this.s.phase!=='choice'||this.s.sequence||this.s.completed||this.s.failure||this.s.skirmish?.failed||this.s.done.includes(q.id)||!options||!Number.isInteger(index)||!options[index])return false;
+  const answer=recordedChoice(q,this.s),resuming=singleChoice(q)&&answer!==null;
+  if(resuming&&answer!==index)return false;
+  if(!this.requireQuestFlags()||!this.requireQuestItems()||(!this.s.claimedRewards?.includes(q.id)&&!this.requireItems(this.outstandingItems(q.consumeItems))))return false;
+  if(q.requireStaging&&!this.s.flags['staged_'+q.id]&&!this.s.flags[q.legacyStagingFlag])return false;
+  const choice=options[index],puzzle=q.switchPuzzle;
+  if(resuming){repairChoiceAssignments(q,this.s,answer);if(choice.ending)this.finish(choice.ending);else if(q.choiceBeforeObjective)this.beginObjective();else this.completeQuest();return true;}
   if(puzzle){
    if(this.puzzleCorrect(index)){this.s.flags[puzzle.successFlag]=true;this.s.choices[this.q.id]=index;this.completeQuest();}
    else{this.s.claimedRewards=[...new Set([...(this.s.claimedRewards||[]),...this.s.done])];for(const key of puzzle.resetFlags)this.s.flags[key]=false;this.s.done=this.s.done.filter(id=>!/^eSwitch[1-8]$/.test(id));this.s.quest=QUESTS.findIndex(q=>q.id===puzzle.retryQuestId);this.s.phase=this.s.map===this.q.map?'talk':'travel';this.s.collected=0;this.s.collectedIds=[];this.target=null;this.waypoints=[];this.autoInteract=null;this.emit('quest');}
@@ -282,7 +312,7 @@ export class GameEngine{
   }
   this.s.choices[this.q.id]=index;if(this.resolveRefusal(index))return true;this.applyEffects(choice.effects);if(this.q.repeatRefusal&&index===1){this.s.flags.refusals=(this.s.flags.refusals||0)+1;if(this.s.flags.refusals<4){this.emit('choice');return true;}this.s.flags.forsake=true;}if(choice.ending){this.finish(choice.ending);return true;}if(this.q.choiceBeforeObjective){this.beginObjective();return true;}this.completeQuest();return true;}
  completeQuest(){
-  if(this.s.failure||this.s.skirmish?.failed||this.s.completed||this.s.sequence||this.s.map!==this.q.map)return;const q=this.q;if(q.id==='e09'){const answer=this.s.choices.e09;if(!this.s.flags.evilManorDecision||![0,1].includes(answer)||this.s.flags.evilMeiEscorted!==(answer===0)||this.s.flags.evilMeiAlone!==(answer===1))return;}if(q.pursuit&&(!this.s.pursuit?.finished||this.s.pursuit.questId!==q.id||this.s.phase!=='pursuit'))return;if(q.skirmish&&(!this.s.skirmish?.finished||this.s.phase!=='after'))return;if(q.refusalRule&&(this.s.phase!=='choice'||!Object.hasOwn(this.s.choices,q.id)||(this.s.choices[q.id]===(q.refusalRule.refuseIndex??1)&&this.refusalCount()<q.refusalRule.limit)))return;if(q.requireStaging&&!this.s.flags['staged_'+q.id]&&!this.s.flags[q.legacyStagingFlag]&&!this.s.done.includes(q.id))return;if(!this.requireQuestItems()||(!this.s.claimedRewards?.includes(q.id)&&!this.requireItems(this.outstandingItems(q.consumeItems))))return;if(q.training&&this.s.phase!=='after'){this.emit('toast',{text:'本次试剑尚未结束。'});return;}if(!this.requireQuestFlags())return;if(this.s.done.includes(q.id))return;this.s.done.push(q.id);const claimed=this.s.claimedRewards??=[];const firstReward=!claimed.includes(q.id);if(firstReward){claimed.push(q.id);for(const [id,count] of Object.entries(this.outstandingItems(q.consumeItems)))this.s.inventory[id]-=count;this.applyEffects(q.rewards);for(const [id,count] of Object.entries(q.ensureItems||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(this.s.inventory[id]||0,count);this.gainExp(q.xp??65);this.s.coins+=q.money??15;if(!q.suppressBattleSupplies&&(q.type==='battle'||q.type==='boss')){this.s.potions++;this.s.elixirs++;}}else{for(const [key,value] of Object.entries(q.rewards?.flags||{}))this.s.flags[key]=value;}
+  if(this.s.failure||this.s.skirmish?.failed||this.s.completed||this.s.sequence||this.s.map!==this.q.map)return;const q=this.q;if(singleChoice(q)&&!choiceFlagsMatch(q,this.s))return;if(q.id==='e09'){const answer=this.s.choices.e09;if(!this.s.flags.evilManorDecision||![0,1].includes(answer)||this.s.flags.evilMeiEscorted!==(answer===0)||this.s.flags.evilMeiAlone!==(answer===1))return;}if(q.pursuit&&(!this.s.pursuit?.finished||this.s.pursuit.questId!==q.id||this.s.phase!=='pursuit'))return;if(q.skirmish&&(!this.s.skirmish?.finished||this.s.phase!=='after'))return;if(q.refusalRule&&(this.s.phase!=='choice'||!Object.hasOwn(this.s.choices,q.id)||(this.s.choices[q.id]===(q.refusalRule.refuseIndex??1)&&this.refusalCount()<q.refusalRule.limit)))return;if(q.requireStaging&&!this.s.flags['staged_'+q.id]&&!this.s.flags[q.legacyStagingFlag]&&!this.s.done.includes(q.id))return;if(!this.requireQuestItems()||(!this.s.claimedRewards?.includes(q.id)&&!this.requireItems(this.outstandingItems(q.consumeItems))))return;if(q.training&&this.s.phase!=='after'){this.emit('toast',{text:'本次试剑尚未结束。'});return;}if(!this.requireQuestFlags())return;if(this.s.done.includes(q.id))return;this.s.done.push(q.id);const claimed=this.s.claimedRewards??=[];const firstReward=!claimed.includes(q.id);if(firstReward){claimed.push(q.id);for(const [id,count] of Object.entries(this.outstandingItems(q.consumeItems)))this.s.inventory[id]-=count;this.applyEffects(q.rewards);for(const [id,count] of Object.entries(q.ensureItems||{}))if(ITEMS[id])this.s.inventory[id]=Math.max(this.s.inventory[id]||0,count);this.gainExp(q.xp??65);this.s.coins+=q.money??15;if(!q.suppressBattleSupplies&&(q.type==='battle'||q.type==='boss')){this.s.potions++;this.s.elixirs++;}}else{for(const [key,value] of Object.entries(q.rewards?.flags||{}))this.s.flags[key]=value;}
   if(q.setRoute){const affection=Object.values(this.s.affection).reduce((a,b)=>a+b,0);this.s.flags.route=affection>=2||(affection>=0&&this.s.flags.moral>=0)?'good':'evil';this.s.flags.companion=this.s.flags.route==='evil'?null:'纳兰真';}
   if(q.endingId){this.finish(q.endingId);return;}if(q.ending){this.finish(chooseEnding(this.s));return;}
   this.s.objectiveProgress=null;this.s.pursuit=null;this._pursuitPath=null;this._pursuitFollow=false;this.s.destination=null;this.s.allies=[];this.s.skirmish=null;this.s.quest++;while(QUESTS[this.s.quest]&&((QUESTS[this.s.quest].when&&!this.matches(QUESTS[this.s.quest].when))||this.s.done.includes(QUESTS[this.s.quest].id))){this.s.quest++;}
@@ -294,7 +324,7 @@ export class GameEngine{
  routeCache(){const keys=[...new Set(QUESTS.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[]),...(q.requiredFlags||[])]).filter(Boolean))];const key=this.s.quest+'|'+this.s.done.join(',')+'|'+this.s.flags.route+'|'+keys.map(k=>k+':'+this.s.flags[k]).join(',');if(this._routeCache?.key!==key)this._routeCache={key,exits:new Map(),paths:new Map()};return this._routeCache;}
  exits(){const cache=this.routeCache();if(!cache.exits.has(this.s.map))cache.exits.set(this.s.map,exitsFor(this.s.map,this.s,QUESTS));return cache.exits.get(this.s.map);}
  routeTo(id){const cache=this.routeCache(),key=this.s.map+'>'+id;if(!cache.paths.has(key))cache.paths.set(key,shortestRoute(this.s.map,id,this.s,QUESTS));return cache.paths.get(key);}
- travelBlocked(){return !!this.s.failure||this.paused||['battle','escape','staging'].includes(this.s.phase)||(['search','return'].includes(this.s.phase)&&this.q.timeLimit);}
+ travelBlocked(){return !!this.jump||!!this.s.failure||this.paused||['battle','escape','staging'].includes(this.s.phase)||(['search','return'].includes(this.s.phase)&&this.q.timeLimit);}
  travel(id){
   if(this.travelBlocked()){this.emit('toast',{text:'当前交谈或挑战结束后才能离开。'});return false;}
   if(!MAPS[id])return false;if(id===this.s.map){this.s.destination=null;return true;}
@@ -310,7 +340,7 @@ export class GameEngine{
   const progress=this.s.objectiveProgress?.questId===this.q.id?this.s.objectiveProgress:null;
   if(id===this.q.map&&progress){this.s.phase=progress.phase;this.s.collectedIds=[...progress.collectedIds];this.s.collected=this.s.collectedIds.length;}else{this.s.collected=0;this.s.collectedIds=[];}this.target=null;this.waypoints=[];
   const entry=this.scene.portals?.[from]?.entry||this.scene.spawn;Object.assign(this.s.hero,this.nearestOpen(entry.x,entry.y));
-  this.followPosition=this.nearestOpen(this.s.hero.x-65,this.s.hero.y+35);this.autoInteract=null;this.attackTarget=null;this.effects=[];this.s.enemies=[];this._portalCooldown=.8;
+  this.resetParty();this.jump=null;this.autoInteract=null;this.attackTarget=null;this.effects=[];this.s.enemies=[];this._portalCooldown=.8;
   if(this.s.destination===id)this.s.destination=null;this.emit('chapter');return true;
  }
 
@@ -319,7 +349,7 @@ export class GameEngine{
  equipSkill(id,slot){if(!SKILLS[id]||!Object.hasOwn(this.s.skills,id)||!Number.isInteger(slot)||slot<0||slot>4)return false;const existing=this.s.hotbar.indexOf(id);if(existing!==-1)this.s.hotbar[existing]=this.s.hotbar[slot];this.s.hotbar[slot]=id;return true;}
  skillLevel(id){return Math.min(10,1+Math.floor((this.s.skills[id]||0)/50));}
  damageBonus(){return (ITEMS[this.s.equipment.weapon]?.attack||0);}
- cast(index){const skill=SKILLS[index],h=this.s.hero;if(!skill||this.paused||!this.active||this.s.completed||this.s.phase==='staging')return false;if(index!==0&&!Object.hasOwn(this.s.skills,index)){this.emit('toast',{text:'这门武学尚未习得。'});return false;}if(this.s.cooldowns[index]>0)return false;if(h.mp<skill.cost){this.emit('toast',{text:'内力不足，可用补气丹或在安全处打坐。'});return false;}if(skill.heal&&h.hp>=h.maxHp)return false;
+ cast(index){const skill=SKILLS[index],h=this.s.hero;if(!skill||this.jump||this.paused||!this.active||this.s.completed||this.s.phase==='staging')return false;if(index!==0&&!Object.hasOwn(this.s.skills,index)){this.emit('toast',{text:'这门武学尚未习得。'});return false;}if(this.s.cooldowns[index]>0)return false;if(h.mp<skill.cost){this.emit('toast',{text:'内力不足，可用补气丹或在安全处打坐。'});return false;}if(skill.heal&&h.hp>=h.maxHp)return false;
   h.mp-=skill.cost;this.s.cooldowns[index]=skill.cooldown;this.hitTime=.3;this.emit('cast',{index});const level=this.skillLevel(index);if(index)this.s.skills[index]=Math.min(500,(this.s.skills[index]||0)+1);
   if(skill.heal){const amount=Math.min(h.maxHp-h.hp,130+h.level*14+level*10);h.hp+=amount;this.addNumber('+'+amount,h.x,h.y-100,'#c7efad');this.addEffect('heal',h.x,h.y,100,skill.color,1);return true;}
   if(skill.shield){this.s.flags.shield=8+level*.3;this.addEffect('heal',h.x,h.y,120,skill.color,1);return true;}
@@ -339,15 +369,15 @@ export class GameEngine{
   if(q.cost&&this.s.coins<q.cost){this.emit('toast',{text:'需要 '+q.cost+' 两银子。'});return false;}this.s.coins-=q.cost||0;
   if(q.repeat){this.s.flags[id+'Count']=(this.s.flags[id+'Count']||0)+1;if(this.s.flags[id+'Count']<q.repeat){this.emit('toast',{text:'已施舍 '+this.s.flags[id+'Count']+' 次。'});return true;}}
   for(const k of required){this.s.inventory[k]--;if(this.s.equipment.weapon===k)this.s.equipment.weapon='family_sword';}this.s.sideDone.push(id);this.applyEffects(q.rewards);if(this.s.inventory.sheepskin>=7)this.unlock(18);this.gainExp(75);this.emit('sideComplete',{id});return true;}
- dash(){if(this.paused||this.s.phase==='staging'||this.s.hero.stamina<24||this.dashTime>0)return false;const h=this.s.hero;let dx=0,dy=0;if(this.target){dx=this.target.x-h.x;dy=this.target.y-h.y;}else{dx=(this.keys.has('ArrowRight')||(this.settings.controls==='modern'&&this.keys.has('d'))?1:0)-(this.keys.has('ArrowLeft')||(this.settings.controls==='modern'&&this.keys.has('a'))?1:0);dy=(this.keys.has('ArrowDown')||(this.settings.controls==='modern'&&this.keys.has('s'))?1:0)-(this.keys.has('ArrowUp')||(this.settings.controls==='modern'&&this.keys.has('w'))?1:0);if(!dx&&!dy)dx=h.direction;}const len=Math.hypot(dx,dy)||1,nx=h.x+dx/len*145,ny=h.y+dy/len*105;if(!this.clearSegment(h,{x:nx,y:ny}))return false;this.addEffect('dash',h.x,h.y,60,'#c5e8e5',.6);h.x=nx;h.y=ny;h.stamina-=24;this.dashTime=.6;this.emit('dash');return true;}
- meditate(){if(this.paused||this.s.phase==='staging')return;if(this.s.phase==='battle'){this.emit('toast',{text:'交战中无法打坐。'});return;}this.meditating=!this.meditating;this.target=null;this.waypoints=[];this.emit('toast',{text:this.meditating?'凝神静气，恢复气血与内力。':'收功起身。'});}
- tick(dt){dt=clamp(dt,0,.05);if(this.sceneLoading||this.s.failure||this.paused||!this.active)return;this.time+=dt;this.s.playTime+=dt;if(this.canStartStaging()){const d=this.stagingDefinition();if(this.hasQuestItems()&&(d.auto||(d.trigger&&distance(this.s.hero,d.trigger)<(d.trigger.radius||135))))this.startStaging();}if(this.s.phase==='staging'){this.tickStaging(dt);return;}this._portalCooldown=Math.max(0,(this._portalCooldown||0)-dt);this.dashTime=Math.max(0,this.dashTime-dt);this.hitTime=Math.max(0,this.hitTime-dt);this.s.cooldowns=this.s.cooldowns.map(c=>Math.max(0,c-dt));this.s.flags.shield=Math.max(0,(this.s.flags.shield||0)-dt);const h=this.s.hero;h.stamina=Math.min(100,h.stamina+dt*12);h.mp=Math.min(h.maxMp,h.mp+dt*(this.meditating?35:this.s.phase==='battle'?2:6));if(this.meditating)h.hp=Math.min(h.maxHp,h.hp+dt*30);
+ dash(){if(this.jump)return false;const nearby=this.jumpMarkers().find(m=>distance(this.s.hero,m)<100);if(nearby)return this.startJump(nearby.jumpId,nearby.side);if(this.paused||this.s.phase==='staging'||this.s.hero.stamina<24||this.dashTime>0)return false;const h=this.s.hero;let dx=0,dy=0;if(this.target){dx=this.target.x-h.x;dy=this.target.y-h.y;}else{dx=(this.keys.has('ArrowRight')||(this.settings.controls==='modern'&&this.keys.has('d'))?1:0)-(this.keys.has('ArrowLeft')||(this.settings.controls==='modern'&&this.keys.has('a'))?1:0);dy=(this.keys.has('ArrowDown')||(this.settings.controls==='modern'&&this.keys.has('s'))?1:0)-(this.keys.has('ArrowUp')||(this.settings.controls==='modern'&&this.keys.has('w'))?1:0);if(!dx&&!dy)dx=h.direction;}const len=Math.hypot(dx,dy)||1,nx=h.x+dx/len*145,ny=h.y+dy/len*105;if(!this.clearSegment(h,{x:nx,y:ny}))return false;this.addEffect('dash',h.x,h.y,60,'#c5e8e5',.6);h.x=nx;h.y=ny;h.stamina-=24;this.dashTime=.6;this.emit('dash');return true;}
+ meditate(){if(this.jump||this.paused||this.s.phase==='staging')return;if(this.s.phase==='battle'){this.emit('toast',{text:'交战中无法打坐。'});return;}this.meditating=!this.meditating;this.target=null;this.waypoints=[];this.emit('toast',{text:this.meditating?'凝神静气，恢复气血与内力。':'收功起身。'});}
+ tick(dt){dt=clamp(dt,0,.05);if(this.sceneLoading||this.s.failure||this.paused||!this.active)return;this.time+=dt;this.s.playTime+=dt;if(this.jump){this.tickJump(dt);return;}if(this.canStartStaging()){const d=this.stagingDefinition();if(this.hasQuestItems()&&(d.auto||(d.trigger&&distance(this.s.hero,d.trigger)<(d.trigger.radius||135))))this.startStaging();}if(this.s.phase==='staging'){this.tickStaging(dt);return;}this._portalCooldown=Math.max(0,(this._portalCooldown||0)-dt);this.dashTime=Math.max(0,this.dashTime-dt);this.hitTime=Math.max(0,this.hitTime-dt);this.s.cooldowns=this.s.cooldowns.map(c=>Math.max(0,c-dt));this.s.flags.shield=Math.max(0,(this.s.flags.shield||0)-dt);const h=this.s.hero;h.stamina=Math.min(100,h.stamina+dt*12);h.mp=Math.min(h.maxMp,h.mp+dt*(this.meditating?35:this.s.phase==='battle'?2:6));if(this.meditating)h.hp=Math.min(h.maxHp,h.hp+dt*30);
   let dx=(this.keys.has('ArrowRight')||(this.settings.controls==='modern'&&this.keys.has('d'))?1:0)-(this.keys.has('ArrowLeft')||(this.settings.controls==='modern'&&this.keys.has('a'))?1:0),dy=(this.keys.has('ArrowDown')||(this.settings.controls==='modern'&&this.keys.has('s'))?1:0)-(this.keys.has('ArrowUp')||(this.settings.controls==='modern'&&this.keys.has('w'))?1:0);
   if(dx||dy){this._pursuitFollow=false;this.s.destination=null;this.target=null;this.waypoints=[];this.attackTarget=null;this.autoInteract=null;this.meditating=false;}else if(this.target){dx=this.target.x-h.x;dy=this.target.y-h.y;if(Math.hypot(dx,dy)<8){this.target=this.waypoints.shift()||null;dx=dy=0;}}
   if(dx||dy){this.meditating=false;const len=Math.hypot(dx,dy),speed=this.keys.has('Shift')&&h.stamina>3?250:190,nx=h.x+dx/len*speed*dt,ny=h.y+dy/len*speed*.73*dt;if(this.passable(nx,h.y))h.x=nx;if(this.passable(h.x,ny))h.y=ny;if(speed===250)h.stamina=Math.max(0,h.stamina-dt*12);if(Math.abs(dx)>.01)h.direction=dx>=0?1:-1;this.walkTime+=dt*11;}else this.walkTime=0;
   this.tickPursuit(dt);
   if(this.s.phase==='escape'||(['search','return'].includes(this.s.phase)&&this.q.timeLimit)){this.s.timer-=dt;if(this.s.timer<=0){this.s.phase='talk';this.s.collected=0;this.s.collectedIds=[];h.x=this.scene.spawn.x;h.y=this.scene.spawn.y;this.target=null;this.waypoints=[];this.autoInteract=null;this.emit('toast',{text:this.q.timeLimit?'气息将尽，先返回岸边。调整路线后再试。':'未能及时撤出，已返回入口，可重新尝试。'});}}
-  const follower=this.nearestOpen(h.x-65,h.y+35),followStep=this.nearestOpen(this.followPosition.x+(follower.x-this.followPosition.x)*dt*2,this.followPosition.y+(follower.y-this.followPosition.y)*dt*2);this.followPosition=followStep;
+  this.stepParty(dt);
   if(this.autoInteract){const marker=this.markers.find(m=>m.id===this.autoInteract);if(marker&&distance(h,marker)<135){this.target=null;this.waypoints=[];this.interact(marker);}}
   if(this.s.destination&&!this.target&&!this.autoInteract&&this._portalCooldown<=0)this.travel(this.s.destination);
   if(!this.travelBlocked()&&this._portalCooldown<=0&&!this.s.destination&&!this.autoInteract&&!this.target&&!this.waypoints.length&&(dx||dy)){const portal=this.exits().find(exit=>!exit.locked&&this.scene.portals?.[exit.to]&&distance(h,this.scene.portals[exit.to].exit)<48);if(portal){this.enterMap(portal.to);return;}}
@@ -407,3 +437,5 @@ export class GameEngine{
 }
 
 Object.assign(GameEngine.prototype,stagingMethods,recruitmentMethods,skirmishMethods,pursuitMethods);
+
+Object.assign(GameEngine.prototype,partyMethods,jumpMethods);
