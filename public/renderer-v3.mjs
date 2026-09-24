@@ -15,7 +15,7 @@ export function npcCellFor(name){
   if(/老板|掌柜|小二|店主|酒保|李总管/.test(n))return 0;
   if(/商人|行商|货郎|张仲天/.test(n))return 1;
   if(/道士|道长|天星|张惟宜/.test(n))return 2;
-  if(/老头|老者|老丈|长老|钓叟|纳兰潜凛|孟知秋/.test(n))return 3;
+  if(/老头|老者|老丈|长老|钓叟|纳兰潜凛|孟知秋|胡神医/.test(n))return 3;
   if(/强盗|匪|刺客|黑衣|蒙面|叛众|帮凶|打手|伏兵|劫持者|追兵|守卫|塔卫|来犯|刀客/.test(n))return 6;
   if(/弟子|执事|铁云|卓非凡/.test(n))return 5;
   if(/村民|路人|酒客|书生|王炜|乞丐|家丁|大夫|小叁子|李四/.test(n))return 4;

@@ -428,6 +428,22 @@
       ]
     },
     {
+      "path": "public/assets/medicine-courtyard.png",
+      "sha256": "da5d37267784ce59366a4777ca0723a47f947d64d44b61a078f00beda91d8c2d",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-courtyard-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 纯文字独立生成，无输入图片；完整提示词及生成路径见制作记录。",
+        "documented表示有制作记录，不代表法律认证或原版相似度结论。"
+      ]
+    },
+    {
       "path": "public/assets/mei-original.png",
       "sha256": "600078a555c6a6a345ea254338453f84e3e5bd7241fd32f2f0bd4e89603d89fb",
       "status": "documented",

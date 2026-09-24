@@ -335,3 +335,12 @@ console.log(JSON.stringify({result:'PASS',checks,
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
 },null,2));
 
+
+// First conversation is an actual actor interaction; storage commits before dialogue.
+for(const answer of [0,1]){
+ preset('g23');ui.engine.s.flags.goodMedicineFarewellReady=true;nodes.get('track-button').click();assert.equal(ui.engine.s.choices.g23,undefined,'tracking never chooses a person for the player');assert.equal(ui.engine.autoInteract,null);const actor=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);assert.ok(actor);
+ Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(actor.x-15,actor.y+10));assert.equal(ui.engine.interact(actor),true);assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('choices').children.length,0,'no first-person selection menu');
+ const saved=[...local.values()].map(value=>{try{return JSON.parse(value)}catch{return null}}).find(s=>s?.questId==='g23');assert.ok(saved);assert.equal(saved.choices.g23,answer,'selected person saved before first result line');assert.equal(saved.done.includes('g23'),false);assert.equal(ui.engine.q.id,'g23');
+ ui.loadState(saved);nodes.get('dialogue').hidden=true;ui.engine.paused=false;const resumed=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);const other=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index!==answer);assert.equal(other.interactive,false);Object.assign(ui.engine.s.hero,resumed);ui.engine.interact(resumed);drain();assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);checks++;
+}
+console.log(JSON.stringify({firstMeetingUI:'PASS',cases:2,scope:'production journey with DOM stub: actor click, save before lines, reload resume; not browser visual verification'}));

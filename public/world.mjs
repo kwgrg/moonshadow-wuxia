@@ -87,6 +87,8 @@ function solid(scene, object, rectangle) {
 // Chapter-local layouts share only original paintings. No pursuit, jade
 // mechanism or letter-chest transaction is inherited from the evil aliases.
 const CHAPTER_SCENES={
+ r_good_manor_infirmary:{kind:'room',art:'leaf-infirmary',objective:{x:850,y:720},points:[point('good-care-bedside','病榻前',1090,610,'床前留着照料病者的空处，门外的脚步声被帘子隔得很轻。',{paintOnly:true,appearance:'trace'}),point('good-care-window','窗下清光',535,535,'日光落在收好的杯盏旁，室内留着淡淡药香。',{paintOnly:true,appearance:'trace'})]},
+ r_good_manor_zhen_room:{kind:'room',art:'zhen-chamber',objective:{x:850,y:650},points:[point('good-zhen-curtain','帘前木地板',770,390,'床帘垂在一侧，窗下留着可供人交谈的空处。',{paintOnly:true,appearance:'trace'}),point('good-zhen-window','临院纸窗',1090,680,'隔着纸窗能听见院中风声，房门通回园路。',{paintOnly:true,appearance:'trace'})]},
  r_leaf_memorial:{kind:'garden',art:'leaf-memorial',objective:{x:760,y:650},points:[point('leaf-memorial-grass','谷中草地',580,555,'山风掠过草叶，静处可以望见回院的石路。',{paintOnly:true,appearance:'trace'}),point('leaf-memorial-path','墓区石路',1110,610,'石路绕过草地伸向谷院，来时的脚步声已渐渐散去。',{paintOnly:true,appearance:'trace'})]},
  r_good_hanbo_road:{kind:'forest',art:'forest-original',objective:{x:950,y:620},points:[point('rescue-hanbo-outward','谷外山径',650,535,'溪声留在身后，谷外的路沿着树林折向镇郊。',{paintOnly:true,appearance:'trace'}),point('rescue-hanbo-wayback','回谷方向',1080,650,'山径的转角还能望见来时的树梢，回谷的方向清晰可辨。',{paintOnly:true,appearance:'trace'})]},
  r_good_dunhuang_approach:{kind:'forest',art:'forest-original',objective:{x:970,y:615},points:[point('rescue-west-ridge','西行山径',640,620,'山庄的檐角已被树林遮住，脚下的石路继续向洞口延伸。',{paintOnly:true,appearance:'trace'}),point('rescue-west-wind','林中风声',1070,545,'山风沿坡地掠过，远处隐约传来空洞的水声。',{paintOnly:true,appearance:'trace'})]},
@@ -109,6 +111,7 @@ function goodForbiddenLayout(scene){
  const data=CHAPTER_SCENES[scene.id];if(!data)return false;
  Object.assign(scene,{kind:data.kind,art:data.art,objective:{...data.objective},ground:palettes[data.kind],points:data.points.map(p=>({...p})),props:[],paths:[],drawRoads:false});
  scene.atmosphere={light:['m59','m60','r_good_forbidden_path','r_good_seaside_hut','r_good_yitian','r_good_hanbo_hut','r_good_dunhuang_approach','r_good_feilong_approach','r_good_desert','r_good_hanbo_road'].includes(scene.id)?'day':'night',weather:'clear',indoor:['room','cave','hall'].includes(data.kind),particles:data.kind==='forest'?'leaves':'dust'};
+ if(scene.id==='r_good_manor_infirmary')scene.atmosphere={light:'day',weather:'clear',indoor:true,particles:'dust'};
  if(scene.id==='r_leaf_memorial')scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
  if(scene.id==='r_good_dungeon'){
   const positions={};for(let i=0;i<28;i++)positions['rescue-dungeon-man-'+String(i+1).padStart(2,'0')]={x:760+(i%7)*75,y:450+Math.floor(i/7)*75};
@@ -472,6 +475,24 @@ export function getScene(mapId,region={},variant=null) {
    Object.assign(scene,{variant,art:'leaf-ruined-courtyard',drawRoads:false,props:[],paths:[],objective:{x:760,y:650},allowedPortalTargets:['m49','r_leaf_hero_room','r_leaf_rose_room','r_leaf_memorial'],portalCoordinates:{m49:[[800,875],[800,750]],r_leaf_hero_room:[[485,310],[540,430]],r_leaf_rose_room:[[1150,310],[1100,435]],r_leaf_memorial:[[210,490],[335,535]]}});
    scene.points=[point('ruined-court-stone','受损石院',620,645,'断木与碎瓦留在院边，中央石路仍连着两间屋子。',{paintOnly:true,appearance:'trace'}),point('ruined-court-return','院门石阶',1020,730,'向下的石阶通往谷外，西侧小路则绕向安静的草地。',{paintOnly:true,appearance:'trace'})];
   }
+  // R16 rooms are independent web partitions. The chapter variant never
+  // moves old chapter anchors or exposes two room aliases at one painted door.
+  if(variant==='medicineCare'){
+   scene.variant=variant;
+   if(mapId==='m23'){
+    Object.assign(scene,{kind:'garden',art:'medicine-courtyard',fallbackArt:'medicine-courtyard',ground:palettes.garden,props:[],paths:[],drawRoads:false,objective:{x:850,y:680},allowedPortalTargets:[],carePositions:{hero:{x:850,y:680},rose:{x:930,y:570},physician:{x:1090,y:485}}});
+    scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
+    scene.points=[point('medicine-paving','诊院石地',680,640,'石地从院门一直通到药房台阶，晒药的木架留在远处。',{paintOnly:true,appearance:'trace'}),point('medicine-breeze','院中药香',1130,685,'山风掠过院角，药圃与屋檐间飘来草木的气味。',{paintOnly:true,appearance:'trace'})];
+   }
+   if(mapId==='m50')Object.assign(scene,{allowedPortalTargets:['m49','r_good_manor_infirmary','r_good_manor_zhen_room'],portalCoordinates:{m49:[[385,540],[555,565]],r_good_manor_infirmary:[[435,300],[535,430]],r_good_manor_zhen_room:[[1120,315],[1060,440]]}});
+   if(mapId==='m49')Object.assign(scene,{allowedPortalTargets:['m50','m41','m70'],portalCoordinates:{m50:[[1260,820],[1140,780]],m41:[[805,365],[815,465]],m70:[[400,435],[525,520]]}});
+   if(mapId==='m17')Object.assign(scene,{allowedPortalTargets:['r_good_hanbo_road','m16'],portalCoordinates:{r_good_hanbo_road:[[1250,425],[1130,505]],m16:[[800,940],[800,810]]},meetingPositions:{'good-meeting-zi':{x:920,y:520},'good-meeting-mei':{x:1100,y:610}}});
+   if(mapId==='m41')Object.assign(scene,{allowedPortalTargets:['m49','r_good_hanbo_road']});
+   if(mapId==='r_good_hanbo_road')Object.assign(scene,{allowedPortalTargets:['m41','m17'],portalCoordinates:{m41:[[800,915],[800,800]],m17:[[1250,410],[1165,470]]}});
+   if(mapId==='m34')Object.assign(scene,{allowedPortalTargets:[],points:[],objective:{x:945,y:735},departurePositions:{hero:{x:945,y:735},zhen:{x:1055,y:720},other:{x:980,y:610}}});
+   if(mapId==='m16')scene.allowedPortalTargets=['m17'];
+   if(mapId==='m70')Object.assign(scene,{allowedPortalTargets:['m49'],portalCoordinates:{m49:[[555,915],[585,800]]}});
+  }
   alignPaintedGround(scene);
   scene.art=LANDSCAPE_ART[scene.art]||scene.art;scene.fallbackArt=LANDSCAPE_ART[scene.fallbackArt]||scene.fallbackArt;
   attachPortals(scene);
@@ -483,7 +504,7 @@ export function getScene(mapId,region={},variant=null) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['leaf-ruined-courtyard','leaf-memorial','tower-lower','tower-middle','tower-prison','desert-passage','hanbo-hut-yard','rescue-dungeon','cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
+export const SCENE_ART_KEYS=['medicine-courtyard','leaf-ruined-courtyard','leaf-memorial','tower-lower','tower-middle','tower-prison','desert-passage','hanbo-hut-yard','rescue-dungeon','cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -508,6 +529,15 @@ export function getDreamScene(key){
 let towerSceneCache=null;
 export function getStagingScene(key){
  const dream=getDreamScene(key);if(dream)return dream;
+ if(key==='goodMedicineMemorial'){
+  const scene=getScene('r_leaf_memorial',ROUTE_MAPS.r_leaf_memorial),footprint=[972,485,1028,513];
+  return {...scene,id:'staging:goodMedicineMemorial',cinematicName:'庄外安葬',bounds:scene.bounds.slice(),spawn:{x:760,y:650},objective:{x:760,y:650},exit:{x:760,y:650},atmosphere:{...scene.atmosphere},obstacles:[...scene.obstacles.map(r=>r.slice()),footprint.slice()],props:[prop('grave',1000,500,80,95,{label:'纳兰潜凛之墓',footprint:footprint.slice()})],points:[],paths:[],portals:{}};
+ }
+ const medicineScenes={goodMedicineInfirmary:['r_good_manor_infirmary','静养客房'],goodMedicineZhenRoom:['r_good_manor_zhen_room','真儿客房'],goodMedicineGarden:['m50','山庄园中'],goodMedicineHeroRoom:['r_beimo_hero_room','影枫卧房']};
+ if(Object.hasOwn(medicineScenes,key)){
+  const [id,cinematicName]=medicineScenes[key],scene=getScene(id,ROUTE_MAPS[id],'medicineCare');
+  return {...scene,id:'staging:'+key,cinematicName,bounds:scene.bounds.slice(),spawn:{...scene.spawn},objective:{...scene.objective},exit:{...scene.exit},atmosphere:{...scene.atmosphere},obstacles:scene.obstacles.map(r=>r.slice()),props:[],points:[],paths:[],portals:{}};
+ }
  if(!['towerInterlude','towerFirstInterlude'].includes(key))return null;
  if(!towerSceneCache){const scene={...baseScene('staging:towerInterlude',{name:'摘星楼交锋',weather:'亥时 · 灯火沉沉',art:'hall'}),kind:'hall',art:'hall',cinematicName:'摘星楼交锋',hidePlayer:true,ground:palettes.hall,atmosphere:{light:'night',weather:'clear',indoor:true,particles:'dust'},objective:{x:930,y:520},drawRoads:false,props:[],points:[],paths:[],portals:{}};
  alignPaintedGround(scene);towerSceneCache=scene;}
@@ -539,6 +569,7 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'medicine-courtyard':{bounds:[120,240,1420,1024],polygon:[[165,445],[250,445],[305,485],[305,400],[380,340],[485,300],[620,270],[760,250],[850,285],[940,335],[1080,385],[1240,430],[1350,475],[1380,535],[1320,565],[1290,685],[1190,765],[1100,840],[980,890],[935,965],[930,1024],[710,1024],[700,945],[615,885],[530,830],[410,805],[295,720],[270,655],[190,605],[150,550]],spawn:{x:790,y:810},exit:{x:790,y:930},solids:[]},
     'leaf-ruined-courtyard':{bounds:[75,265,1490,1024],polygon:[[420,285],[560,285],[580,325],[650,345],[1030,345],[1100,285],[1220,285],[1260,370],[1290,420],[1270,470],[1360,490],[1410,570],[1350,630],[1420,680],[1320,700],[1140,775],[1050,820],[1010,870],[980,1024],[640,1024],[600,875],[505,790],[360,760],[280,680],[240,640],[150,650],[130,590],[155,500],[225,435],[175,385],[110,345],[110,300],[200,285],[235,370],[320,405],[390,360]],spawn:{x:800,y:750},exit:{x:800,y:875},solids:[]},
     'leaf-memorial':{bounds:[270,235,1520,1024],polygon:[[355,305],[565,250],[790,240],[1010,270],[1180,315],[1290,340],[1380,315],[1520,310],[1520,355],[1420,405],[1390,510],[1340,595],[1280,645],[1120,665],[960,710],[870,760],[820,830],[860,1024],[640,1024],[635,855],[670,785],[600,735],[485,695],[390,635],[330,570],[290,465],[285,370]],spawn:{x:750,y:790},exit:{x:745,y:925},solids:[]},
     'tower-lower':{bounds:[65,200,1510,995],polygon:[[180,420],[390,330],[595,270],[825,210],[1000,255],[1090,280],[1170,250],[1295,280],[1400,315],[1400,420],[1490,450],[1490,610],[1410,680],[1320,735],[1170,760],[1070,835],[920,860],[850,920],[690,935],[600,975],[465,960],[440,880],[300,915],[180,945],[75,970],[75,875],[120,785],[170,730],[180,655],[100,600],[95,520]],spawn:{x:520,y:820},exit:{x:1280,y:350},solids:[[225,615,285,780],[285,705,350,810],[350,765,425,825],[1140,200,1210,330],[1360,245,1435,425]]},
@@ -674,7 +705,7 @@ function alignPaintedGround(scene){
   }
   // The manor uses the complete temple painting. Remove its generated pools,
   // gateway and paving together with their footprints; keep the painted mask.
-  if(['m49','m54'].includes(scene.id)){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
+  if(['m49','m54'].includes(scene.id)||(scene.id==='m70'&&scene.variant==='medicineCare')||scene.art==='medicine-courtyard'){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
   if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','r_beimo_rose_room','r_hanbo_return','m52','m16'].includes(scene.id)){
@@ -753,6 +784,8 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ r_good_manor_infirmary:{m50:[[820,935],[820,810]]},
+ r_good_manor_zhen_room:{m50:[[750,925],[750,820]]},
  r_leaf_memorial:{m51:[[745,925],[750,790]]},
  r_good_hanbo_road:{r_hanbo_return:[[1250,410],[1165,470]],m41:[[800,915],[800,800]]},
  r_good_dunhuang_approach:{m49:[[800,915],[800,800]],r_good_dunhuang_passage:[[1250,410],[1165,470]]},

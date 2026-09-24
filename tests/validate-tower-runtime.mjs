@@ -19,7 +19,7 @@ function walk(g,to){
  assert.equal(g.s.map,to,'walk crosses actual stair '+from+'→'+to);assert.equal(budget(g),before,'stairs never grant kill/quest resources');crossings++;
  assert(g.q.id===id||/^gTower[2-8]$/.test(g.q.id),'only a current ascending passage can advance');return g;
 }
-assert.equal(typeof GameEngine.prototype.ensureTowerEncounter,'function','production runtime installs tower methods');assert.equal(freshState().campaignRevision,15);
+assert.equal(typeof GameEngine.prototype.ensureTowerEncounter,'function','production runtime installs tower methods');assert.equal(freshState().campaignRevision,16);
 // No synthetic completion away from a stair, no sheep or guard-kill gate.
 let g=create(),before=budget(g);assert.equal(g.s.enemies.length,38);assert.equal(g.enterMap('m63'),false,'far-away direct map entry is rejected');g.completeQuest();assert.equal(g.q.id,'gTower1');assert.equal(g.s.done.includes('gTower1'),false);
 const start=saved(g);g=walk(g,'m63');assert.equal(g.q.id,'gTower2');assert.equal(g.s.done.includes('gTower1'),true);assert.equal(g.s.towerFloors.m62.enemies.filter(e=>e.hp>0).length,38);assert.equal(g.s.inventory.sheepskin,0);

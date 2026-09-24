@@ -93,7 +93,7 @@ assert.equal(game.q.id,'g15');assert.equal(game.s.flags.valleyRescueResolved,tru
 assert.equal(game.q.refusalRule.limit,3);assert.equal(game.q.refusalRule.outcome,'continue');
 // v11 cursors map by stable IDs. Historical completion is not a new award or a
 // fabricated staged scene; pending old g14 must enter the new manor battle.
-assert.equal(freshState().campaignRevision,15);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
+assert.equal(freshState().campaignRevision,16);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
 for(const numeric of [false,true])for(const id of ['g14','g15']){
  const raw=save(create(id));raw.campaignRevision=11;raw.flags={route:'good',moral:0,evil:0};raw.map=id==='g14'?'m51':'m61';raw.coins=421;raw.hero.exp=37;if(id==='g15'){raw.phase='choice';raw.flags.refusal_g15=2;}
  if(numeric){delete raw.questId;raw.quest=campaign.REVISION_ELEVEN_QUEST_IDS.indexOf(id);}if(id==='g15'){raw.done=['g14'];raw.claimedRewards=['g14'];}

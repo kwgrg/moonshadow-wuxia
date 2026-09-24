@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {GameEngine,freshState,restoreState,QUESTS,MAPS,SKILLS,ITEMS,SIDE_QUESTS,distance} from '../public/runtime.mjs';
 import fs from 'node:fs';
 const stats=[];
-for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging||q.towerPassage,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
+for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging||q.towerPassage||q.firstMeeting,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
 assert.equal(new Set(QUESTS.map(q=>q.id)).size,QUESTS.length);
 function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(['g20','g20_call2','g20_call3','g20_call4'].includes(id))return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
 // The lake now has two disconnected walking surfaces. The simulation must
@@ -16,9 +16,10 @@ function crossGap(game,goal){
  for(let n=0;n<30&&game.jump;n++)game.tick(.05);assert.equal(game.jump,null);assert.ok(game.findPath(goal.x,goal.y).length,'land before continuing on foot');
 }
 for(const difficulty of ['normal','story']) for(const outcome of ['reunion','three','zhen_good','cult','alone','family']){
- const g=new GameEngine();g.settings.difficulty=difficulty;let transitions=0,battles=0,defeats=0;g.onEvent=(event)=>{if(event==='defeat')defeats++;if(event==='stagingDialogue')g.advanceStaging();if(event==='startingDifficulty')g.chooseStartingDifficulty(difficulty);};
+ const g=new GameEngine();g.settings.difficulty=difficulty;let transitions=0,battles=0,defeats=0;g.onEvent=(event)=>{if(event==='defeat')defeats++;if(event==='stagingDialogue')g.advanceStaging();if(event==='firstMeetingDialogue')g.finishFirstMeeting();if(event==='startingDifficulty')g.chooseStartingDifficulty(difficulty);};
  while(!g.s.completed&&transitions++<1000){const q=g.q;
   if(g.s.map!==q.map){crossGap(g,g.scene.portals?.[g.routeTo(q.map)[1]]?.exit);assert.equal(g.travel(q.map),true,q.id+' route open');for(let t=0;t<18000&&g.s.map!==q.map;t++)g.tick(.05);assert.equal(g.s.map,q.map,q.id+' walking route arrives');continue;}
+  if(q.firstMeeting){const actor=g.markers.find(m=>m.kind==='firstMeeting'&&m.index===option(g,outcome));assert.ok(actor,q.id+' exposes the chosen real person');g.interact(actor);for(let t=0;t<5000&&g.q.id===q.id;t++)g.tick(.05);assert.notEqual(g.q.id,q.id,'approach and first conversation complete');continue;}
   if(g.s.phase==='talk'){crossGap(g,g.stagingDefinition()?.startPoint||g.scene.objective);g.beginObjective();}if(g.s.phase==='staging'){for(let t=0;t<5000&&g.s.phase==='staging';t++)g.tick(.05);assert.notEqual(g.s.phase,'staging',q.id+' staging releases');continue;}
   if(g.s.phase==='pursuit'){assert.equal(g.followPursuit(),true,q.id+' following starts through the pursuit action');for(let t=0;t<18000&&g.q.id===q.id&&g.s.phase==='pursuit';t++)g.tick(.05);assert.notEqual(g.q.id,q.id,q.id+' pursuit must reach its real exit');continue;}
   if(g.s.phase==='training'){const opponent=g.markers.find(m=>m.kind==='master')||g.markers.find(m=>m.kind==='training'&&!m.defeated);assert.ok(opponent);g.interact(opponent);for(let n=0;n<1200&&g.s.phase==='training';n++)g.tick(.05);assert.equal(g.s.phase,'battle');}

@@ -1,3 +1,4 @@
+import {GOOD_MEDICINE_REUNION_REVISIONS,GOOD_MEDICINE_REUNION_ADDITIONS} from './good-medicine-reunion-revisions.mjs';
 import {GOOD_TOWER_VALLEY_REVISIONS,GOOD_TOWER_VALLEY_ADDITIONS} from './good-tower-valley-revisions.mjs';
 import {GOOD_RESCUE_REVISIONS,GOOD_RESCUE_ADDITIONS} from './good-rescue-revisions.mjs';
 import {GOOD_FORBIDDEN_REVISIONS,GOOD_FORBIDDEN_ADDITIONS} from './good-forbidden-revisions.mjs';
@@ -108,3 +109,13 @@ export const REVISION_FOURTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
 QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
 for(const q of QUESTS)Object.assign(q,GOOD_TOWER_VALLEY_REVISIONS[q.id]||{});
 for(const insertion of GOOD_TOWER_VALLEY_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown good-tower-valley insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+// Preserve R15 cursor identities and combat strength before adding independent care/reunion scenes.
+export const REVISION_FIFTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
+QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
+for(const q of QUESTS)Object.assign(q,GOOD_MEDICINE_REUNION_REVISIONS[q.id]||{});
+for(const insertion of GOOD_MEDICINE_REUNION_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown good-medicine-reunion insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+// The last scene's visible company is verified separately from later family life.
+Object.assign(ENDINGS.reunion,{name:'临海同行',description:'后事已毕，影枫在海边与真儿、紫轩相伴，告别一路纷争。',party:['纳兰真','紫轩'],fidelityNote:'此处只展示已核海边同行，未据NPC列表推断未显示人物的最终归宿；见good-medicine-reunion-reference.md。'});
+Object.assign(ENDINGS.three,{name:'樱谷留别',description:'紫轩留在寒波谷。海风渐起，影枫与真儿、蔷薇走向新的日子。',party:['纳兰真','蔷薇'],fidelityNote:'此处只展示已核海边同行，不把攻略标题或注释掉的跟随语句当作已核结局家庭名单。'});

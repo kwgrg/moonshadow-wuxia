@@ -71,7 +71,7 @@ for(const route of ['good','evil'])for(const cultPath of [false,true])for(const 
 const CHAIN=['e06','e06_kill','e06_refuse','e06_aftermath','e06_night','e06_night_visit','e06_escort','e06_ferry','e06_landing','e06_first_interlude','e06_rest'];
 const MILESTONES=['evilQiangweiDecision','evilQiangweiDead','evilFamilyHeard','evilDreamEnded','evilNightPassed','evilEscortStarted','evilFerryReady','evilIslandArrived','evilFirstTowerInterludeComplete','evilZhenMissing'];
 const PURSUIT=['e07_village','e07_approach','e07_entry','e07_first','e07_second','e07_gate'];
-assert.equal(freshState().campaignRevision,15);
+assert.equal(freshState().campaignRevision,16);
 let restoredSteps=0;
 function runScene(game){
  const id=game.q.id;let active=game,lastStep=-1,steps=0;
@@ -152,7 +152,7 @@ for(const [revision,ids] of [[1,campaign.LEGACY_QUEST_IDS],[2,campaign.REVISION_
  for(const id of ['e05','e06','e07','e08']){
   const game=create(id),raw=snapshot(game);delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);assert.ok(raw.quest>=0);if(id==='e06'&&revision<5){raw.map='m71';raw.phase='choice';}if(revision===5&&['e07','e08'].includes(id))raw.flags.evilZhenMissing=true;if(id==='e08'){raw.map='m41';Object.assign(raw.hero,{x:1040,y:725});raw.phase='talk';}
   const restored=new GameEngine(restoreState(raw));assert.equal(restored.q.id,id==='e05'?'e04_homecoming':id,'old numeric index resolves to original identity or explicit pending return-message migration');
-  assert.equal(restored.s.campaignRevision,15);
+  assert.equal(restored.s.campaignRevision,16);
   if(id==='e06'){if(revision<5)assert.equal(restored.s.phase,'travel');assert.ok(!restored.s.flags.evilQiangweiDead);assert.ok(!restored.s.flags.evilLegacyJourney);}
   if(['e07','e08'].includes(id)){if(revision<5)assert.equal(restored.s.flags.evilLegacyJourney,true);assert.equal(restored.s.flags.evilZhenMissing,true);assert.equal(restored.s.flags.evilLegacyReveal,true);assert.equal(restored.s.flags.evilGateOpened,true);assert.deepEqual(restored.s.inventory,raw.inventory);assert.equal(restored.s.coins,raw.coins);assert.equal(restored.s.hero.exp,raw.hero.exp);assert.ok(!restored.s.done.includes('e06_rest'),'legacy summary is not mislabeled newly played staging');for(const added of [...PURSUIT,'e06_night_visit']){assert.ok(!restored.s.done.includes(added),'migration does not fabricate a played event');assert.ok(!restored.s.claimedRewards.includes(added),'migration does not fabricate a reward claim');assert.ok(!restored.s.flags['staged_'+added],'migration does not fabricate staging completion');}assert.ok(!restored.s.flags.staged_e07,'old reveal is represented by its explicit legacy flag');}
   if(id==='e08'){
@@ -168,4 +168,4 @@ for(const [revision,ids] of [[1,campaign.LEGACY_QUEST_IDS],[2,campaign.REVISION_
 }
 const fresh=create('e07'),freshRestored=restoreState(snapshot(fresh));assert.ok(!freshRestored.flags.evilLegacyJourney);assert.ok(!freshRestored.flags.evilZhenMissing,'new revision does not grant free escort progress');assert.ok(!freshRestored.flags.evilGateOpened);assert.ok(!freshRestored.flags.evilLegacyReveal,'new revision cannot claim old revealed history');
 const good=create('e07',{route:'good'}),goodRaw=snapshot(good);goodRaw.campaignRevision=4;goodRaw.done=['e06'];assert.ok(!restoreState(goodRaw).flags.evilZhenMissing,'old wrong-route flag mixtures do not migrate evil progress');
-console.log(JSON.stringify({result:'PASS',pathChecks,restoredSteps,migratedIndices:migrated,outcomes,checks:'two consequence actions, persistent fallen actors, exclusive dream progression, private night room and next-day return walk, true boat travel, no invented rewards, required flags, branch isolation and legacy restoration to revision fifteen'}));
+console.log(JSON.stringify({result:'PASS',pathChecks,restoredSteps,migratedIndices:migrated,outcomes,checks:'two consequence actions, persistent fallen actors, exclusive dream progression, private night room and next-day return walk, true boat travel, no invented rewards, required flags, branch isolation and legacy restoration to revision sixteen'}));

@@ -1,8 +1,15 @@
 // Authored companion movement uses the same collision graph as the player.
+const companionCast=new Set(['紫轩','月眉儿','纳兰真','蔷薇']);
+export const normalizeCompanions=value=>Array.isArray(value)?[...new Set(value.filter(name=>companionCast.has(name)))].slice(0,4):[];
+export function applyCompanionEffects(flags,effects){
+ if(Array.isArray(effects.companions)){flags.companions=normalizeCompanions(effects.companions);flags.companion=flags.companions[0]||null;}
+ else if(effects.companion!==undefined){flags.companion=effects.companion;flags.companions=effects.companion?[effects.companion]:[];}
+}
 export const partyMethods={
  travelPartyNames(){
   if(this.s.completed)return [];
-  const names=this.s.flags.companion?[this.s.flags.companion]:[];
+  const stored=normalizeCompanions(this.s.flags.companions),primary=this.s.flags.companion;
+  const names=stored.length&&primary===stored[0]?stored:primary?[primary]:[];
   if(this.s.flags.route==='good'&&this.s.flags.valleyMeiAwake&&!this.s.flags.valleyCareSettled&&['g07_mainland','g07_island','g07_settle'].includes(this.q.id))names.push('月眉儿');
   if(this.s.flags.route==='good'&&this.s.flags.goodForbiddenReunited&&!this.s.flags.goodForbiddenCaptured&&['g13','g13_captured'].includes(this.q.id))names.splice(0,names.length,'蔷薇','纳兰真','月眉儿');
   if(this.q.rescueMission&&this.s.flags['staged_'+this.q.id]&&this.s.skirmish?.questId===this.q.id)names.splice(0,names.length,this.q.rescueMission.companion);
@@ -13,6 +20,7 @@ export const partyMethods={
   if(this.scene.hidePlayer||this.q.hideCompanion)return [];
   const actors=this.stagingPresentation()?.actors||[],mainName=this.s.phase==='choice'?(this.q.choiceSpeaker||this.q.npc):this.q.npc;
   return this.partyNames.filter(name=>{
+   if(this.q.firstMeeting&&this.s.map===this.q.map&&this.q.firstMeeting.actors.some(actor=>actor.name===name))return false;
    if(this.s.skirmish&&(this.s.allies||[]).some(ally=>ally.name===name))return false;
    if(!this.q.rescueMission&&this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===name)return false;
    return !actors.some(actor=>actor.name===name&&(this.s.sequence||!actor.hidden)&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest)));
