@@ -84,7 +84,36 @@ function solid(scene, object, rectangle) {
   }
 }
 
+// Chapter-local layouts share only original paintings. No pursuit, jade
+// mechanism or letter-chest transaction is inherited from the evil aliases.
+const GOOD_FORBIDDEN_SCENES={
+ m59:{kind:'village',art:'town-original',objective:{x:760,y:620},points:[point('good-town-paving','街口石砖',505,590,'镇中的石街在此变宽，来往的脚步沿屋前分向两侧。',{paintOnly:true,appearance:'trace'}),point('good-town-way','南面街路',845,795,'南面的路通向镇外，屋檐在身后渐渐收拢。',{paintOnly:true,appearance:'trace'})]},
+ m60:{kind:'temple',art:'temple',objective:{x:620,y:690},points:[point('good-outer-court','庭中石纹',655,505,'宽阔石庭连着下方山径和北侧内门，远处的水声传过石栏。',{paintOnly:true,appearance:'trace'}),point('good-outer-stair','门前石阶',1160,815,'院边石阶留着往来的磨痕，转身仍可望见整片前庭。',{paintOnly:true,appearance:'trace'})]},
+ r_good_seaside_hut:{kind:'room',art:'beimo-mei-room',objective:{x:730,y:660},points:[point('good-hut-table','桌旁空处',590,470,'桌旁没有人应声，窗外只有远处的海风。',{paintOnly:true,appearance:'trace'}),point('good-hut-curtain','床帘前',1070,535,'帘前静悄悄的，地板上也没有来回走动的人影。',{paintOnly:true,appearance:'trace'})]},
+ r_good_forbidden_path:{kind:'forest',art:'forest-original',objective:{x:950,y:620},points:[point('good-path-stones','林间石径',650,535,'石径穿过林中空隙，将身后的村路与前方石庭连在一起。',{paintOnly:true,appearance:'trace'}),point('good-path-turn','山径转角',1080,650,'转角处还能望见回村的路，树影遮住了更远的海面。',{paintOnly:true,appearance:'trace'})]},
+ r_good_forbidden_first:{kind:'cave',art:'cave',objective:{x:960,y:650},points:[point('good-first-echo','石窟回声',660,500,'水声从低处传来，脚下干燥的石地伸向另一侧洞口。',{paintOnly:true,appearance:'trace'}),point('good-first-floor','洞口石地',1000,735,'石地在洞口前变宽，回身可以辨认来时的通路。',{paintOnly:true,appearance:'trace'})]},
+ r_good_forbidden_second:{kind:'cave',art:'forbidden-second',objective:{x:950,y:620},points:[point('good-second-depth','临渊石栏',775,655,'深处的水声隔着石栏传来，通路留在右侧岩壁旁。',{paintOnly:true,appearance:'trace'}),point('good-second-turn','折廊石阶',1040,515,'石阶沿岩壁缓缓折向上方，脚下仍是连通的干地。',{paintOnly:true,appearance:'trace'})]},
+ r_good_forbidden_third:{kind:'hall',art:'forbidden-gate',objective:{x:800,y:580},points:[point('good-third-left','门厅石座',550,430,'石座静立在门厅两侧，前面的门道已留出通行的空处。',{paintOnly:true,appearance:'trace'}),point('good-third-right','石门近旁',1080,435,'从这里能望见门后的石阶，回廊的声音逐渐远去。',{paintOnly:true,appearance:'trace'})]},
+ r_good_forbidden_chamber:{kind:'room',art:'forbidden-chamber',objective:{x:760,y:690},points:[point('good-chamber-wall','石室北壁',815,430,'北壁旧陈设在微光中显出轮廓，石地上留着足够转身的空处。',{paintOnly:true,appearance:'trace'}),point('good-chamber-return','回廊方向',610,775,'南侧石阶通回门厅，来时的层层回廊仍在身后。',{paintOnly:true,appearance:'trace'})]}
+};
+function goodForbiddenLayout(scene){
+ const data=GOOD_FORBIDDEN_SCENES[scene.id];if(!data)return false;
+ Object.assign(scene,{kind:data.kind,art:data.art,objective:{...data.objective},ground:palettes[data.kind],points:data.points.map(p=>({...p})),props:[],paths:[],drawRoads:false});
+ scene.atmosphere={light:['m59','m60','r_good_forbidden_path','r_good_seaside_hut'].includes(scene.id)?'day':'night',weather:'clear',indoor:['room','cave','hall'].includes(data.kind),particles:data.kind==='forest'?'leaves':'dust'};
+ if(scene.id==='m60'){
+  const positions={},slot=i=>({x:835+(i%7)*65,y:410+Math.floor(i/7)*50});
+  for(let i=0;i<22;i++)positions['good-entry-man-'+String(i+1).padStart(2,'0')]=slot(i);
+  for(let i=0;i<14;i++)positions['good-entry-woman-'+String(i+1).padStart(2,'0')]=slot(22+i);
+  for(let i=0;i<50;i++)positions['good-ambush-man-'+String(i+1).padStart(2,'0')]=slot(i);
+  for(let i=0;i<2;i++)positions['good-ambush-woman-'+String(i+1).padStart(2,'0')]=slot(50+i);
+  positions['good-ambush-chief']=slot(52);
+  Object.assign(positions,{'good-rose':{x:490,y:805},'good-zhen':{x:490,y:680},'good-mei':{x:590,y:745}});
+  scene.skirmish={heroStart:{x:400,y:770},positions};
+ }
+ return true;
+}
 function handcrafted(scene) {
+  if(goodForbiddenLayout(scene))return true;
   switch (scene.id) {
     case 'm52':
       scene.title='天池';scene.kind='shore';scene.art='tianchi-islet';scene.fallbackArt='snow';scene.ground=palettes.shore;
@@ -581,6 +610,14 @@ function alignPaintedGround(scene){
   if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','r_beimo_rose_room','r_hanbo_return','m52','m16'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
+  if(GOOD_FORBIDDEN_SCENES[scene.id]){
+    scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
+    if(scene.id==='m60'){
+      scene.spawn={x:585,y:800};scene.exit={x:805,y:365};
+      // The temple painting's north-west pool is scenery, not walkable floor.
+      scene.obstacles.push([280,325,555,385]);
+    }
+  }
   if(scene.id==='r_hanbo_return'){scene.spawn={x:425,y:655};scene.objective={x:850,y:650};}
   if(LANDSCAPE_ART[scene.art]||Object.values(LANDSCAPE_ART).includes(scene.art)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
@@ -621,6 +658,13 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ m59:{m58:[[1250,410],[1160,475]],m41:[[720,940],[720,820]]},
+ r_good_seaside_hut:{m34:[[780,935],[780,810]]},
+ r_good_forbidden_path:{m31:[[800,915],[800,800]],m60:[[1250,410],[1165,470]]},
+ r_good_forbidden_first:{m60:[[830,915],[830,790]],r_good_forbidden_second:[[1270,410],[1160,490]]},
+ r_good_forbidden_second:{r_good_forbidden_first:[[800,910],[800,790]],r_good_forbidden_third:[[1100,410],[1010,505]]},
+ r_good_forbidden_third:{r_good_forbidden_second:[[800,915],[800,790]],r_good_forbidden_chamber:[[800,245],[800,365]]},
+ r_good_forbidden_chamber:{r_good_forbidden_third:[[725,930],[725,805]]},
  m52:{m51:[[200,770],[350,680]]},
  m51:{r_leaf_hero_room:[[215,325],[335,445]],r_leaf_zhen_room:[[425,275],[520,425]],r_leaf_rose_room:[[1130,285],[1070,430]],r_leaf_mei_room:[[1340,365],[1230,500]],m49:[[800,945],[800,800]],m52:[[1460,560],[1370,685]],m23:[[100,535],[335,675]],r_hanbo_return:[[385,755],[500,720]]},
  r_leaf_hero_room:{m51:[[760,935],[760,810]]},
@@ -650,17 +694,17 @@ const AUTHORED_PORTALS={
  m40:{m31:[[345,420],[455,465]],r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
  r_island_village:{m31:[[230,595],[370,605]],m40:[[810,935],[830,815]]},
  r_mainland_dock:{m40:[[700,335],[700,455]],m41:[[710,920],[720,800]]},
- m41:{r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
+ m41:{m59:[[370,580],[490,650]],r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
  m17:{m16:[[800,940],[800,810]],m18:[[250,460],[390,515]],m49:[[1250,425],[1130,505]],m70:[[575,360],[645,485]]},
- m34:{m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
- m31:{m60:[[750,415],[750,530]],m40:[[345,420],[455,465]],m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
+ m34:{r_good_seaside_hut:[[345,420],[455,465]],m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
+ m31:{r_good_forbidden_path:[[750,415],[750,530]],m40:[[345,420],[455,465]],m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
  r_forbidden_path:{m31:[[775,915],[800,825]],r_forbidden_entry:[[1250,410],[1165,470]]},
  r_forbidden_entry:{r_forbidden_path:[[350,535],[480,630]],r_forbidden_first:[[1250,410],[1165,470]]},
  r_forbidden_first:{r_forbidden_entry:[[830,915],[830,790]],r_forbidden_second:[[1270,410],[1160,490]]},
  r_forbidden_second:{r_forbidden_first:[[800,910],[800,790]],r_forbidden_gate:[[1100,410],[1010,505]]},
  r_forbidden_gate:{r_forbidden_second:[[800,915],[800,790]],m57:[[800,245],[800,365]]},
  m57:{r_forbidden_gate:[[725,930],[725,805]],m56:[[725,930],[725,805]],m58:[[1240,505],[1130,575]]},
- m60:{m31:[[830,915],[830,790]]},
+ m60:{r_good_forbidden_path:[[555,915],[585,800]],r_good_forbidden_first:[[805,365],[815,480]]},
  m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]],r_hanbo_return:[[765,915],[760,800]]},
  r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
  r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},

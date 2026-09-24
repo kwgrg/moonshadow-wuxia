@@ -229,7 +229,7 @@ const current=restoreState(partial);assert.equal(current.completed,false);assert
 let migratedIndices=0;
 for(const [revision,ids] of [[1,LEGACY_QUEST_IDS],[2,REVISION_TWO_QUEST_IDS],[3,REVISION_THREE_QUEST_IDS]])for(const id of ['g15','g16','e07','e14']){
  const raw=snapshot(create(id));delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);assert.ok(raw.quest>=0);raw.phase='talk';
- const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,id,'legacy index keeps its quest identity');assert.equal(restored.campaignRevision,12);migratedIndices++;
+ const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,id,'legacy index keeps its quest identity');assert.equal(restored.campaignRevision,13);migratedIndices++;
  raw.questId=id;raw.quest=0;assert.equal(QUESTS[restoreState(raw).quest].id,id,'stable questId wins over the numeric slot');
 }
 const rescue=snapshot(create('g16'));rescue.campaignRevision=3;rescue.done=['g15'];rescue.choices.g15=1;const continued=restoreState(rescue);assert.equal(QUESTS[continued.quest].id,'g16');assert.ok(!continued.flags.cultPath,'old rejected route does not enter accepted events');

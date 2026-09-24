@@ -1,3 +1,4 @@
+import {GOOD_FORBIDDEN_REVISIONS,GOOD_FORBIDDEN_ADDITIONS} from './good-forbidden-revisions.mjs';
 import {HUT_RETURN_REVISIONS,HUT_RETURN_ADDITIONS} from './hut-return-revisions.mjs';
 import {VALLEY_DEFENSE_REVISIONS,VALLEY_DEFENSE_ADDITIONS} from './valley-defense-revisions.mjs';
 import {HUT_NIGHT_REVISIONS,HUT_NIGHT_ADDITIONS} from './hut-night-revisions.mjs';
@@ -87,3 +88,9 @@ export const REVISION_ELEVEN_QUEST_IDS=QUESTS.map(q=>q.id);
 QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
 for(const q of QUESTS)Object.assign(q,HUT_RETURN_REVISIONS[q.id]||{},VALLEY_DEFENSE_REVISIONS[q.id]||{});
 for(const insertion of [...HUT_RETURN_ADDITIONS,...VALLEY_DEFENSE_ADDITIONS]){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown return or valley-defense insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+// Freeze revision 12 identifiers and effective tiers before extending the island route.
+export const REVISION_TWELVE_QUEST_IDS=QUESTS.map(q=>q.id);
+QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
+for(const q of QUESTS)Object.assign(q,GOOD_FORBIDDEN_REVISIONS[q.id]||{});
+for(const insertion of GOOD_FORBIDDEN_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown good-forbidden insertion');QUESTS.splice(index,0,...insertion.quests);}

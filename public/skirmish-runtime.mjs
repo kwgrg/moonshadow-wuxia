@@ -4,6 +4,26 @@ const range=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*1.3);
 const finite=(n,min,max,fallback)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;
 const hasPoint=point=>Number.isFinite(point?.x)&&Number.isFinite(point?.y);
 const criticalIds=quest=>[...new Set((quest.skirmish?.criticalAllyIds||[]).filter(id=>quest.skirmish.allies.some(entry=>entry.id===id)))];
+function captureRule(quest){return quest.skirmish?.storyOutcome?.kind==='capture'?quest.skirmish.storyOutcome:null;}
+function completeRoster(quest,roster){
+ return ['enemies','allies'].every(side=>{
+  const entries=quest.skirmish[side],units=roster?.[side];
+  return Array.isArray(units)&&units.length===entries.length&&new Set(units.map(unit=>unit?.id)).size===entries.length&&entries.every(entry=>units.some(unit=>unit?.id===entry.id&&Number.isFinite(unit.hp)&&unit.hp>=0&&hasPoint(unit)));
+ });
+}
+function captureReason(quest,roster){
+ const rule=captureRule(quest);if(!rule||!completeRoster(quest,roster))return null;
+ const down=rule.allyIds.find(id=>roster.allies.some(unit=>unit.id===id&&unit.hp===0));
+ return down?'ally:'+down:roster.enemies.every(unit=>unit.hp===0)?'army-cleared':null;
+}
+function validStoryRoster(quest,battle){
+ const saved=battle.storyRoster;
+ return battle.finished===true&&battle.failed!==true&&battle.storyResolved==='capture'&&captureReason(quest,saved)?saved:null;
+}
+function resolveCapture(quest,state,battle){
+ const reason=captureReason(quest,state);if(!reason)return false;
+ battle.finished=true;battle.storyResolved='capture';battle.outcomeReason=reason;battle.storyRoster=completedRoster(state);return true;
+}
 function baseUnit(entry,side,index){
  const ally=side==='ally',fallbackHp=entry.boss?(ally?2600:1800):(ally?500:460);
  const maxHp=finite(entry.maxHp,1,100000,finite(entry.hp,1,100000,fallbackHp));
@@ -21,6 +41,8 @@ function declaredRoster(quest){
  const entries=[...rule.enemies,...rule.allies],ids=entries.map(entry=>entry?.id);
  if(ids.some(id=>typeof id!=='string'||!id)||new Set(ids).size!==ids.length)throw new Error('当前战场的单位身份必须独立且有效');
  if(rule.criticalAllyIds&&(!Array.isArray(rule.criticalAllyIds)||rule.criticalAllyIds.some(id=>!rule.allies.some(entry=>entry.id===id))))throw new Error('当前战场的关键同伴不在友方阵容中');
+ const capture=captureRule(quest);
+ if(capture&&(!Array.isArray(capture.allyIds)||!capture.allyIds.length||new Set(capture.allyIds).size!==capture.allyIds.length||capture.allyIds.some(id=>!rule.allies.some(entry=>entry.id===id))||capture.heroDefeat!=='retry'))throw new Error('当前战场的剧情结果配置无效');
  return [...rule.enemies.map((entry,index)=>({entry,index,side:'enemy'})),...rule.allies.map((entry,index)=>({entry,index,side:'ally'}))];
 }
 function explicitPosition(engine,entry){
@@ -89,13 +111,14 @@ export function restoreSkirmish(raw,quest,state){
   if(!state.sequence&&state.map===quest.map&&['battle','after'].includes(state.phase))state.phase='talk';
   return;
  }
- const rule=quest.skirmish,cleared=validClearedRoster(quest,raw.skirmish);
- // Map transitions remove visible combatants. Only an actual victory snapshot
- // may supply that omitted roster; a kill-count claim is never sufficient.
+ const rule=quest.skirmish,cleared=validStoryRoster(quest,raw.skirmish)||validClearedRoster(quest,raw.skirmish);
+ // Map transitions remove visible combatants. Only a validated complete outcome
+ // snapshot may supply that omitted roster; a result label is never sufficient.
  const enemySource=Array.isArray(raw.enemies)&&raw.enemies.length===0&&cleared?cleared.enemies:raw.enemies;
  const allySource=Array.isArray(raw.allies)&&raw.allies.length===0&&cleared?cleared.allies:raw.allies;
  const enemyRecords=savedUnits(rule.enemies,enemySource),allyRecords=savedUnits(rule.allies,allySource),critical=criticalIds(quest);
  const missingCritical=critical.some(id=>!Number.isFinite(allyRecords.get(id)?.hp));
+ const incompleteStory=!!captureRule(quest)&&!completeRoster(quest,{enemies:enemySource,allies:allySource});
  function units(entries,side,records){return entries.map((entry,index)=>{
   const base=baseUnit(entry,side,index),unit=records.get(entry.id),validHp=Number.isFinite(unit?.hp);
   // An absent enemy is unknown, never evidence of a kill. An absent critical
@@ -121,12 +144,14 @@ export function restoreSkirmish(raw,quest,state){
  const deadCritical=critical.find(id=>Number.isFinite(allyRecords.get(id)?.hp)&&allyRecords.get(id).hp<=0);
  const previousReason=raw.skirmish.failedReason;
  const persistedReason=raw.skirmish.failed===true&&(previousReason==='hero'||critical.includes(previousReason)||previousReason==='incomplete-roster')?previousReason:null;
- let failedReason=raw.hero?.hp<=0?'hero':persistedReason||deadCritical||(missingCritical?'incomplete-roster':null);
+ let failedReason=raw.hero?.hp<=0?'hero':persistedReason||deadCritical||(missingCritical||incompleteStory?'incomplete-roster':null);
  if(!failedReason&&raw.skirmish.failed===true)failedReason=critical.length?'battle':'hero';
  if(critical.includes(failedReason))allies.find(unit=>unit.id===failedReason).hp=0;
  const battle={questId:quest.id,defeatedIds,finished:false,failed:!!failedReason,failedReason};
- battle.finished=!battle.failed&&rosterCleared(quest,{enemies,skirmish:battle});
- if(battle.finished)battle.clearedRoster=completedRoster({enemies,allies});
+ if(!battle.failed){
+  if(captureRule(quest))resolveCapture(quest,{enemies,allies},battle);
+  else{battle.finished=rosterCleared(quest,{enemies,skirmish:battle});if(battle.finished)battle.clearedRoster=completedRoster({enemies,allies});}
+ }
  if(state.map!==quest.map&&!battle.finished)return;
  state.enemies=enemies;state.allies=allies;state.skirmish=battle;
  state.phase=state.map!==quest.map?'travel':battle.finished?'after':'battle';
@@ -174,8 +199,12 @@ export const skirmishMethods={
   const battle=this.s.skirmish;if(!battle||battle.questId!==this.q.id||battle.finished||battle.failed)return;
   const critical=criticalIds(this.q),down=critical.find(id=>this.s.allies.some(unit=>unit.id===id&&unit.hp<=0));
   const missing=critical.some(id=>this.s.allies.filter(unit=>unit.id===id&&Number.isFinite(unit.hp)).length!==1);
-  const failedReason=this.s.hero.hp<=0?'hero':down||(missing?'incomplete-roster':null);
+  const failedReason=this.s.hero.hp<=0?'hero':down||(missing||(captureRule(this.q)&&!completeRoster(this.q,this.s))?'incomplete-roster':null);
   if(failedReason){battle.failed=true;battle.failedReason=failedReason;this.paused=true;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys?.clear();this.emit('skirmishProgress');this.emit('defeat');return;}
+  if(captureRule(this.q)){
+   if(resolveCapture(this.q,this.s,battle)){this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.keys?.clear();this.emit('storyBattleOutcome',{kind:'capture',reason:battle.outcomeReason});}
+   return;
+  }
   if(rosterCleared(this.q,this.s)){battle.finished=true;battle.clearedRoster=completedRoster(this.s);this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.emit('victory');}
  },
  moveCombatant(unit,target,dt){

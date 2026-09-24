@@ -4,6 +4,14 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ m59:{name:'惠安镇街口',area:'镇中石街',art:'town-original',weather:'辰时 · 镇中微风',poem:'旧事随人至，归舟向海行',shop:false,obstacles:[]},
+ m60:{name:'忘忧岛禁地外场',area:'石阶前庭',art:'temple',weather:'辰时 · 风过空庭',poem:'深门留去路，剑影满前庭',shop:false,obstacles:[]},
+ r_good_seaside_hut:{name:'海边空屋',area:'屋内寻人',art:'beimo-mei-room',weather:'辰时 · 窗前寂静',poem:'归来空室静，旧影待人寻',shop:false,obstacles:[],routeOnly:true},
+ r_good_forbidden_path:{name:'村北禁地山径',area:'林间连接路',art:'forest-original',weather:'辰时 · 林间微风',poem:'村声留身后，石径向深门',shop:false,obstacles:[],routeOnly:true},
+ r_good_forbidden_first:{name:'禁地一层回廊',area:'洞窟石路',art:'cave',weather:'亥时 · 石窟回声',poem:'幽光循石路，归步记前程',shop:false,obstacles:[],routeOnly:true},
+ r_good_forbidden_second:{name:'禁地二层折廊',area:'临渊石阶',art:'forbidden-second',weather:'亥时 · 深廊静水',poem:'石阶绕深水，微光向里延',shop:false,obstacles:[],routeOnly:true},
+ r_good_forbidden_third:{name:'禁地三层内门',area:'内门前厅',art:'forbidden-gate',weather:'亥时 · 门内静寂',poem:'石门留一线，故人在深处',shop:false,obstacles:[],routeOnly:true},
+ r_good_forbidden_chamber:{name:'禁地会合密室',area:'石室会合',art:'forbidden-chamber',weather:'亥时 · 静室微光',poem:'相逢知旧事，归路共人行',shop:false,obstacles:[],routeOnly:true},
  r_beimo_rose_room:{name:'悲魔山庄右厢房',area:'大厅东侧内室',art:'leaf-rose-room',weather:'申时 · 帘外院声',poem:'一室留旧语，门外去人迟',shop:false,obstacles:[],routeOnly:true},
  r_hanbo_return:{name:'寒波谷归途',area:'林间谷路',art:'forest-original',weather:'辰时 · 谷风微凉',poem:'归途思旧影，前路待援人',shop:false,obstacles:[],routeOnly:true},
  m52:{name:'天池',area:'雪岸与湖心岛',art:'tianchi-islet',weather:'巳时 · 湖上清寒',poem:'孤雪分深水，跃影过寒波',shop:false,obstacles:[]},
@@ -50,7 +58,7 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m59','m60'],['m60','m31'],['m60','r_mainland_dock'],['m59','r_good_seaside_hut'],['r_good_seaside_hut','m60'],['m60','r_good_forbidden_chamber'],['m60','m40'],['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
 
 // These links are independent web staging. A ferry is an explicit voyage,
 // while the mountain connector must be walked on both sides of the journey.
@@ -103,10 +111,18 @@ const HUT_RETURN_ROUTES=[['m16','m17'],['m17','m49'],['m49','r_beimo_rose_room']
 const HUT_RETURN_MAPS=new Set(HUT_RETURN_ROUTES.flat());
 const HUT_RETURN_PAIRS=new Set(HUT_RETURN_ROUTES.map(([a,b])=>pairKey(a,b)));
 const HUT_RETURN_QUESTS=new Set(['e04_homecoming','e04_quarrel','e04_wait','e04_report','e05']);
-const VALLEY_DEFENSE_ROUTES=[['m60','m31'],['m31','m40'],['m40','r_mainland_dock','boat'],['r_mainland_dock','m41'],['m41','m49'],['m49','m51'],['m51','r_hanbo_return'],['r_hanbo_return','m16'],['r_hanbo_return','m61']];
+const VALLEY_DEFENSE_ROUTES=[['m60','r_good_forbidden_path'],['r_good_forbidden_path','m31'],['m31','m40'],['m40','r_mainland_dock','boat'],['r_mainland_dock','m41'],['m41','m49'],['m49','m51'],['m51','r_hanbo_return'],['r_hanbo_return','m16'],['r_hanbo_return','m61']];
 const VALLEY_DEFENSE_MAPS=new Set(VALLEY_DEFENSE_ROUTES.flatMap(([a,b])=>[a,b]));
 const VALLEY_DEFENSE_PAIRS=new Set(VALLEY_DEFENSE_ROUTES.map(([a,b])=>pairKey(a,b)));
 const VALLEY_DEFENSE_QUESTS=new Set(['g14_dock_report','g14_manor_battle','g14','g14_hanbo','g14_resolve','g15']);
+// Dedicated good-line spaces reuse authored paintings but never the evil
+// pursuit, jade-door transaction or identity-reveal scene. Directional gates
+// allow a migrated player to retreat from m60 and inspect the empty house.
+const GOOD_FORBIDDEN_ROUTES=[['m59','m41'],['m41','r_mainland_dock'],['r_mainland_dock','m40','boat'],['m40','m34'],['m34','r_good_seaside_hut'],['m34','m31'],['m31','r_good_forbidden_path'],['r_good_forbidden_path','m60'],['m60','r_good_forbidden_first'],['r_good_forbidden_first','r_good_forbidden_second'],['r_good_forbidden_second','r_good_forbidden_third'],['r_good_forbidden_third','r_good_forbidden_chamber'],['m31','m40']];
+const GOOD_FORBIDDEN_MAPS=new Set(GOOD_FORBIDDEN_ROUTES.flatMap(([a,b])=>[a,b]));
+const GOOD_FORBIDDEN_PAIRS=new Set(GOOD_FORBIDDEN_ROUTES.map(([a,b])=>pairKey(a,b)));
+const GOOD_FORBIDDEN_QUESTS=new Set(['g12','g13_hut','g13_entry','g13_reunion','g13','g13_captured','g13_ferry']);
+const GOOD_FORBIDDEN_INNER=new Set(['r_good_forbidden_first','r_good_forbidden_second','r_good_forbidden_third','r_good_forbidden_chamber']);
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
 function matches(when,state){
@@ -261,6 +277,40 @@ export function routeEdges(state={},quests=[]){
    if(current==='g14_manor_battle'&&!flags.manorInvadersCleared&&(state.phase==='battle'||flags.staged_g14_manor_battle)&&(edge.from==='m49'||edge.to==='m49'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m49'])],departureReason:'山庄出口被来敌封住，必须清除全部来敌。'});
   }
  }
+ if((flags.route||'good')==='good'&&!flags.cultPath){
+  const legacy=!!flags.goodForbiddenLegacy,active=GOOD_FORBIDDEN_QUESTS.has(current);
+  const testimony=!!flags.goodTestimonyHeard||!!flags.goodForbiddenLegacyTestimony;
+  const known=legacy||testimony||active;
+  if(known){
+   const house=legacy||flags.goodForbiddenHutChecked,cleared=legacy||flags.goodForbiddenEntryCleared,captured=legacy||flags.goodForbiddenCaptured;
+   const lockFrom=(edge,from,reason)=>Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),from])],departureReason:reason});
+   for(const [from,to,transport] of GOOD_FORBIDDEN_ROUTES){
+    // After this chapter, its shared roads must retain later quest gates.
+    if(!active&&edges.has(pairKey(from,to)))continue;
+    const edge={from,to,locked:false,inferred:true,design:'authored-good-forbidden',...(transport?{transport,travelLabels:{m40:'乘船返回忘忧岛渡口',r_mainland_dock:'乘船前往中原码头'}}:{})};
+    if(active&&!legacy){
+     if(from==='m59'&&!testimony)lockFrom(edge,from,'先听完镇中的证词，再动身返岛。');
+     if(to==='m40'&&transport&&!testimony)lockFrom(edge,from,'先在惠安镇听取消息，再搭船返岛。');
+     if(transport&&!flags.goodForbiddenReturnReady)lockFrom(edge,'m40','先找到同行人并办妥返程，再请船夫渡海。');
+     if(to==='r_good_forbidden_path'&&!house)lockFrom(edge,from,'海边小屋尚未查过，先去那里寻找真儿与眉儿。');
+     if(to==='m60'&&!house)lockFrom(edge,from,'先检查海边空屋，才知是否需要深入禁地。');
+     if(to==='r_good_forbidden_first'&&!cleared)lockFrom(edge,from,'守卫仍封着内门，须清除全部来敌。');
+     if(to==='m60'&&cleared&&!captured)lockFrom(edge,'m60','先完成禁地中的寻人与返程交涉。');
+     if((from==='m60'||to==='m60')&&((current==='g13_entry'&&!cleared&&(state.phase==='battle'||flags.staged_g13_entry))||(current==='g13'&&flags.goodForbiddenReunited&&!captured)))lockFrom(edge,'m60','外场出口已被封住，当前战事尚未了结。');
+    }
+    edges.set(pairKey(from,to),edge);
+   }
+   if(active)for(const edge of edges.values()){
+    const pair=pairKey(edge.from,edge.to);
+    if(!GOOD_FORBIDDEN_PAIRS.has(pair)&&[edge.from,edge.to].some(id=>GOOD_FORBIDDEN_MAPS.has(id))){
+     // Arrival at the testimony is allowed; once it ends, all chapter travel
+     // must use actual adjoining island layers and the named boat crossing.
+     if(current==='g12'&&!testimony&&!GOOD_FORBIDDEN_INNER.has(edge.from)&&!GOOD_FORBIDDEN_INNER.has(edge.to)&&edge.from!=='m60'&&edge.to!=='m60')continue;
+     Object.assign(edge,{locked:true,reason:'沿海边、村路与禁地各层的实际出入口前行。',design:'good-forbidden-boundary'});
+    }
+   }
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -276,7 +326,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES])add(a,b);
   const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
   const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
   for(const route of ['good','evil'])for(const flags of variations)for(const edge of routeEdges({quest:quests.length,flags:{...flags,route}},quests))add(edge.from,edge.to);

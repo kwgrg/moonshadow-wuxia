@@ -46,7 +46,7 @@ const noResolve=create('g14_resolve');assert.equal(noResolve.startStaging(),fals
 const noTower=create('g15');noTower.s.phase='choice';assert.equal(noTower.choose(0),false);assert.equal(noTower.s.flags.cultPath,undefined);
 
 const noReport=create(battleId);assert.equal(noReport.startStaging(),false);
-let game=create('g14_dock_report');const before=wealth(game);game=stage(game);assert.equal(game.q.id,battleId);assert.equal(game.s.flags.valleyManorReported,true);assert.deepEqual(wealth(game),before);assert.deepEqual(walk(game,'m49'),['r_mainland_dock','m41','m49']);game.completeQuest();assert.equal(game.q.id,battleId);
+let game=create('g14_dock_report',{goodForbiddenCaptured:true,goodForbiddenReturnReady:true});const before=wealth(game);game=stage(game);assert.equal(game.q.id,battleId);assert.equal(game.s.flags.valleyManorReported,true);assert.deepEqual(wealth(game),before);assert.deepEqual(walk(game,'m49'),['r_mainland_dock','m41','m49']);game.completeQuest();assert.equal(game.q.id,battleId);
 game=stage(game);assert.equal(game.s.phase,'battle');assert.equal(game.travel('m51'),false,'the manor is sealed after the confrontation begins');
 assert.equal(game.s.enemies.length,55);assert.equal(game.s.allies.length,0);assert.equal(game.q.skirmish.criticalAllyIds,undefined);
 for(const enemy of game.s.enemies){assert(game.passable(enemy.x,enemy.y));assert(Math.hypot(enemy.x-game.s.hero.x,enemy.y-game.s.hero.y)>=420);assert(game.findPath(enemy.x,enemy.y).length);}
@@ -93,7 +93,7 @@ assert.equal(game.q.id,'g15');assert.equal(game.s.flags.valleyRescueResolved,tru
 assert.equal(game.q.refusalRule.limit,3);assert.equal(game.q.refusalRule.outcome,'continue');
 // v11 cursors map by stable IDs. Historical completion is not a new award or a
 // fabricated staged scene; pending old g14 must enter the new manor battle.
-assert.equal(freshState().campaignRevision,12);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
+assert.equal(freshState().campaignRevision,13);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
 for(const numeric of [false,true])for(const id of ['g14','g15']){
  const raw=save(create(id));raw.campaignRevision=11;raw.flags={route:'good',moral:0,evil:0};raw.map=id==='g14'?'m51':'m61';raw.coins=421;raw.hero.exp=37;if(id==='g15'){raw.phase='choice';raw.flags.refusal_g15=2;}
  if(numeric){delete raw.questId;raw.quest=campaign.REVISION_ELEVEN_QUEST_IDS.indexOf(id);}if(id==='g15'){raw.done=['g14'];raw.claimedRewards=['g14'];}

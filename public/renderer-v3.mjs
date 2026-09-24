@@ -382,6 +382,11 @@ export class Renderer {
     if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
     else if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
     else if(this.assets['characters-original']){if(kneeling&&this.assets['hero-kneel-original']){const w=height*854/1360;c.drawImage(this.assets['hero-kneel-original'],64,96,854,1360,-w/2,-height,w,height);}else c.drawImage(this.assets['characters-original'],sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
+    // Original restrained pose cue for the escort scene, drawn over our own art.
+    if(a.bound){c.save();c.translate(0,-lift+bob);c.strokeStyle='#493426';c.lineWidth=4.4;c.lineCap='round';
+      for(const offset of [0,6]){c.beginPath();c.moveTo(-width*.34,-height*.54+offset);c.quadraticCurveTo(0,-height*.48+offset,width*.34,-height*.54+offset);c.stroke();}
+      c.strokeStyle='#d0ab72';c.lineWidth=1.8;for(const offset of [0,6]){c.beginPath();c.moveTo(-width*.34,-height*.548+offset);c.quadraticCurveTo(0,-height*.488+offset,width*.34,-height*.548+offset);c.stroke();}
+      c.beginPath();c.moveTo(-5,-height*.54);c.lineTo(5,-height*.47);c.moveTo(5,-height*.54);c.lineTo(-5,-height*.47);c.stroke();c.restore();}
     const crowded=(this.e.s.enemies.length+this.allies.length)>16,visibleLabel=hero||a.hp===undefined||!crowded||a.boss||this.labelledUnits?.has(a.id)||(!a.ally&&this.e.attackTarget?.id===a.id);
     if(visibleLabel){
     c.font=`15px ${FONT}`;c.textAlign='center';c.shadowColor='#001416';c.shadowBlur=7;c.shadowOffsetY=2;c.fillStyle=hero?'#f2e8c5':a.ally?'#b7e4c2':a.hp!==undefined?'#eed4bd':'#f1d898';c.fillText(hero?(this.e.q.playAs||'杨影枫'):(a.displayName||a.name),0,-height-12-lift);c.shadowBlur=0;c.shadowOffsetY=0;

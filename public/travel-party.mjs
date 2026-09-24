@@ -4,6 +4,7 @@ export const partyMethods={
   if(this.s.completed)return [];
   const names=this.s.flags.companion?[this.s.flags.companion]:[];
   if(this.s.flags.route==='good'&&this.s.flags.valleyMeiAwake&&!this.s.flags.valleyCareSettled&&['g07_mainland','g07_island','g07_settle'].includes(this.q.id))names.push('月眉儿');
+  if(this.s.flags.route==='good'&&this.s.flags.goodForbiddenReunited&&!this.s.flags.goodForbiddenCaptured&&['g13','g13_captured'].includes(this.q.id))names.splice(0,names.length,'蔷薇','纳兰真','月眉儿');
   return [...new Set(names)].filter(name=>name!==this.q.playAs);
  },
  resetParty(){this._partyPositions={};this._partyPaths={};this._partyTime=0;this.followPosition={...this.s.hero};},
@@ -21,7 +22,7 @@ export const partyMethods={
   const names=this.partyNames;
   for(const name of Object.keys(this._partyPositions))if(!names.includes(name)){delete this._partyPositions[name];delete this._partyPaths[name];}
   for(const [index,name] of names.entries()){
-   const h=this.s.hero,goal=this.nearestOpen(h.x+(index?55:-65),h.y+(index?75:35));
+   const h=this.s.hero,offset=[[-65,35],[65,35],[-110,-45]][index%3],goal=this.nearestOpen(h.x+offset[0],h.y+offset[1]);
    let position=this._partyPositions[name];
    if(!position){position=this._partyPositions[name]={x:h.x,y:h.y};this._partyPaths[name]=[];}
    let path=this._partyPaths[name]||[];
