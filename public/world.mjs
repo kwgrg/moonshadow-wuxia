@@ -86,7 +86,15 @@ function solid(scene, object, rectangle) {
 
 // Chapter-local layouts share only original paintings. No pursuit, jade
 // mechanism or letter-chest transaction is inherited from the evil aliases.
-const GOOD_FORBIDDEN_SCENES={
+const CHAPTER_SCENES={
+ r_good_hanbo_road:{kind:'forest',art:'forest-original',objective:{x:950,y:620},points:[point('rescue-hanbo-outward','谷外山径',650,535,'溪声留在身后，谷外的路沿着树林折向镇郊。',{paintOnly:true,appearance:'trace'}),point('rescue-hanbo-wayback','回谷方向',1080,650,'山径的转角还能望见来时的树梢，回谷的方向清晰可辨。',{paintOnly:true,appearance:'trace'})]},
+ r_good_dunhuang_approach:{kind:'forest',art:'forest-original',objective:{x:970,y:615},points:[point('rescue-west-ridge','西行山径',640,620,'山庄的檐角已被树林遮住，脚下的石路继续向洞口延伸。',{paintOnly:true,appearance:'trace'}),point('rescue-west-wind','林中风声',1070,545,'山风沿坡地掠过，远处隐约传来空洞的水声。',{paintOnly:true,appearance:'trace'})]},
+ r_good_dunhuang_passage:{kind:'cave',art:'cave',objective:{x:960,y:650},points:[point('rescue-dunhuang-rock','洞口石纹',660,500,'石壁在两侧收拢，干燥的地面绕过低处积水通向另一端。',{paintOnly:true,appearance:'trace'}),point('rescue-dunhuang-air','洞外来风',1000,735,'空气从前方洞口流入，循着干地还能辨认回路。',{paintOnly:true,appearance:'trace'})]},
+ r_good_feilong_approach:{kind:'forest',art:'forest-original',objective:{x:950,y:620},points:[point('rescue-fort-road','堡前山路',650,535,'山径越过最后一片树林，前方的石阶通向飞龙堡。',{paintOnly:true,appearance:'trace'}),point('rescue-fort-look','回望洞口',1080,650,'回身望去，出洞的山路仍在树影间清晰可辨。',{paintOnly:true,appearance:'trace'})]},
+ r_good_desert:{kind:'shore',art:'desert-passage',objective:{x:950,y:620},points:[point('rescue-desert-sand','沙中浅痕',650,535,'风将沙地上的足迹抹淡，远处的塔影仍指着前行的方向。',{paintOnly:true,appearance:'trace'}),point('rescue-desert-return','回望堡门',1080,650,'堡门留在身后，通天塔与归路分处沙地两端。',{paintOnly:true,appearance:'trace'})]},
+ r_good_dungeon:{kind:'cave',art:'rescue-dungeon',objective:{x:945,y:410},points:[point('rescue-stair','返厅石阶',385,385,'石阶向楼上延伸，阶脚旁的地面留着往来的磨痕。',{paintOnly:true,appearance:'trace'}),point('rescue-cell','牢门近旁',1120,390,'牢门一侧留着通行的空处，北面的铁栏把囚室与石厅隔开。',{paintOnly:true,appearance:'trace'})]},
+ r_good_yitian:{kind:'forest',art:'forest-original',objective:{x:970,y:615},points:[point('rescue-yitian-bend','山路弯处',1070,545,'山路向上折回楼前，回谷的路则沿树林向下延伸。',{paintOnly:true,appearance:'trace'}),point('rescue-yitian-wind','山间风声',640,620,'风穿过树梢，身后的石阶声已渐渐听不见了。',{paintOnly:true,appearance:'trace'})]},
+ r_good_hanbo_hut:{kind:'garden',art:'hanbo-hut-yard',objective:{x:850,y:650},points:[point('rescue-hanbo-flowers','溪畔石桥',525,680,'溪声从石桥下穿过，桥旁的院路通到小筑门前。',{paintOnly:true,appearance:'trace'}),point('rescue-hanbo-rest','屋前石阶',1140,495,'门前的石阶接着安静庭院，停在屋外便能避开山路的奔波。',{paintOnly:true,appearance:'trace'})]},
  m59:{kind:'village',art:'town-original',objective:{x:760,y:620},points:[point('good-town-paving','街口石砖',505,590,'镇中的石街在此变宽，来往的脚步沿屋前分向两侧。',{paintOnly:true,appearance:'trace'}),point('good-town-way','南面街路',845,795,'南面的路通向镇外，屋檐在身后渐渐收拢。',{paintOnly:true,appearance:'trace'})]},
  m60:{kind:'temple',art:'temple',objective:{x:620,y:690},points:[point('good-outer-court','庭中石纹',655,505,'宽阔石庭连着下方山径和北侧内门，远处的水声传过石栏。',{paintOnly:true,appearance:'trace'}),point('good-outer-stair','门前石阶',1160,815,'院边石阶留着往来的磨痕，转身仍可望见整片前庭。',{paintOnly:true,appearance:'trace'})]},
  r_good_seaside_hut:{kind:'room',art:'beimo-mei-room',objective:{x:730,y:660},points:[point('good-hut-table','桌旁空处',590,470,'桌旁没有人应声，窗外只有远处的海风。',{paintOnly:true,appearance:'trace'}),point('good-hut-curtain','床帘前',1070,535,'帘前静悄悄的，地板上也没有来回走动的人影。',{paintOnly:true,appearance:'trace'})]},
@@ -97,9 +105,13 @@ const GOOD_FORBIDDEN_SCENES={
  r_good_forbidden_chamber:{kind:'room',art:'forbidden-chamber',objective:{x:760,y:690},points:[point('good-chamber-wall','石室北壁',815,430,'北壁旧陈设在微光中显出轮廓，石地上留着足够转身的空处。',{paintOnly:true,appearance:'trace'}),point('good-chamber-return','回廊方向',610,775,'南侧石阶通回门厅，来时的层层回廊仍在身后。',{paintOnly:true,appearance:'trace'})]}
 };
 function goodForbiddenLayout(scene){
- const data=GOOD_FORBIDDEN_SCENES[scene.id];if(!data)return false;
+ const data=CHAPTER_SCENES[scene.id];if(!data)return false;
  Object.assign(scene,{kind:data.kind,art:data.art,objective:{...data.objective},ground:palettes[data.kind],points:data.points.map(p=>({...p})),props:[],paths:[],drawRoads:false});
- scene.atmosphere={light:['m59','m60','r_good_forbidden_path','r_good_seaside_hut'].includes(scene.id)?'day':'night',weather:'clear',indoor:['room','cave','hall'].includes(data.kind),particles:data.kind==='forest'?'leaves':'dust'};
+ scene.atmosphere={light:['m59','m60','r_good_forbidden_path','r_good_seaside_hut','r_good_yitian','r_good_hanbo_hut','r_good_dunhuang_approach','r_good_feilong_approach','r_good_desert','r_good_hanbo_road'].includes(scene.id)?'day':'night',weather:'clear',indoor:['room','cave','hall'].includes(data.kind),particles:data.kind==='forest'?'leaves':'dust'};
+ if(scene.id==='r_good_dungeon'){
+  const positions={};for(let i=0;i<28;i++)positions['rescue-dungeon-man-'+String(i+1).padStart(2,'0')]={x:760+(i%7)*75,y:450+Math.floor(i/7)*75};
+  scene.skirmish={heroStart:{x:330,y:780},positions};scene.cells={zixuan:{x:970,y:280,approach:{x:945,y:410}}};
+ }
  if(scene.id==='m60'){
   const positions={},slot=i=>({x:835+(i%7)*65,y:410+Math.floor(i/7)*50});
   for(let i=0;i<22;i++)positions['good-entry-man-'+String(i+1).padStart(2,'0')]=slot(i);
@@ -240,13 +252,15 @@ function handcrafted(scene) {
       scene.title='倚天山渡头';scene.kind='shore';scene.art='island';scene.ground=palettes.shore;
       scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'dust'};
       scene.points=[point('ferry-water','渡头水声',760,515,'岸边泊船随水起伏，去岛上的行程要从这里登船。',{appearance:'trace',paintOnly:true}),point('ferry-tide','石岸潮痕',620,425,'石岸上的湿痕一层高过一层，候船的人沿高处绕行，避开临水的低洼处。',{appearance:'trace',paintOnly:true})];return true;
-    case 'm61':
+    case 'm61':{
+      const positions={};for(let i=0;i<43;i++)positions['rescue-hall-man-'+String(i+1).padStart(2,'0')]={x:800+(i%7)*65,y:350+Math.floor(i/7)*65};positions['rescue-hall-cultist']={x:865,y:740};scene.skirmish={heroStart:{x:350,y:760},positions};
       scene.title='摘星楼议事厅';scene.kind='hall';scene.art='hall';scene.ground=palettes.hall;
       scene.atmosphere={light:'night',weather:'clear',indoor:true,particles:'dust'};
       scene.points=[
         point('hall-order','厅侧铜牌',355,500,'铜牌记着楼内各处：东侧石阶通往地牢，再往内是一间供来客歇息的房间。',{appearance:'sign'}),
         point('silent-hall','厅中灯火',1190,490,'灯火映在空阔的砖地上。厅内两侧的走廊都留着可以通行的空隙。',{appearance:'trace',paintOnly:true})
       ];return true;
+    }
     case 'r_evil_dungeon':
     case 'r_cult_dungeon':
       scene.title='摘星楼地牢';scene.kind='cave';scene.art='cult-dungeon';scene.fallbackArt='cave';scene.maskArt='cult-dungeon';scene.ground=palettes.cave;
@@ -423,7 +437,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
+export const SCENE_ART_KEYS=['desert-passage','hanbo-hut-yard','rescue-dungeon','cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -479,6 +493,12 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    // The newly generated rescue dungeon has one closed northern cell, an
+    // already-open right cell, and a left stair. Bars/walls and the open gate
+    // leaf keep their actual painted footprints; no quest gate is invented.
+    'desert-passage':{bounds:[75,160,1490,980],polygon:[[1180,180],[1380,160],[1370,240],[1340,305],[1490,335],[1460,385],[1365,440],[1335,490],[1390,540],[1250,590],[1280,650],[1180,720],[1100,770],[995,820],[935,885],[790,940],[650,920],[545,900],[360,890],[195,975],[75,975],[90,875],[150,790],[255,715],[320,660],[390,580],[375,530],[460,500],[480,440],[570,405],[690,350],[800,310],[870,270],[1010,255]],spawn:{x:375,y:750},exit:{x:1260,y:300},solids:[]},
+    'hanbo-hut-yard':{bounds:[250,260,1515,1024],polygon:[[340,390],[510,340],[695,275],[840,260],[970,315],[1100,335],[1220,385],[1410,425],[1440,545],[1400,650],[1280,700],[1250,800],[1360,900],[1515,1024],[1190,1024],[1070,900],[890,830],[735,825],[550,750],[400,680],[350,610],[295,480]],spawn:{x:1180,y:805},exit:{x:1350,y:925},solids:[]},
+    'rescue-dungeon':{bounds:[75,190,1490,995],polygon:[[160,210],[350,210],[370,335],[820,340],[870,280],[870,215],[1080,215],[1100,340],[1300,340],[1350,220],[1470,215],[1490,470],[1490,890],[1420,920],[1320,950],[1310,995],[350,995],[335,945],[160,925],[135,810],[90,750],[90,450],[150,415]],spawn:{x:330,y:410},exit:{x:255,y:245},solids:[[75,280,175,460],[430,190,785,310],[785,190,865,315],[1085,190,1150,310],[1150,190,1290,315]]},
     // Independently generated 2026-09-23 landscapes. The perimeter follows
     // visible trunks, bank rocks and market facades, not the old open rectangle.
     forest:{bounds:[150,280,1450,980],polygon:[[620,365],[820,285],[1090,275],[1190,205],[1290,205],[1290,300],[1350,330],[1310,440],[1420,520],[1360,650],[1280,715],[1150,765],[1000,800],[880,870],[850,980],[710,980],[690,870],[635,790],[515,730],[400,670],[340,565],[220,475],[160,425],[240,395],[380,430],[460,400]],spawn:{x:780,y:875},exit:{x:1250,y:410},solids:[]},
@@ -584,9 +604,8 @@ function alignPaintedGround(scene){
     scene.spawn={x:455,y:465};scene.objective={x:1040,y:705};scene.exit={x:1295,y:710};scene.props=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
   }else if(scene.id==='m61'){
     scene.spawn={x:760,y:800};scene.objective={x:845,y:445};scene.exit={x:1270,y:730};
-    scene.props=[prop('column',420,530,58,165),prop('column',1255,490,58,165),prop('altar',845,365,240,75),prop('lantern',300,680,42,95),prop('lantern',1290,685,42,95)];
-    scene.obstacles=[...mask.edges.map(r=>r.slice()),[398,510,442,550],[1233,470,1277,510]];
-    scene.drawRoads=false;scene.paths=[path([[350,700],[760,700],[845,445]],78,'tile'),path([[760,700],[1090,690],[1270,730]],72,'tile')];
+    // The hall painting already supplies columns, altar, lamps and paving.
+    scene.props=[];scene.paths=[];scene.obstacles=mask.edges.map(r=>r.slice());scene.drawRoads=false;
   }else if(['r_cult_dungeon','r_evil_dungeon'].includes(scene.id)){
     scene.spawn={x:830,y:840};scene.objective={x:650,y:610};scene.exit={x:1270,y:410};
     scene.obstacles=mask.edges.map(r=>r.slice());
@@ -604,18 +623,36 @@ function alignPaintedGround(scene){
   }
   // The manor uses the complete temple painting. Remove its generated pools,
   // gateway and paving together with their footprints; keep the painted mask.
-  if(scene.id==='m49'){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
+  if(['m49','m54'].includes(scene.id)){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
   // These complete shore paintings already contain water, stone and paths.
   // Removing the generated overlays also removes their invisible footprints.
   if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','r_beimo_rose_room','r_hanbo_return','m52','m16'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
-  if(GOOD_FORBIDDEN_SCENES[scene.id]){
+  if(CHAPTER_SCENES[scene.id]){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
     if(scene.id==='m60'){
       scene.spawn={x:585,y:800};scene.exit={x:805,y:365};
       // The temple painting's north-west pool is scenery, not walkable floor.
       scene.obstacles.push([280,325,555,385]);
+    }
+  }
+  // Rescue forces use disjoint stable IDs; earlier manor battles retain their
+  // quest-owned formations and heroStart. No per-unit placement is random.
+  if(['m41','m49','m54'].includes(scene.id)){
+    const positions={};
+    if(scene.id==='m41'){
+      const slot=i=>({x:830+(i%6)*70,y:390+Math.floor(i/6)*70});
+      for(let i=0;i<25;i++)positions['rescue-mei-woman-'+String(i+1).padStart(2,'0')]=slot(i);
+      for(let i=0;i<2;i++)positions['rescue-mei-cultist-'+String(i+1).padStart(2,'0')]=slot(25+i);
+      positions['rescue-mei']={x:570,y:735};scene.skirmish={heroStart:{x:400,y:710},positions};
+    }else{
+      const slot=i=>({x:800+(i%8)*65,y:370+Math.floor(i/8)*65});
+      const prefix=scene.id==='m49'?'rescue-manor':'rescue-fort',men=scene.id==='m49'?48:50,pili=scene.id==='m49'?7:6;
+      for(let i=0;i<men;i++)positions[prefix+'-man-'+String(i+1).padStart(2,'0')]=slot(i);
+      for(let i=0;i<pili;i++)positions[prefix+'-pili-'+String(i+1).padStart(2,'0')]=slot(men+i);
+      if(scene.id==='m49')positions['rescue-manor-xin']=slot(55);
+      scene.skirmish={heroStart:{x:390,y:790},positions};
     }
   }
   if(scene.id==='r_hanbo_return'){scene.spawn={x:425,y:655};scene.objective={x:850,y:650};}
@@ -658,6 +695,16 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ r_good_hanbo_road:{r_hanbo_return:[[1250,410],[1165,470]],m41:[[800,915],[800,800]]},
+ r_good_dunhuang_approach:{m49:[[800,915],[800,800]],r_good_dunhuang_passage:[[1250,410],[1165,470]]},
+ r_good_dunhuang_passage:{r_good_dunhuang_approach:[[830,915],[830,790]],r_good_feilong_approach:[[1270,410],[1160,490]]},
+ r_good_feilong_approach:{r_good_dunhuang_passage:[[1250,410],[1165,470]],m54:[[800,915],[800,800]]},
+ r_good_desert:{m54:[[220,810],[375,750]],m62:[[1260,300],[1130,390]]},
+ m54:{r_good_feilong_approach:[[555,915],[585,800]],r_good_desert:[[805,365],[815,465]]},
+ m62:{r_good_desert:[[765,915],[760,800]]},
+ r_good_dungeon:{m61:[[255,245],[330,410]]},
+ r_good_yitian:{m61:[[1250,410],[1165,470]],r_hanbo_return:[[800,915],[800,800]]},
+ r_good_hanbo_hut:{r_hanbo_return:[[1350,925],[1180,805]]},
  m59:{m58:[[1250,410],[1160,475]],m41:[[720,940],[720,820]]},
  r_good_seaside_hut:{m34:[[780,935],[780,810]]},
  r_good_forbidden_path:{m31:[[800,915],[800,800]],m60:[[1250,410],[1165,470]]},
@@ -671,10 +718,10 @@ const AUTHORED_PORTALS={
  r_leaf_zhen_room:{m51:[[780,935],[780,810]]},
  r_leaf_mei_room:{m51:[[820,935],[820,810]]},
  r_leaf_rose_room:{m51:[[750,955],[750,815]]},
- m49:{m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]],m17:[[400,435],[525,520]],r_beimo_rose_room:[[1295,590],[1175,675]],m71:[[350,710],[490,690]]},
+ m49:{r_good_dunhuang_approach:[[1295,420],[1175,500]],m41:[[805,365],[815,465]],m50:[[1260,820],[1140,780]],m51:[[555,915],[585,800]],m17:[[400,435],[525,520]],r_beimo_rose_room:[[1295,590],[1175,675]],m71:[[350,710],[490,690]]},
  m50:{m49:[[385,540],[555,565]],r_beimo_hero_room:[[425,295],[535,430]],r_beimo_mei_room:[[1120,315],[1060,440]],m16:[[1020,885],[950,780]],m51:[[780,865],[785,745]]},
  r_beimo_rose_room:{m49:[[750,955],[750,815]]},
- r_hanbo_return:{m51:[[355,510],[430,635]],m16:[[800,940],[800,810]],m61:[[1250,410],[1165,470]]},
+ r_hanbo_return:{r_good_hanbo_road:[[600,650],[720,680]],m51:[[355,510],[430,635]],m16:[[800,940],[800,810]],r_good_yitian:[[1250,410],[1165,470]],r_good_hanbo_hut:[[720,835],[795,730]]},
  m16:{m17:[[760,935],[760,810]],r_hanbo_return:[[760,935],[760,810]]},
  r_beimo_hero_room:{m50:[[760,935],[760,810]]},
  r_beimo_mei_room:{m50:[[780,935],[780,810]]},
@@ -694,7 +741,7 @@ const AUTHORED_PORTALS={
  m40:{m31:[[345,420],[455,465]],r_evil_ferry:[[715,900],[710,780]],m34:[[750,415],[750,530]],r_island_village:[[345,420],[455,465]],r_mainland_dock:[[1295,710],[1175,700]]},
  r_island_village:{m31:[[230,595],[370,605]],m40:[[810,935],[830,815]]},
  r_mainland_dock:{m40:[[700,335],[700,455]],m41:[[710,920],[720,800]]},
- m41:{m59:[[370,580],[490,650]],r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
+ m41:{r_good_hanbo_road:[[280,625],[405,675]],m18:[[1005,685],[910,655]],m59:[[370,580],[490,650]],r_mainland_dock:[[1250,415],[1160,475]],m49:[[710,925],[760,800]]},
  m17:{m16:[[800,940],[800,810]],m18:[[250,460],[390,515]],m49:[[1250,425],[1130,505]],m70:[[575,360],[645,485]]},
  m34:{r_good_seaside_hut:[[345,420],[455,465]],m40:[[750,415],[750,530]],m31:[[715,900],[710,780]]},
  m31:{r_good_forbidden_path:[[750,415],[750,530]],m40:[[345,420],[455,465]],m30:[[1295,710],[1175,700]],m32:[[345,420],[455,465]],m34:[[715,900],[710,780]],r_forbidden_path:[[750,415],[750,530]],r_island_village:[[610,900],[615,780]]},
@@ -705,7 +752,7 @@ const AUTHORED_PORTALS={
  r_forbidden_gate:{r_forbidden_second:[[800,915],[800,790]],m57:[[800,245],[800,365]]},
  m57:{r_forbidden_gate:[[725,930],[725,805]],m56:[[725,930],[725,805]],m58:[[1240,505],[1130,575]]},
  m60:{r_good_forbidden_path:[[555,915],[585,800]],r_good_forbidden_first:[[805,365],[815,480]]},
- m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]],r_hanbo_return:[[765,915],[760,800]]},
+ m61:{m5:[[350,700],[490,690]],r_cult_dungeon:[[1270,730],[1135,680]],r_good_dungeon:[[1270,730],[1135,680]],r_good_yitian:[[765,915],[760,800]]},
  r_cult_dungeon:{m61:[[830,915],[830,790]],r_cult_chamber:[[1270,410],[1160,490]]},
  r_cult_chamber:{r_cult_dungeon:[[1350,610],[1215,590]]},
  m6:{m2:[[1250,415],[1160,475]],m7:[[800,915],[800,825]]}

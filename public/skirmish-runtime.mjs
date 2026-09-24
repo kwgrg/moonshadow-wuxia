@@ -108,6 +108,7 @@ export function restoreSkirmish(raw,quest,state){
  state.skirmish=null;state.enemies=[];state.allies=[];
  declaredRoster(quest);
  if(raw.skirmish?.questId!==quest.id){
+  if(quest.rescueMission){state.sequence=null;delete state.flags['staged_'+quest.id];if(state.map===quest.map)state.phase='talk';}
   if(!state.sequence&&state.map===quest.map&&['battle','after'].includes(state.phase))state.phase='talk';
   return;
  }
@@ -118,7 +119,7 @@ export function restoreSkirmish(raw,quest,state){
  const allySource=Array.isArray(raw.allies)&&raw.allies.length===0&&cleared?cleared.allies:raw.allies;
  const enemyRecords=savedUnits(rule.enemies,enemySource),allyRecords=savedUnits(rule.allies,allySource),critical=criticalIds(quest);
  const missingCritical=critical.some(id=>!Number.isFinite(allyRecords.get(id)?.hp));
- const incompleteStory=!!captureRule(quest)&&!completeRoster(quest,{enemies:enemySource,allies:allySource});
+ const incompleteStory=!!(captureRule(quest)||quest.rescueMission)&&!completeRoster(quest,{enemies:enemySource,allies:allySource});
  function units(entries,side,records){return entries.map((entry,index)=>{
   const base=baseUnit(entry,side,index),unit=records.get(entry.id),validHp=Number.isFinite(unit?.hp);
   // An absent enemy is unknown, never evidence of a kill. An absent critical
@@ -155,6 +156,7 @@ export function restoreSkirmish(raw,quest,state){
  if(state.map!==quest.map&&!battle.finished)return;
  state.enemies=enemies;state.allies=allies;state.skirmish=battle;
  state.phase=state.map!==quest.map?'travel':battle.finished?'after':'battle';
+ if(quest.rescueMission&&state.sequence){if(battle.failed)state.sequence=null;else state.phase='staging';}
  if(failedReason==='hero')state.hero.hp=0;
 }
 export const skirmishMethods={

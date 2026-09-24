@@ -36,6 +36,16 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
    if(q.battleBeforeChoice){assert.equal(g.s.phase,'choice');g.choose(option(g,outcome));continue;}
    assert.equal(g.s.phase,'after',`${outcome} ${q.id} battle should complete (hp ${g.s.hero.hp}, tick ${ticks})`);
   }
+  if(q.rescueMission){
+   if(!g.rescueReady()){
+    const captive=g.rescueMarker();assert.ok(captive,q.id+' exposes the captive after fighting');g.interact(captive);
+    for(let t=0;t<12000&&g.s.phase!=='staging';t++)g.tick(.05);
+    assert.equal(g.s.phase,'staging',q.id+' requires approaching and rescuing the captive');continue;
+   }
+   assert.equal(g.travel(q.rescueMission.exitMap),true,q.id+' return stair is reachable');
+   for(let t=0;t<18000&&g.q.id===q.id;t++)g.tick(.05);
+   assert.notEqual(g.q.id,q.id,q.id+' settles only at the real return exit');continue;
+  }
   if(g.s.phase==='search'){let safety=0;while(g.s.phase==='search'&&safety++<40){const marker=g.markers.find(m=>m.main);assert.ok(marker,q.id);crossGap(g,marker);g.interact(marker);for(let t=0;t<500&&g.autoInteract;t++)g.tick(.05);assert.equal(g.autoInteract,null,`${q.id} pathfinding reaches collectible`);}if(g.s.phase==='return'){g.interact(g.markers.find(m=>m.kind==='return'));for(let t=0;t<1000&&g.s.phase==='return';t++)g.tick(.05);}assert.equal(g.s.phase,'after',q.id);}
   if(g.s.phase==='after')g.completeQuest();
   assert.equal(defeats,0,`${outcome} ${q.id} should not softlock`);

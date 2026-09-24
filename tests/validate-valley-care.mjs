@@ -126,7 +126,7 @@ if(!migrationOnly&&!legacyFlowOnly){
 // Old narrated history has an explicit label; migration never pretends the new
 // scenes were played, invents an answer, refunds a score or pays a new reward.
 const oldTables=[campaign.LEGACY_QUEST_IDS,campaign.REVISION_TWO_QUEST_IDS,campaign.REVISION_THREE_QUEST_IDS,campaign.REVISION_FOUR_QUEST_IDS,campaign.REVISION_FIVE_QUEST_IDS,campaign.REVISION_SIX_QUEST_IDS,campaign.REVISION_SEVEN_QUEST_IDS,campaign.REVISION_EIGHT_QUEST_IDS,campaign.REVISION_NINE_QUEST_IDS];
-assert.equal(freshState().campaignRevision,13);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
+assert.equal(freshState().campaignRevision,14);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
 function legacy(id,revision,numeric,{answer,phase='talk',done=[],away=false,flags={}}={}){
  const raw=snapshot(create(id));raw.campaignRevision=revision;raw.quest=oldTables[revision-1].indexOf(id);assert.ok(raw.quest>=0);if(numeric)delete raw.questId;
  raw.map=['g06','g07'].includes(id)?'m51':QUESTS[index(id)].map;raw.hero.x=760;raw.hero.y=650;raw.phase=phase;raw.visited=[raw.map];raw.done=[...done];raw.claimedRewards=[...done];raw.flags={route:'good',evil:11,moral:-6,companion:'纳兰真',...flags};
@@ -183,6 +183,6 @@ if(!migrationOnly){
 // insertion, including the untouched evil route. No drift by global array index.
 for(const [oldIndex,id] of oldTables[8].entries()){
  const raw=snapshot(create(id));delete raw.questId;raw.campaignRevision=9;raw.quest=oldIndex;raw.skills[8]=21;raw.flags.switch8=true;raw.flags.route=QUESTS[index(id)].when?.route||'good';if(id==='g07')raw.map='m51';
- const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut'})[id]||id,id+' keeps its old numeric identity or an explicit new unfinished-stage migration');assert.equal(QUESTS[index(id)].encounterTier,Math.max(1,Math.floor(oldIndex/9)+1),id+' keeps its battle tier');legacyCases++;
+ const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor'})[id]||id,id+' keeps its old numeric identity or an explicit new unfinished-stage migration');assert.equal(QUESTS[index(id)].encounterTier,Math.max(1,Math.floor(oldIndex/9)+1),id+' keeps its battle tier');legacyCases++;
 }
 console.log(JSON.stringify({result:'PASS',mode:migrationOnly?'migration-only':legacyFlowOnly?'legacy-night-to-medicine':'full',branchCases,restoredSteps,midMoveRestores,timedRestores,travelRestores,companionChecks,legacyCases,paths:walkPaths,checks:migrationOnly?'revision 1–9 history, exact balances, pending/recorded/unknown answers, numeric identities and frozen encounter tiers':'exclusive answers without marriage/reward effects; care and thank-you itinerary; actual room doors and boat; saved staging and walking; unique obstacle-aware followers; settlement before medicine; revision 1–9 history and battle-tier compatibility'}));

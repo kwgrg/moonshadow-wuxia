@@ -88,7 +88,7 @@ preset('g15');ui.engine.s.phase='choice';ui.showChoice();
 for(let refusal=1;refusal<=3;refusal++){
  const lines=clickOption(1);assert.equal(ui.engine.s.flags.refusal_g15,refusal);assert.equal(ui.engine.s.ending,null);
  if(refusal<3){assert.equal(ui.engine.q.id,'g15');assert.equal(ui.engine.s.flags.moral,0);for(const text of rejectionLines)assert.ok(!lines.includes(text),'cannot announce leaving before the final refusal');}
- else{assert.equal(ui.engine.q.id,'g16');assert.equal(ui.engine.s.flags.moral,2);for(const text of rejectionLines)assert.ok(lines.includes(text));}
+ else{assert.equal(ui.engine.q.id,'g15_escape');assert.equal(ui.engine.s.flags.goodRescueRefused,true);assert.equal(ui.engine.s.flags.moral,2);for(const text of rejectionLines)assert.ok(lines.includes(text));}
 }
 assert.ok(!ui.engine.s.flags.cultPath);checks++;
 

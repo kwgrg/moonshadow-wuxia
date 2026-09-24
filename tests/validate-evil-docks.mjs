@@ -78,7 +78,7 @@ function stage(game,{projection=false,beforeTick=()=>{}}={}){
  return g;
 }
 
-assert.equal(freshState().campaignRevision,13);
+assert.equal(freshState().campaignRevision,14);
 // Start at the existing post-duel decision; the preceding reveal/duel has its own tests.
 let game=create('e07',{staged_e07:true});game.s.phase='choice';Object.assign(game.s.hero,{hp:31,mp:41,stamina:12});
 const initial=economy(game);assert.equal(game.choose(0),true);assert.equal(game.q.id,'e08_interlude');
@@ -249,7 +249,7 @@ function legacy(id,revision,numeric,{choice=null,done=false}={}){
  return {raw,budget:economy(g)};
 }
 function noInventedEvents(g,raw,budget){
- assert.equal(g.s.campaignRevision,13);assert.deepEqual(economy(g),budget);assert.equal(g.s.flags.evil,raw.flags.evil);
+ assert.equal(g.s.campaignRevision,14);assert.deepEqual(economy(g),budget);assert.equal(g.s.flags.evil,raw.flags.evil);
  assert.deepEqual(g.s.done,raw.done);assert.deepEqual(g.s.claimedRewards,raw.claimedRewards);
  for(const id of newEvents){assert.ok(!g.s.done.includes(id));assert.ok(!g.s.claimedRewards.includes(id));assert.ok(!g.s.flags['staged_'+id]);}
  assert.equal(g.s.skirmish,null);assert.ok(!g.s.flags.evilTowerInterludeComplete&&!g.s.flags.evilIslandCleared&&!g.s.flags.evilIslandFarewell);

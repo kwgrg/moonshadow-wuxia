@@ -91,7 +91,7 @@ for(let n=1;n<=3;n++){
  assert.equal(rejected.choose(1),true);assert.equal(rejected.s.flags.refusal_g15,n,'every refusal commits its own count');
  if(n<3){assert.equal(rejected.q.id,'g15');assert.equal(rejected.s.flags.moral,0);}
 }
-assert.equal(rejected.q.id,'g16');assert.ok(!rejected.s.flags.cultPath);assert.equal(rejected.s.flags.moral,2);assert.equal(rejected.s.failure,null);assert.equal(rejected.s.completed,false);
+assert.equal(rejected.q.id,'g15_escape');assert.equal(rejected.s.flags.goodRescueRefused,true);assert.ok(!rejected.s.flags.cultPath);assert.equal(rejected.s.flags.moral,2);assert.equal(rejected.s.failure,null);assert.equal(rejected.s.completed,false);
 
 const game=create('g15');game.s.phase='choice';game.s.done=QUESTS.slice(0,index('g15')).filter(q=>matches(q.when,game.s.flags)).map(q=>q.id);game.s.claimedRewards=[...game.s.done];
 assert.equal(game.choose(0),true);const itinerary=[game.q.id];
@@ -228,9 +228,9 @@ const old=snapshot(legacy);old.campaignRevision=3;const history=restoreState(old
 const current=restoreState(partial);assert.equal(current.completed,false);assert.equal(current.ending,null);assert.equal(QUESTS[current.quest].id,'gCult_wudang');
 let migratedIndices=0;
 for(const [revision,ids] of [[1,LEGACY_QUEST_IDS],[2,REVISION_TWO_QUEST_IDS],[3,REVISION_THREE_QUEST_IDS]])for(const id of ['g15','g16','e07','e14']){
- const raw=snapshot(create(id));delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);assert.ok(raw.quest>=0);raw.phase='talk';
- const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,id,'legacy index keeps its quest identity');assert.equal(restored.campaignRevision,13);migratedIndices++;
- raw.questId=id;raw.quest=0;assert.equal(QUESTS[restoreState(raw).quest].id,id,'stable questId wins over the numeric slot');
+ const raw=snapshot(create(id));delete raw.questId;raw.campaignRevision=revision;raw.quest=ids.indexOf(id);assert.ok(raw.quest>=0);raw.phase='talk';if(id==='g16')raw.map='m61';
+ const expected=id==='g16'?'g15_escape':id;const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,expected,'legacy identity maps to the declared revision14 restart');assert.equal(restored.campaignRevision,14);migratedIndices++;
+ raw.questId=id;raw.quest=0;assert.equal(QUESTS[restoreState(raw).quest].id,expected,'stable questId wins over the numeric slot');
 }
-const rescue=snapshot(create('g16'));rescue.campaignRevision=3;rescue.done=['g15'];rescue.choices.g15=1;const continued=restoreState(rescue);assert.equal(QUESTS[continued.quest].id,'g16');assert.ok(!continued.flags.cultPath,'old rejected route does not enter accepted events');
+const rescue=snapshot(create('g16'));rescue.campaignRevision=3;rescue.map='m61';rescue.done=['g15'];rescue.choices.g15=1;const continued=restoreState(rescue);assert.equal(QUESTS[continued.quest].id,'g15_escape');assert.equal(continued.flags.goodRescueLegacyRefused,true);assert.ok(!continued.flags.cultPath,'old rejected route does not enter accepted events');
 console.log(JSON.stringify({result:'PASS',pathChecks,restoredSteps,migratedIndices,checks:'isolated branch, faction AI, persistent roster and defeat, retry, single rewards, all staged transitions, historical saves'}));

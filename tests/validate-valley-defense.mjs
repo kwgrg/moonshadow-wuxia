@@ -89,11 +89,11 @@ assert(flowing);assert.equal(game.q.id,'g14_hanbo');assert.equal(game.s.flags.va
 assert.equal(game.s.claimedRewards.filter(x=>x==='g14').length,1);assert(game.stagingActors().some(x=>x.name==='孟知秋'&&x.pose==='sit'&&x.groundSeated&&!x.hidden));
 const afterTeaching=wealth(game);game=reload(game);assert.deepEqual(wealth(game),afterTeaching);const repeat=reload(game);repeat.s.quest=index('g14');repeat.s.map='m51';repeat.s.phase='talk';repeat.beginObjective();repeat.completeQuest();assert.deepEqual(wealth(repeat),afterTeaching);
 assert.equal(game.travel('m61'),false,'tower cannot bypass searching the hut');assert.deepEqual(walk(game,'r_hanbo_return'),['m51','r_hanbo_return']);game=stage(game);assert.equal(game.q.id,'g14_resolve');assert.equal(game.s.flags.valleyHanboReached,true);assert.equal(game.travel('m61'),false);assert.deepEqual(walk(game,'m16'),['r_hanbo_return','m16']);game=stage(game);
-assert.equal(game.q.id,'g15');assert.equal(game.s.flags.valleyRescueResolved,true);assert.deepEqual(wealth(game),afterTeaching);assert.deepEqual(walk(game,'m61'),['m16','r_hanbo_return','m61']);
+assert.equal(game.q.id,'g15');assert.equal(game.s.flags.valleyRescueResolved,true);assert.deepEqual(wealth(game),afterTeaching);assert.deepEqual(walk(game,'m61'),['m16','r_hanbo_return','r_good_yitian','m61']);
 assert.equal(game.q.refusalRule.limit,3);assert.equal(game.q.refusalRule.outcome,'continue');
 // v11 cursors map by stable IDs. Historical completion is not a new award or a
 // fabricated staged scene; pending old g14 must enter the new manor battle.
-assert.equal(freshState().campaignRevision,13);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
+assert.equal(freshState().campaignRevision,14);assert(Array.isArray(campaign.REVISION_ELEVEN_QUEST_IDS));
 for(const numeric of [false,true])for(const id of ['g14','g15']){
  const raw=save(create(id));raw.campaignRevision=11;raw.flags={route:'good',moral:0,evil:0};raw.map=id==='g14'?'m51':'m61';raw.coins=421;raw.hero.exp=37;if(id==='g15'){raw.phase='choice';raw.flags.refusal_g15=2;}
  if(numeric){delete raw.questId;raw.quest=campaign.REVISION_ELEVEN_QUEST_IDS.indexOf(id);}if(id==='g15'){raw.done=['g14'];raw.claimedRewards=['g14'];}

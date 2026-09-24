@@ -99,3 +99,35 @@
 限定模块扫描没有发现原目录路径、原包/动画格式引用、原目录读盘调用或外部代码import；只存在本项目模块依赖与来源说明链接。来源链接是说明元数据，没有被用作加载原内容的运行入口。当前 `public` 下未发现软链接。新增禁地各层、空屋、镇中与外场复用已有项目PNG；本轮 `public/assets`、资源来源清单、`package-lock.json` 均无差异，没有新增或替换发布PNG，也没有增加开发或运行依赖。`package.json` 的修改仅将新专项纳入测试命令。发布PNG仍为31项既有制作记录；本次未重新认证这些历史记录。
 
 以上结论是本轮代码、依赖和资源引用的有限范围检查。它不包含原版实机比对、对白全语料相似性检验、全部Git历史对象取证或法律审查；“未发现直接复制或运行依赖”不等于版权无风险、获得授权或法律原创认证。部署仍以静态 `public` 为边界，参考文档和原目录不属于游戏运行资源。
+
+## 2026-09-24：善线救援数据与演出增量（revision 14，限定模块）
+
+本次增量审查限定于 `good-rescue-revisions.mjs`、`good-rescue-staging.mjs`、`good-rescue-migration.mjs` 与 [good-rescue-reference.md](good-rescue-reference.md)。前序必要核验仅在内存读取原包的指定事件及相邻出口，仓库仅留下独立动作/条件概述和定位元数据。没有保存原脚本、台词、NPC配置、动作文件、坐标、地图或媒体副本，没有创建原资源读取/导入工具。
+
+三个产品模块重新编写对白、动作编排、角色与军阵稳定ID、数值、任务门槛和迁移。数据模块只import项目自己的cult-revisions.mjs以保留既有招揽选项；限定扫描未见原目录路径、pak或原动画格式、解包库、网络加载代码或外部代码import。来源网页地址仅为说明元数据。28名地牢守卫不设未经证实的全清救人条件；页面暂停、失败重试及奖励兼容均明确为本项目适配，不宣称原版行为。
+
+这次限定审查没有重新对比原台词语料，也不覆盖根任务与地图代理并行编写的运行时及新图制作全过程；两幅新增项目图的制作记录由各自来源文档说明，不在这里代为认证。此记录是代码与引用边界检查，不是授权证明、法律审查或版权风险认证。
+
+## 2026-09-24：revision 14 集成与三幅新图边界补审
+
+这是上一节“三模块限定审查”的增量。本次仅只读当前仓库及其Git差异，**没有再次打开原游戏目录，也没有读取仓库外的生成源图片**。检查范围扩展到新增rescue-runtime.mjs，以及campaign、runtime、staging-runtime、skirmish-runtime、travel-party、staging、journey、world、routes的本轮接入。参考、浏览器和全流程完成度仍分别以各自记录为准，本节不代替玩法验收。
+
+集成代码使用项目自己的模块注册、独立状态机、队伍显示、场景标识、军阵位置和多边形通行范围。地牢、安置庭院和沙漠的新art键通过既有`./assets/<name>.png`图像入口加载；地图路线没有引入原地图文件、NPC配置、动画或脚本读取器。新增的救援运行时只处理项目存档、交互和出口提交，不含原包读取或解压调用。
+
+对当前public文本与文件名的扫描结果：未见`D:\Game`或`Monthly Shadow Legend`运行路径，未见原格式`.pak/.asf/.mpc/.spr/.mps/.npc/.map`实体文件，未见解包库或原资源导入器调用；JS模块import均指向项目相对路径，没有外部代码import。必须保留一个准确例外：既有cult-revisions.mjs和recruitment-revisions.mjs的source说明仍含`script.pak`、`ini.pak`与包内hash等定位文字。这些是来源元数据，本轮没有新增对应读盘、下载或加载调用，不能把扫描结果写成“public完全不含pak字样”。public递归检查未发现符号链接、目录联接或其他重解析点。
+
+### 三幅新增发布图
+
+| 发布文件 | 制作记录 | 本次重新计算的SHA-256 |
+| --- | --- | --- |
+| public/assets/rescue-dungeon.png | [rescue-dungeon-art.md](rescue-dungeon-art.md) | afedaa95f0f1dbce85979927d328ca8f9fa023e43faef5478502f68c5092a5d2 |
+| public/assets/hanbo-hut-yard.png | [hanbo-hut-yard-art.md](hanbo-hut-yard-art.md) | 6f7433acdfb20e04e9405d2a5d0bd480faa58e2f077103edf916e17f165e9050 |
+| public/assets/desert-passage.png | [desert-passage-art.md](desert-passage-art.md) | 22d629ea1875cff8e6c03b98817051892af45a358e55826fd9f204a1b86b5e5a |
+
+三图均从仓库PNG头部核得1536×1024，实际字节数分别为3,005,211、3,678,709、3,187,952。每图实算hash同时匹配其制作文档和asset-provenance.json条目，条目为documented且referenceAssets为空。三份记录各自提供完整文字提示词、生成源绝对路径、交付文件和目视说明，并写明内置imagegen文生图、没有输入参考图。**本次证实的是当前发布字节与记录一致**；没有重新调用生成服务、复核仓库外源文件或执行原版图像相似性比对，不能单凭记录独立认证生成过程或法律权属。
+
+当前public共89个文件，其中34幅PNG；资源清单也有34项。相对于审查时HEAD，既有31个public/assets文件无修改，新增项正是上表三图。没有把机制参考文档、内存核验工具或原目录作为新发布图的输入链记录；原参考目录也不属于静态部署目录。
+
+依赖与部署配置方面：package.json只把validate-good-rescue专项加入总测试并新增test:good-rescue命令；dependencies/devDependencies均未改变，开发依赖仍为Wrangler 4.130.0，package-lock.json无差异。wrangler.jsonc无差异，静态资产目录仍是`./public`。本轮产品接入没有增加认证、服务器端存档或远端游戏内容服务，继续使用既有浏览器本地存档；本检查没有执行云端部署。
+
+本节属于本轮集成代码、文件引用、依赖差异和制作记录一致性的有限审查。它不包含所有Git历史对象取证、全部对白相似性检验、原版实机/图像比较、服务端生成记录认证或法律审查。未发现直接原资源运行依赖、制作记录完整或hash一致，均不等于取得授权、版权无风险或法律原创认证。

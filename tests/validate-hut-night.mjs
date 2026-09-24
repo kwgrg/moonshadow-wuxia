@@ -70,7 +70,7 @@ function stage(game,{observe=()=>{},companionMayLeave=false}={}){
  assert.equal(g.s.sequence,null,id+' must release');assert.notEqual(g.s.phase,'staging');assert.equal(g.s.map,map);assert.deepEqual(g.s.visited,visited);assert.deepEqual(resources(g),baseline.resources);if(!companionMayLeave)assert.deepEqual(reality(g),baseline);assert.equal(g.s.flags['staged_'+id],true);return {game:g,trace};
 }
 function reject(g,id){const before=resources(g);g.beginObjective();g.completeQuest();assert.equal(g.q.id,id);assert.equal(g.s.sequence,null);assert.deepEqual(resources(g),before);assert.ok(!g.s.flags['staged_'+id]);}
-assert.equal(freshState().campaignRevision,13);
+assert.equal(freshState().campaignRevision,14);
 const addedIds=['e04_departure','e04_dream','e06_first_interlude'];
 for(const id of [...addedIds,'e06_rest']){const q=QUESTS[index(id)];assert.equal(q.xp,0);assert.equal(q.money,0);assert.equal(q.requireStaging,true);assert.ok(STAGED_QUESTS[id]);}
 if(!process.argv.includes('--migration-only')){
@@ -174,7 +174,7 @@ for(const id of ['e04','e06_rest']){
 // redirects are the unfinished beach cutaway, return-message and manor defense.
 for(const [oldIndex,id] of campaign.REVISION_TEN_QUEST_IDS.entries()){
  const raw=snapshot(create(id));delete raw.questId;raw.quest=oldIndex;raw.campaignRevision=10;raw.flags.route=QUESTS[index(id)].when?.route||'good';raw.skills[8]=20;raw.flags.switch8=true;
- const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut'})[id]||id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
+ const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor'})[id]||id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
 }
 
 console.log(JSON.stringify({result:'PASS',branchCases,restoredSteps,midMoveRestores,timedRestores,projectionRestores,invalidSaves,legacyCases,checks:'two isolated hut dreams, real-world conservation, ordinary duel retry, first tower clash without death, shore disappearance order, exact projected origin restoration'}));

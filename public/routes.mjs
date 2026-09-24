@@ -4,6 +4,14 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_good_hanbo_road:{name:'寒波谷外山路',area:'通往惠安南郊',art:'forest-original',weather:'辰时 · 谷外清风',poem:'谷声留身后，旧路向人间',shop:false,obstacles:[],routeOnly:true},
+ r_good_dunhuang_approach:{name:'敦煌外山道',area:'山庄外连接路',art:'forest-original',weather:'辰时 · 山间微风',poem:'庄门留身后，石路向西行',shop:false,obstacles:[],routeOnly:true},
+ r_good_dunhuang_passage:{name:'敦煌洞口通路',area:'洞窟通行段',art:'cave',weather:'辰时 · 洞口微光',poem:'石窟留回声，行人辨去路',shop:false,obstacles:[],routeOnly:true},
+ r_good_feilong_approach:{name:'飞龙堡前山径',area:'出洞连接路',art:'forest-original',weather:'辰时 · 风过疏林',poem:'洞尽山光近，前庭又一关',shop:false,obstacles:[],routeOnly:true},
+ r_good_desert:{name:'通天塔外沙漠',area:'堡后沙路',art:'desert-passage',weather:'辰时 · 沙地晴光',poem:'黄沙接远塔，归路在身后',shop:false,obstacles:[],routeOnly:true},
+ r_good_dungeon:{name:'摘星楼地下牢房',area:'石阶与囚室',art:'rescue-dungeon',weather:'亥时 · 牢中灯火',poem:'阶深闻故语，归路待人同',shop:false,obstacles:[],routeOnly:true},
+ r_good_yitian:{name:'倚天山归路',area:'楼外山径',art:'forest-original',weather:'辰时 · 山间微风',poem:'楼影留身后，归人向谷行',shop:false,obstacles:[],routeOnly:true},
+ r_good_hanbo_hut:{name:'寒波谷小筑近旁',area:'谷内安置处',art:'hanbo-hut-yard',weather:'辰时 · 溪畔微风',poem:'溪声留归步，暂别待君还',shop:false,obstacles:[],routeOnly:true},
  m59:{name:'惠安镇街口',area:'镇中石街',art:'town-original',weather:'辰时 · 镇中微风',poem:'旧事随人至，归舟向海行',shop:false,obstacles:[]},
  m60:{name:'忘忧岛禁地外场',area:'石阶前庭',art:'temple',weather:'辰时 · 风过空庭',poem:'深门留去路，剑影满前庭',shop:false,obstacles:[]},
  r_good_seaside_hut:{name:'海边空屋',area:'屋内寻人',art:'beimo-mei-room',weather:'辰时 · 窗前寂静',poem:'归来空室静，旧影待人寻',shop:false,obstacles:[],routeOnly:true},
@@ -58,7 +66,7 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m59','m60'],['m60','m31'],['m60','r_mainland_dock'],['m59','r_good_seaside_hut'],['r_good_seaside_hut','m60'],['m60','r_good_forbidden_chamber'],['m60','m40'],['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m49','m54'],['m54','m62'],['m61','m41'],['m61','m16'],['m61','r_hanbo_return'],['r_good_dungeon','r_good_hanbo_hut'],['r_good_hanbo_hut','m41'],['m59','m60'],['m60','m31'],['m60','r_mainland_dock'],['m59','r_good_seaside_hut'],['r_good_seaside_hut','m60'],['m60','r_good_forbidden_chamber'],['m60','m40'],['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
 
 // These links are independent web staging. A ferry is an explicit voyage,
 // while the mountain connector must be walked on both sides of the journey.
@@ -111,7 +119,7 @@ const HUT_RETURN_ROUTES=[['m16','m17'],['m17','m49'],['m49','r_beimo_rose_room']
 const HUT_RETURN_MAPS=new Set(HUT_RETURN_ROUTES.flat());
 const HUT_RETURN_PAIRS=new Set(HUT_RETURN_ROUTES.map(([a,b])=>pairKey(a,b)));
 const HUT_RETURN_QUESTS=new Set(['e04_homecoming','e04_quarrel','e04_wait','e04_report','e05']);
-const VALLEY_DEFENSE_ROUTES=[['m60','r_good_forbidden_path'],['r_good_forbidden_path','m31'],['m31','m40'],['m40','r_mainland_dock','boat'],['r_mainland_dock','m41'],['m41','m49'],['m49','m51'],['m51','r_hanbo_return'],['r_hanbo_return','m16'],['r_hanbo_return','m61']];
+const VALLEY_DEFENSE_ROUTES=[['m60','r_good_forbidden_path'],['r_good_forbidden_path','m31'],['m31','m40'],['m40','r_mainland_dock','boat'],['r_mainland_dock','m41'],['m41','m49'],['m49','m51'],['m51','r_hanbo_return'],['r_hanbo_return','m16'],['r_hanbo_return','r_good_yitian'],['r_good_yitian','m61']];
 const VALLEY_DEFENSE_MAPS=new Set(VALLEY_DEFENSE_ROUTES.flatMap(([a,b])=>[a,b]));
 const VALLEY_DEFENSE_PAIRS=new Set(VALLEY_DEFENSE_ROUTES.map(([a,b])=>pairKey(a,b)));
 const VALLEY_DEFENSE_QUESTS=new Set(['g14_dock_report','g14_manor_battle','g14','g14_hanbo','g14_resolve','g15']);
@@ -123,6 +131,13 @@ const GOOD_FORBIDDEN_MAPS=new Set(GOOD_FORBIDDEN_ROUTES.flatMap(([a,b])=>[a,b]))
 const GOOD_FORBIDDEN_PAIRS=new Set(GOOD_FORBIDDEN_ROUTES.map(([a,b])=>pairKey(a,b)));
 const GOOD_FORBIDDEN_QUESTS=new Set(['g12','g13_hut','g13_entry','g13_reunion','g13','g13_captured','g13_ferry']);
 const GOOD_FORBIDDEN_INNER=new Set(['r_good_forbidden_first','r_good_forbidden_second','r_good_forbidden_third','r_good_forbidden_chamber']);
+const GOOD_RESCUE_ROUTES=[['m61','r_good_dungeon'],['m61','r_good_yitian'],['r_good_yitian','r_hanbo_return'],['r_hanbo_return','r_good_hanbo_hut']];
+const GOOD_RESCUE_CORE=new Set(GOOD_RESCUE_ROUTES.flat());
+const GOOD_RESCUE_PAIRS=new Set(GOOD_RESCUE_ROUTES.map(([a,b])=>pairKey(a,b)));
+const GOOD_RESCUE_QUESTS=new Set(['g15_escape','g16','g16_homecoming','g17','g17_departure','g17_manor','g18','gTower1']);
+const GOOD_RESCUE_DEPARTURE=[['r_hanbo_return','r_good_hanbo_road'],['r_good_hanbo_road','m41'],['m41','m49']];
+const GOOD_RESCUE_TOWER_ROUTE=[['m49','r_good_dunhuang_approach'],['r_good_dunhuang_approach','r_good_dunhuang_passage'],['r_good_dunhuang_passage','r_good_feilong_approach'],['r_good_feilong_approach','m54'],['m54','r_good_desert'],['r_good_desert','m62']];
+const GOOD_RESCUE_TOWER_PAIRS=new Set(GOOD_RESCUE_TOWER_ROUTE.map(([a,b])=>pairKey(a,b)));
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
 function matches(when,state){
@@ -311,6 +326,49 @@ export function routeEdges(state={},quests=[]){
    }
   }
  }
+ // Underground combat is intentionally not an all-clear prerequisite. The
+ // actor release owns rescue; the actual return doorway owns departure.
+ if((flags.route||'good')==='good'&&!flags.cultPath){
+  const active=GOOD_RESCUE_QUESTS.has(current),legacy=!!flags.goodRescueLegacy;
+  const settled=!!flags.goodRescueZiSettled||!!flags.goodRescueLegacyZiSettled||legacy,freed=!!flags.goodRescueZiFreed||settled,hall=!!flags.goodRescueHallCleared||freed;
+  const departed=!!flags.goodRescueMeiDeparted||!!flags.goodRescueLegacyMeiDeparted||legacy,manor=!!flags.goodRescueManorCleared||legacy,fort=!!flags.goodRescueFortCleared||legacy;
+  if(active||hall||freed||settled){
+   for(const [from,to] of GOOD_RESCUE_ROUTES){
+    const edge={from,to,locked:false,inferred:true,design:'authored-good-rescue'};
+    const lock=(id,reason)=>Object.assign(edge,{lockedFrom:[...(edge.lockedFrom||[]),id],departureReason:reason});
+    if(to==='r_good_dungeon'){
+     if(!hall)lock('m61','厅中来敌仍未退尽，地下入口尚不能通行。');
+     if(!freed&&!flags.staged_g16)lock('r_good_dungeon','先找到紫轩，与她说好一起离开，再返回楼中。');
+    }
+    if(from==='m61'&&to==='r_good_yitian'&&!freed)lock('m61','紫轩还没有离开地下牢房，先去接她。');
+    edges.set(pairKey(from,to),edge);
+   }
+   if(settled)for(const [from,to] of GOOD_RESCUE_DEPARTURE)edges.set(pairKey(from,to),{from,to,locked:false,inferred:true,design:'authored-good-rescue-departure'});
+   for(const [from,to] of GOOD_RESCUE_TOWER_ROUTE){
+    const edge={from,to,locked:false,inferred:true,design:'authored-good-rescue-tower-road'};
+    if((from==='m49'||to==='m54')&&!manor)Object.assign(edge,{lockedFrom:[from],departureReason:'先击退山庄里新来的伏兵，再往飞龙堡赶路。'});
+    if(from==='m54'&&!fort)Object.assign(edge,{lockedFrom:[from],departureReason:'堡后的通路仍被封住，须击退堡内全部来敌。'});
+    edges.set(pairKey(from,to),edge);
+   }
+   if(current==='g17'&&!departed)for(const edge of edges.values()){
+    if(edge.from==='r_hanbo_return'||edge.to==='r_hanbo_return'){const other=edge.from==='r_hanbo_return'?edge.to:edge.from;if(!['r_good_hanbo_road','r_good_hanbo_hut','r_good_yitian'].includes(other))Object.assign(edge,{lockedFrom:[...(edge.lockedFrom||[]),'r_hanbo_return'],departureReason:'出谷去惠安须沿谷外山路前行。'});}
+   }
+   if(active)for(const edge of edges.values()){
+    const endpoints=[edge.from,edge.to];
+    if(!GOOD_RESCUE_TOWER_PAIRS.has(pairKey(edge.from,edge.to))&&!endpoints.every(id=>/^m6[2-9]$/.test(id))&&endpoints.some(id=>['m54','m62'].includes(id)))Object.assign(edge,{locked:true,reason:'沿敦煌洞口、堡前山径与堡后沙地逐段前行。'});
+    const battleMap=current==='g17'?'m41':current==='g17_manor'?'m49':current==='g18'?'m54':null;
+    const won=current==='g17'?departed:current==='g17_manor'?manor:fort;
+    const underway=state.phase==='battle'||flags['staged_'+current];
+    if(battleMap&&!won&&underway&&endpoints.includes(battleMap))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),battleMap])],departureReason:'来敌仍封住去路，当前战事尚未了结。'});
+    if(current==='g17_departure'&&!departed&&endpoints.includes('m41'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m41'])],departureReason:'先听完眉儿带来的消息，目送她离开险地。'});
+   }
+   if(active&&!settled)for(const edge of edges.values()){
+    if(GOOD_RESCUE_PAIRS.has(pairKey(edge.from,edge.to)))continue;
+    const inside=[edge.from,edge.to].filter(id=>GOOD_RESCUE_CORE.has(id));
+    if(inside.length)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),...inside])],departureReason:'沿地下牢房、倚天山与寒波谷的归路，先把紫轩安置妥当。'});
+   }
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -326,7 +384,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE])add(a,b);
   const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
   const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
   for(const route of ['good','evil'])for(const flags of variations)for(const edge of routeEdges({quest:quests.length,flags:{...flags,route}},quests))add(edge.from,edge.to);

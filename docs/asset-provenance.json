@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-09-23",
+  "reviewedAt": "2026-09-24",
   "scope": "All public PNG files; public/assets currently accepts PNG only.",
   "statusMeaning": {
     "documented": "具有对应交付文件、制作方法和完整提示词的制作记录；仅表示文档状态，不是法律原创、授权或所有上游来源已确认。",
@@ -134,6 +134,21 @@
       ]
     },
     {
+      "path": "public/assets/desert-passage.png",
+      "sha256": "22d629ea1875cff8e6c03b98817051892af45a358e55826fd9f204a1b86b5e5a",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/desert-passage-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文本生成，未提供原版图像；记录状态不表示法律原创或授权结论。"
+      ]
+    },
+    {
       "path": "public/assets/forbidden-chamber.png",
       "sha256": "7e95918f506fa2115de8068610b01444096f9ebbd41197fa4d639e9af93d922e",
       "status": "documented",
@@ -207,6 +222,22 @@
       "referenceAssets": [],
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/hanbo-hut-yard.png",
+      "sha256": "6f7433acdfb20e04e9405d2a5d0bd480faa58e2f077103edf916e17f165e9050",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/hanbo-hut-yard-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置image_gen独立文生图，无输入图。完整提示词、源路径与交付SHA见记录。",
+        "documented仅记录制作来源，不是法律认证。"
       ]
     },
     {
@@ -412,6 +443,22 @@
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。",
         "该制作记录没有保留可直接复核的生成源文件绝对路径；本清单哈希仅绑定当前交付文件。"
+      ]
+    },
+    {
+      "path": "public/assets/rescue-dungeon.png",
+      "sha256": "afedaa95f0f1dbce85979927d328ca8f9fa023e43faef5478502f68c5092a5d2",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/rescue-dungeon-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 独立文字生成，无输入图片；完整提示词、源路径与交付哈希见制作记录。",
+        "documented只表示制作记录，不代表版权或原版相似性认证。"
       ]
     },
     {

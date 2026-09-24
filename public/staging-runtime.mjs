@@ -53,10 +53,10 @@ export const stagingMethods={
  hasQuestItems(){return Object.entries(this.outstandingItems(this.q.requiredItems)).every(([id,count])=>(this.s.inventory[id]||0)>=count);},
  requireQuestItems(){return this.requireItems(this.outstandingItems(this.q.requiredItems));},
  stagingFocus(){if(this.scene.hidePlayer&&(!this.s.sequence?.focus||this.s.sequence.focus==='hero'))return this.scene.focus||this.scene.spawn;return this.s.sequence?this.stagingActor(this.s.sequence.focus)||this.s.hero:this.s.hero;},
- canStartStaging(){return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
+ canStartStaging(){if(this.q.rescueMission)return this.canStartRescueStaging();return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
  startStaging(){
   if(!this.canStartStaging()||this.s.sequence||!this.requireQuestItems()||!this.requireQuestFlags())return false;
-  const definition=this.stagingDefinition();if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
+  const definition=this.stagingDefinition();if(this.q.rescueMission&&near(this.s.hero,definition.startPoint||this.scene.objective)>135)return false;if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
   if(definition.heroStart)Object.assign(this.s.hero,this.nearestOpen(definition.heroStart.x,definition.heroStart.y),{direction:definition.heroStart.direction||1});
   this.effects=[];this.numbers=[];this.hitTime=0;this.dashTime=0;this.s.phase='staging';this.s.destination=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys.clear();this.meditating=false;this._stagingPrompt=null;this._stagingMove=null;this.emit('stagingStep');return true;
  },
@@ -81,7 +81,7 @@ export const stagingMethods={
    this.advanceStaging();this.emit('stagingScene');return;
   }
   if(!step||step.type==='release'){if(sequence.sceneKey)return;
-   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose=definition.finalHeroPose||'stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;this.s.phase='talk';this.walkTime=0;this.beginObjective();return;
+   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose=definition.finalHeroPose||'stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;if(this.q.rescueMission){this.resumeRescueCombat();return;}this.s.phase='talk';this.walkTime=0;this.beginObjective();return;
   }
   if(step.type==='handover'){
    const outstanding=this.outstandingItems(step.items);

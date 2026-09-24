@@ -60,7 +60,7 @@ function stage(game){
  assert.equal(g.s.sequence,null,id+' releases');assert.notEqual(g.q.id,id);assert.equal(g.s.flags['staged_'+id],true);assert.equal(g.s.flags[milestones[ids.indexOf(id)]],true);assert.deepEqual(resources(g),baseline);assert.deepEqual(g.s.choices,choices);assert.equal(g.s.map,map);assert.deepEqual(g.s.visited,visited);return {game:g,trace};
 }
 function reject(g){const before=snapshot(g);g.beginObjective();g.completeQuest();assert.equal(g.q.id,before.questId);assert.equal(g.s.sequence,null);assert.deepEqual(resources(g),resources({s:before}));assert.deepEqual(g.s.done,before.done);assert.deepEqual(g.s.claimedRewards,before.claimedRewards);}
-assert.equal(freshState().campaignRevision,13);
+assert.equal(freshState().campaignRevision,14);
 for(const [n,id] of ids.entries()){
  const q=QUESTS[index(id)];assert.equal(q.map,maps[n]);assert.equal(q.when.route,'evil');assert.equal(q.requireStaging,true);assert.equal(q.hideCompanion,true);assert.equal(q.xp,0);assert.equal(q.money,0);assert.ok(STAGED_QUESTS[id]);assert.ok(!q.choice&&!q.skirmish&&!q.battleBeforeChoice);assert.deepEqual(Object.keys(q.rewards||{}).sort(),id==='e04_report'?['companion','flags']:['flags']);assert.deepEqual(q.rewards.flags,{[milestones[n]]:true});
 }

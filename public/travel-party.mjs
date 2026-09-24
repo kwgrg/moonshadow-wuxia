@@ -5,6 +5,7 @@ export const partyMethods={
   const names=this.s.flags.companion?[this.s.flags.companion]:[];
   if(this.s.flags.route==='good'&&this.s.flags.valleyMeiAwake&&!this.s.flags.valleyCareSettled&&['g07_mainland','g07_island','g07_settle'].includes(this.q.id))names.push('月眉儿');
   if(this.s.flags.route==='good'&&this.s.flags.goodForbiddenReunited&&!this.s.flags.goodForbiddenCaptured&&['g13','g13_captured'].includes(this.q.id))names.splice(0,names.length,'蔷薇','纳兰真','月眉儿');
+  if(this.q.rescueMission&&this.s.flags['staged_'+this.q.id]&&this.s.skirmish?.questId===this.q.id)names.splice(0,names.length,this.q.rescueMission.companion);
   return [...new Set(names)].filter(name=>name!==this.q.playAs);
  },
  resetParty(){this._partyPositions={};this._partyPaths={};this._partyTime=0;this.followPosition={...this.s.hero};},
@@ -13,7 +14,7 @@ export const partyMethods={
   const actors=this.stagingPresentation()?.actors||[],mainName=this.s.phase==='choice'?(this.q.choiceSpeaker||this.q.npc):this.q.npc;
   return this.partyNames.filter(name=>{
    if(this.s.skirmish&&(this.s.allies||[]).some(ally=>ally.name===name))return false;
-   if(this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===name)return false;
+   if(!this.q.rescueMission&&this.s.map===this.q.map&&['talk','after','choice','return'].includes(this.s.phase)&&!this.canStartStaging()&&mainName===name)return false;
    return !actors.some(actor=>actor.name===name&&(this.s.sequence||!actor.hidden)&&!(actor.residentUntilQuest&&this.hasReachedQuest(actor.residentUntilQuest)));
   }).map(name=>({...(this._partyPositions?.[name]||{x:this.s.hero.x,y:this.s.hero.y}),name,sprite:['紫轩','月眉儿'].includes(name)?2:1,direction:this.s.hero.direction}));
  },
