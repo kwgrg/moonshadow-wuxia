@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {GameEngine,freshState,restoreState,QUESTS,MAPS,SKILLS,ITEMS,SIDE_QUESTS,distance} from '../public/runtime.mjs';
 import fs from 'node:fs';
 const stats=[];
-for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
+for(const q of QUESTS){assert.ok(MAPS[q.map],q.id);assert.ok(q.before.length||q.requireStaging||q.towerPassage,q.id);assert.ok(q.sources.length,q.id);if(q.choice)assert.ok(q.choice.options.length>=2,q.id);}
 assert.equal(new Set(QUESTS.map(q=>q.id)).size,QUESTS.length);
-function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(id==='g20')return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
+function option(g,outcome){const id=g.q.id;if(id==='eSwitch6')return g.puzzleCorrect(0)?0:1;if(id==='g15')return outcome==='cult'?0:1;if(['g20','g20_call2','g20_call3','g20_call4'].includes(id))return outcome==='zhen_good'?1:0;if(id==='g23')return outcome==='three'?1:0;if(id[0]==='e'){const high=outcome==='alone';return {e02:high?1:0,e04:high?1:0,e06:high?1:0,e08:high?1:0,e09:high?0:1}[id]??0;}return ['alone','family'].includes(outcome)?g.q.choice.options.length-1:0;}
 // The lake now has two disconnected walking surfaces. The simulation must
 // perform the same authored leap as the player before continuing on foot.
 function crossGap(game,goal){
@@ -35,6 +35,11 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
    if(q.training&&g.s.phase==='training')continue;
    if(q.battleBeforeChoice){assert.equal(g.s.phase,'choice');g.choose(option(g,outcome));continue;}
    assert.equal(g.s.phase,'after',`${outcome} ${q.id} battle should complete (hp ${g.s.hero.hp}, tick ${ticks})`);
+  }
+  if(q.towerPassage){
+   assert.equal(g.trackTower(),true,q.id+' uses the real stair action');
+   for(let t=0;t<18000&&g.q.id===q.id;t++)g.tick(.05);
+   assert.notEqual(g.q.id,q.id,q.id+' advances only through the physical stair');continue;
   }
   if(q.rescueMission){
    if(!g.rescueReady()){

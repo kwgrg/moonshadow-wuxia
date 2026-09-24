@@ -70,7 +70,7 @@ function stage(game,{observe=()=>{},companionMayLeave=false}={}){
  assert.equal(g.s.sequence,null,id+' must release');assert.notEqual(g.s.phase,'staging');assert.equal(g.s.map,map);assert.deepEqual(g.s.visited,visited);assert.deepEqual(resources(g),baseline.resources);if(!companionMayLeave)assert.deepEqual(reality(g),baseline);assert.equal(g.s.flags['staged_'+id],true);return {game:g,trace};
 }
 function reject(g,id){const before=resources(g);g.beginObjective();g.completeQuest();assert.equal(g.q.id,id);assert.equal(g.s.sequence,null);assert.deepEqual(resources(g),before);assert.ok(!g.s.flags['staged_'+id]);}
-assert.equal(freshState().campaignRevision,14);
+assert.equal(freshState().campaignRevision,15);
 const addedIds=['e04_departure','e04_dream','e06_first_interlude'];
 for(const id of [...addedIds,'e06_rest']){const q=QUESTS[index(id)];assert.equal(q.xp,0);assert.equal(q.money,0);assert.equal(q.requireStaging,true);assert.ok(STAGED_QUESTS[id]);}
 if(!process.argv.includes('--migration-only')){
@@ -138,7 +138,7 @@ function preserved(g,raw){
 }
 for(let revision=1;revision<=10;revision++)for(const numeric of [false,true]){
  for(const phase of ['talk','battle','choice'])for(const away of [false,true]){
-  const raw=legacy('e04',revision,numeric,{phase,away}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04');assert.ok(!Object.hasOwn(g.s.choices,'e04'));assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!g.s.flags.evilHutDecision);assert.equal(g.s.phase,away?'travel':phase==='choice'?'choice':'talk');if(away&&phase==='choice')assert.equal(g.s.objectiveProgress?.phase,'choice');
+  const raw=legacy('e04',revision,numeric,{phase,away}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04');assert.ok(!Object.hasOwn(g.s.choices,'e04'));assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!g.s.flags.evilHutDecision);assert.equal(g.s.phase,away?'travel':'talk','old choices without a duel roster must replay the duel');if(away&&phase==='choice')assert.equal(g.s.objectiveProgress?.phase,'talk');
  }
  for(const answer of [0,1])for(const phase of ['choice','after'])for(const away of [false,true]){
   const raw=legacy('e04',revision,numeric,{answer,phase,away,flags:{evilHutForgiven:answer===1,evilHutRefused:answer===0}}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04_departure');assert.equal(g.s.choices.e04,answer);assert.equal(g.s.flags.evilHutDecision,true);assert.equal(g.s.flags.evilHutForgiven,answer===0);assert.equal(g.s.flags.evilHutRefused,answer===1);assert.ok(!g.s.flags.evilLegacyHutNight);assert.equal(g.s.phase,away?'travel':'talk');assert.equal(g.s.sequence,null);
@@ -162,7 +162,7 @@ for(let revision=1;revision<=10;revision++)for(const numeric of [false,true]){
 // Invalid pending answers do not become historical completion. Wrong-route and
 // current saves cannot borrow old-history compatibility to skip new content.
 for(const answer of [-1,2,99,'0',null]){
- const raw=legacy('e04',10,false,{answer,phase:'choice'}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04');assert.equal(g.s.phase,'choice');assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!Object.hasOwn(g.s.choices,'e04'));
+ const raw=legacy('e04',10,false,{answer,phase:'choice'}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e04');assert.equal(g.s.phase,'talk','invalid old answers are not duel evidence');assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!Object.hasOwn(g.s.choices,'e04'));
 }
 for(const revision of [1,5,10,11])for(const id of ['e04','e06_rest']){
  const raw=snapshot(create(id,{route:'good'}));raw.campaignRevision=revision;raw.phase='after';raw.done=[id];raw.claimedRewards=[id];const g=new GameEngine(restoreState(raw));assert.ok(!g.s.flags.evilLegacyHutNight);assert.ok(!g.s.flags.evilLegacyFirstTowerInterlude);assert.equal(g.q.id,id);legacyCases++;
@@ -174,7 +174,7 @@ for(const id of ['e04','e06_rest']){
 // redirects are the unfinished beach cutaway, return-message and manor defense.
 for(const [oldIndex,id] of campaign.REVISION_TEN_QUEST_IDS.entries()){
  const raw=snapshot(create(id));delete raw.questId;raw.quest=oldIndex;raw.campaignRevision=10;raw.flags.route=QUESTS[index(id)].when?.route||'good';raw.skills[8]=20;raw.flags.switch8=true;
- const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor'})[id]||id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
+ const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor',g20:'g19_return'})[id]||id,id+' keeps its numeric identity or explicit migration');assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;
 }
 
 console.log(JSON.stringify({result:'PASS',branchCases,restoredSteps,midMoveRestores,timedRestores,projectionRestores,invalidSaves,legacyCases,checks:'two isolated hut dreams, real-world conservation, ordinary duel retry, first tower clash without death, shore disappearance order, exact projected origin restoration'}));

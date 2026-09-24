@@ -1,3 +1,4 @@
+import {GOOD_TOWER_VALLEY_STAGING} from './good-tower-valley-staging.mjs';
 import {GOOD_RESCUE_STAGING} from './good-rescue-staging.mjs';
 import {GOOD_FORBIDDEN_STAGING} from './good-forbidden-staging.mjs';
 import {HUT_RETURN_STAGING} from './hut-return-staging.mjs';
@@ -195,3 +196,5 @@ Object.assign(STAGED_QUESTS,HUT_RETURN_STAGING,VALLEY_DEFENSE_STAGED_QUESTS);
 Object.assign(STAGED_QUESTS,GOOD_FORBIDDEN_STAGING);
 
 Object.assign(STAGED_QUESTS,GOOD_RESCUE_STAGING);
+
+Object.assign(STAGED_QUESTS,GOOD_TOWER_VALLEY_STAGING);

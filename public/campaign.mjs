@@ -1,3 +1,4 @@
+import {GOOD_TOWER_VALLEY_REVISIONS,GOOD_TOWER_VALLEY_ADDITIONS} from './good-tower-valley-revisions.mjs';
 import {GOOD_RESCUE_REVISIONS,GOOD_RESCUE_ADDITIONS} from './good-rescue-revisions.mjs';
 import {GOOD_FORBIDDEN_REVISIONS,GOOD_FORBIDDEN_ADDITIONS} from './good-forbidden-revisions.mjs';
 import {HUT_RETURN_REVISIONS,HUT_RETURN_ADDITIONS} from './hut-return-revisions.mjs';
@@ -101,3 +102,9 @@ export const REVISION_THIRTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
 QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
 for(const q of QUESTS)Object.assign(q,GOOD_RESCUE_REVISIONS[q.id]||{});
 for(const insertion of GOOD_RESCUE_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown good-rescue insertion');QUESTS.splice(index,0,...insertion.quests);}
+
+// Freeze R14 identities and effective tiers before the tower and valley expansion.
+export const REVISION_FOURTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
+QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
+for(const q of QUESTS)Object.assign(q,GOOD_TOWER_VALLEY_REVISIONS[q.id]||{});
+for(const insertion of GOOD_TOWER_VALLEY_ADDITIONS){const index=QUESTS.findIndex(q=>q.id===insertion.beforeId);if(index<0)throw Error('Unknown good-tower-valley insertion');QUESTS.splice(index,0,...insertion.quests);}

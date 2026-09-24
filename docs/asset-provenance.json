@@ -366,6 +366,21 @@
       ]
     },
     {
+      "path": "public/assets/leaf-memorial.png",
+      "sha256": "63ef85b2209a7f239005ce9bb2b08f915c0af3c80ebed34ab6beb9c02908ce32",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/tower-valley-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置imagegen纯文字独立制作，无原版输入；documented只表示制作记录，不是法律认证。"
+      ]
+    },
+    {
       "path": "public/assets/leaf-rose-room.png",
       "sha256": "35901290975bf2902cb333111eea1a2af99318e5e22ecd88fd67554c5889438b",
       "status": "documented",
@@ -379,6 +394,21 @@
       "notes": [
         "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
         "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
+      ]
+    },
+    {
+      "path": "public/assets/leaf-ruined-courtyard.png",
+      "sha256": "cb22c8332fb1dd2a507f6312cb652b0b6657cbabb313242fd4db227887cd266b",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/tower-valley-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置imagegen纯文字独立制作，无原版输入；documented只表示制作记录，不是法律认证。"
       ]
     },
     {
@@ -490,6 +520,51 @@
       "notes": [
         "本轮内置文生图、无输入图片；记录含完整提示词、生成路径和交付哈希。",
         "documented表示有直接制作记录，不表示与原版画面一致或完成法律权属核定。"
+      ]
+    },
+    {
+      "path": "public/assets/tower-lower.png",
+      "sha256": "5c0077265aaed07dcaa5dd1f22ceada8004a49bbee905204b4cc6d752144bedf",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/tower-valley-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文本独立生成，无原版图像输入；记录状态不表示授权或法律认证。"
+      ]
+    },
+    {
+      "path": "public/assets/tower-middle.png",
+      "sha256": "8884c5bd1447f6a63b05d8cbe33a338a0c664e181fe57815bbffb89461fdf63d",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/tower-valley-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置imagegen纯文字独立制作，无原版输入；documented只表示制作记录，不是法律认证。"
+      ]
+    },
+    {
+      "path": "public/assets/tower-prison.png",
+      "sha256": "b816f37c87e1cb35a0f03f5f4e491bcda3d2255cd2556a9f25b650a359cb320d",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/tower-valley-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文本独立生成，无原版图像输入；记录状态不表示授权或法律认证。"
       ]
     },
     {

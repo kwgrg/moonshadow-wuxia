@@ -60,7 +60,7 @@ function stage(game){
  assert.equal(g.s.sequence,null,id+' releases');assert.notEqual(g.q.id,id);assert.equal(g.s.flags['staged_'+id],true);assert.equal(g.s.flags[milestones[ids.indexOf(id)]],true);assert.deepEqual(resources(g),baseline);assert.deepEqual(g.s.choices,choices);assert.equal(g.s.map,map);assert.deepEqual(g.s.visited,visited);return {game:g,trace};
 }
 function reject(g){const before=snapshot(g);g.beginObjective();g.completeQuest();assert.equal(g.q.id,before.questId);assert.equal(g.s.sequence,null);assert.deepEqual(resources(g),resources({s:before}));assert.deepEqual(g.s.done,before.done);assert.deepEqual(g.s.claimedRewards,before.claimedRewards);}
-assert.equal(freshState().campaignRevision,14);
+assert.equal(freshState().campaignRevision,15);
 for(const [n,id] of ids.entries()){
  const q=QUESTS[index(id)];assert.equal(q.map,maps[n]);assert.equal(q.when.route,'evil');assert.equal(q.requireStaging,true);assert.equal(q.hideCompanion,true);assert.equal(q.xp,0);assert.equal(q.money,0);assert.ok(STAGED_QUESTS[id]);assert.ok(!q.choice&&!q.skirmish&&!q.battleBeforeChoice);assert.deepEqual(Object.keys(q.rewards||{}).sort(),id==='e04_report'?['companion','flags']:['flags']);assert.deepEqual(q.rewards.flags,{[milestones[n]]:true});
 }
@@ -99,7 +99,7 @@ if(!process.argv.includes('--migration-only')){
  }
  for(const first of ['evilHutNightComplete','evilLegacyHutNight'])for(const second of ['evilHutReportHeard','evilLegacyHutReport'])assert.equal(create('e05',{[first]:true,[second]:true}).requireQuestFlags(),true);
  for(const flags of [{},{evilHutNightComplete:true},{evilHutReportHeard:true},{evilLegacyHutReport:true},{evilHutNightComplete:true,evilHutReportHeard:true,route:'good'}])reject(create('e05',flags));
- const repeated=create('e05',{evilHutNightComplete:true,evilHutReportHeard:true});repeated.s.phase='choice';for(let count=1;count<=3;count++){assert.equal(repeated.choose(1),true);assert.equal(repeated.refusalCount(),count);}assert.equal(repeated.s.phase,'failed');let failed=reload(repeated);assert.equal(failed.s.hero.hp,0);assert.equal(failed.refusalCount(),3);assert.equal(failed.retryRefusal(),true);assert.equal(failed.refusalCount(),2);assert.equal(failed.choose(0),true);assert.equal(failed.q.id,'e06');assert.equal(failed.s.flags.evilHutReportHeard,true);
+ const repeated=create('e05',{evilHutNightComplete:true,evilHutReportHeard:true});repeated.startBattle();repeated.s.hero.hp=1;repeated.hurt(repeated.s.enemies[0],1);repeated.tick(.05);assert.equal(repeated.s.phase,'choice');for(let count=1;count<=3;count++){assert.equal(repeated.choose(1),true);assert.equal(repeated.refusalCount(),count);}assert.equal(repeated.s.phase,'failed');let failed=reload(repeated);assert.equal(failed.s.hero.hp,0);assert.equal(failed.refusalCount(),3);assert.equal(failed.retryRefusal(),true);assert.equal(failed.refusalCount(),2);assert.equal(failed.choose(0),true);assert.equal(failed.q.id,'e06');assert.equal(failed.s.flags.evilHutReportHeard,true);
 }
 
 // Captured before revision twelve: independent of the newly inserted product.
@@ -124,19 +124,19 @@ for(let revision=1;revision<=11;revision++)for(const numeric of [false,true]){
  for(const phase of ['battle','choice','failed','after'])for(const away of [false,true]){
   const raw=legacy(revision,numeric,{phase,away,count:phase==='failed'?3:phase==='choice'?2:0}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');assert.equal(g.s.flags.evilLegacyHutReport,true);
   if(phase==='failed'){assert.equal(g.s.phase,'failed');assert.equal(g.s.failure.questId,'e05');assert.equal(g.s.hero.hp,0);assert.equal(g.paused,true);assert.equal(g.choose(0),false);assert.equal(g.retryRefusal(),true);assert.equal(g.refusalCount(),2);}
-  else if(phase==='choice'||phase==='after')assert.equal(away?g.s.objectiveProgress.phase:g.s.phase,'choice','already defeated save resumes at the offer');
+  else if(phase==='choice'||phase==='after')assert.equal(away?g.s.objectiveProgress.phase:g.s.phase,'talk','an old phase without a duel roster must replay the encounter');
  }
  for(const id of ['e05','e06','e11']){
   const raw=legacy(revision,numeric,{id,done:true,phase:'talk',count:2});raw.choices.e05=0;const g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,id==='e05'?'e06':id);assert.equal(g.s.flags.evilLegacyHutReport,true);assert.equal(g.s.failure,null);
  }
- const raw=legacy(revision,numeric,{phase:'choice',claimed:true,count:1}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');const before=resources(g);assert.equal(g.choose(0),true);assert.equal(g.q.id,'e06');assert.deepEqual(resources(g),before,'claimed reward history prevents a second payout');
+ const raw=legacy(revision,numeric,{phase:'choice',claimed:true,count:1}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');assert.equal(g.choose(0),false);g.startBattle();g.s.hero.hp=1;g.hurt(g.s.enemies[0],1);g.tick(.05);assert.equal(g.s.phase,'choice');const before=resources(g);assert.equal(g.choose(0),true);assert.equal(g.q.id,'e06');assert.deepEqual(resources(g),before,'claimed reward history prevents a second payout');
 }
-// Recorded replies/refusals are recruitment evidence even when an old UI saved
-// a stale talk cursor. Invalid answers and a different quest checkpoint are not.
+// Recorded replies/refusals prove recruitment was reached, but the current
+// combat protocol still needs an actual duel when its old roster was lost. Invalid answers and a different quest checkpoint are not.
 for(const revision of [1,5,10,11])for(const numeric of [false,true])for(const away of [false,true]){
  for(const evidence of ['answer','count','claimed']){
   const raw=legacy(revision,numeric,{away});if(evidence==='answer')raw.choices.e05=0;if(evidence==='count')raw.flags.refusal_e05=2;if(evidence==='claimed')raw.claimedRewards=['e05'];
-  const g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');assert.equal(g.s.flags.evilLegacyHutReport,true);assert.equal(away?g.s.objectiveProgress.phase:g.s.phase,'choice');
+  const g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,'e05');assert.equal(g.s.flags.evilLegacyHutReport,true);assert.equal(away?g.s.objectiveProgress.phase:g.s.phase,'talk');assert.equal(g.s.combatLegacyNoKillRewards.e05,true,'known reply history suppresses unknown past kill awards without fabricating the duel');
  }
  for(const answer of [-1,99,'0',null]){
   const raw=legacy(revision,numeric,{away});raw.choices.e05=answer;const g=new GameEngine(restoreState(raw));assert.equal(g.q.id,ids[0]);assert.ok(!g.s.flags.evilLegacyHutReport);assert.ok(!Object.hasOwn(g.s.choices,'e05'));assert.deepEqual(resources(g),resources({s:raw}));legacyCases++;

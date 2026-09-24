@@ -54,6 +54,9 @@ function preset(id){
   ui.engine.keys.clear();
   nodes.get('dialogue').hidden = true;
 }
+
+// A bounded prior-battle fixture uses production outcomes before testing replies.
+function resolveDuel(g){g.startBattle();for(let n=0;n<20&&g.s.phase==='battle';n++){if(g.encounter.scriptedLoss){g.s.hero.hp=1;g.hurt(g.s.enemies[0],1);g.tick(.01);}else{const e=g.s.enemies.find(e=>e.hp>0);for(const other of g.s.enemies)Object.assign(other,{x:1300,y:850});Object.assign(g.s.hero,g.nearestOpen(650,750));Object.assign(e,{x:g.s.hero.x,y:g.s.hero.y,hp:1});g.s.cooldowns[0]=0;g.cast(0);}}assert.equal(g.s.phase,'choice');}
 function drain(limit=40){
   const seen=[];
   while(!nodes.get('dialogue').hidden && !nodes.get('dialogue-next').hidden){
@@ -227,12 +230,12 @@ for(const mode of ['new-ledger','loaded-old-state','live-old-state']){
 }
 // Regression from actual browser QA: the third bout must persist the choice,
 // not leave a battle save that forces all three bouts to replay on reload.
-preset('e02');ui.engine.s.wave=2;ui.engine.startBattle(true);const lastOpponent=ui.engine.s.enemies[0];lastOpponent.hp=1;Object.assign(ui.engine.s.hero,{x:lastOpponent.x,y:lastOpponent.y+20});ui.engine.cast(0);
+preset('e02');resolveDuel(ui.engine);
 const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
 assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
 // Recruitment options must repeat without showing the accepted-route aftermath.
 for(const [id,limit] of [['e05',3],['e07',2]]){
- preset(id);if(id==='e07')Object.assign(ui.engine.s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});ui.engine.s.phase='choice';ui.showChoice();
+ preset(id);if(id==='e07')Object.assign(ui.engine.s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});resolveDuel(ui.engine);ui.showChoice();
  const initialCoins=ui.engine.s.coins;
  for(let refusal=1;refusal<=limit;refusal++){
   const seen=clickOption(1);
@@ -250,7 +253,7 @@ for(const [id,limit] of [['e05',3],['e07',2]]){
  checks++;
 }
 // Answers must persist even when the player reloads before consequence text finishes.
-preset('e05');ui.engine.s.phase='choice';ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
+preset('e05');resolveDuel(ui.engine);ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
 assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('dialogue-next').hidden,false);
 const interruptedAnswer=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(interruptedAnswer.phase,'failed');assert.equal(interruptedAnswer.flags.refusal_e05,3);assert.equal(core.restoreState(interruptedAnswer).hero.hp,0);drain();checks++;
 
@@ -324,6 +327,9 @@ const resident=ui.engine.markers.find(marker=>marker.name==='月眉儿');assert.
 const beforeResident=JSON.stringify(ui.engine.s);assert.equal(ui.engine.interact(resident),true);assert.equal(nodes.get('dialogue').hidden,false);
 assert.deepEqual(drain(),resident.dialogue.map(line=>line[1]));assert.equal(JSON.stringify(ui.engine.s),beforeResident);assert.equal(ui.engine.paused,false);assert.equal(ui.engine.companion,null);checks++;
 
+// The actual UI saves ordinary defeat, and closing/reloading cannot retry it.
+preset('a06');ui.engine.startBattle();const paidEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(paidEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.cast(0);const onceCoins=ui.engine.s.coins;ui.engine.s.hero.hp=1;ui.engine.hurt(ui.engine.s.enemies[1],1);ui.engine.tick(.01);
+const ordinaryFailure=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(ordinaryFailure.hero.hp,0);assert.equal(ordinaryFailure.combatProgress.failed,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('close-panel').click();assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);let prevented=false;for(const fn of nodes.get('panel').listeners.cancel||[])fn({preventDefault(){prevented=true}});assert.equal(prevented,true);ui.loadState(ordinaryFailure);assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('retry-battle').click();assert.equal(ui.engine.s.hero.hp,ui.engine.s.hero.maxHp);assert.equal(ui.engine.s.phase,'battle');assert.equal(ui.engine.paused,false);const retriedEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(retriedEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.s.cooldowns[0]=0;ui.engine.cast(0);assert.equal(ui.engine.s.coins,onceCoins);checks++;
 console.log(JSON.stringify({result:'PASS',checks,
   covered:['山庄清场后检视提示不复生丁戈','山庄两答复立即保存与留庄闲谈无副作用','岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'

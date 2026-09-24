@@ -102,3 +102,9 @@ g20 使用 `repeatRefusal`，没有走已经为招揽 `refusalRule` 设置的“
 | public/late-story-revisions.mjs | 82f7aba896596a61f2434e65e08b6db28416dc06505076b3045a56528c18c568 |
 
 在下一修订注册前，以不可覆盖写入冻结 `work/revision-thirteen-quest-baseline.json`：209 项稳定 ID 及有效 encounterTier。按 `[id,tier]` 数组 JSON 计算 SHA-256 为 `0a8065c5373200ca5f5d77602d45ee40dd1e7413e0c45e0a3859b8f81939432c`。后续专项应将该独立 expected 嵌入测试，不从改后的任务表现算预期。此审计没有执行新的完整 npm test、HTTP 或部署预检，也没有部署。
+
+## R15增量状态（2026-09-24）
+
+本历史审计中的普通战斗刷新/重试重复奖励、裸after终战提交、g20四拒后继续活人同行，已在R15独立修正；见 combat-progress-current-audit.md 与 good-tower-valley-validation.md。g20现在经历实际房间往返、额外哭声选择、死亡与安葬分段。这里的旧缺陷复现保留为历史，不能当当前仍然如此。
+
+g22留庄后的实际同行、g23先访人物的真实交互、g24/gBad2及邪线e14的后段演出和对应来源缺口仍未在R15完成。终战现在必须有有效战斗结果，不能把这一存档修复冒充结局演出齐全。

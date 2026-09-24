@@ -16,11 +16,14 @@ const budget=g=>copy({coins:g.s.coins,kills:g.s.kills,potions:g.s.potions,elixir
 const lastingBudget=g=>{const result=budget(g);delete result.hero.mp;delete result.hero.stamina;return result;};
 const scores=g=>copy({evil:g.s.flags.evil,moral:g.s.flags.moral,affection:g.s.affection});
 const followers=g=>g.companions??(g.companion?[g.companion]:[]);
-function create(id='g06',flags={}){
+function state(id='g06',flags={}){
  const s=freshState();s.quest=index(id);s.map=QUESTS[s.quest].map;s.visited=[s.map];s.phase='talk';
  Object.assign(s.flags,{route:'good',moral:4,evil:-2,...flags});Object.assign(s.hero,{hp:119,mp:63,stamina:41,exp:17});
  s.coins=379;s.inventory={wood_box:1};s.affection={zhen:3,zi:2,mei:4,wei:1};
- const g=new GameEngine(s);Object.assign(s.hero,g.scene.spawn);return g;
+ return s;
+}
+function create(id='g06',flags={}){
+ const s=state(id,flags),g=new GameEngine(s);Object.assign(s.hero,g.scene.spawn);return g;
 }
 let branchCases=0,restoredSteps=0,midMoveRestores=0,timedRestores=0,travelRestores=0,companionChecks=0,legacyCases=0;
 const visitedSteps=new Set(),stageSaves=new Map(),walkPaths=[];
@@ -126,7 +129,7 @@ if(!migrationOnly&&!legacyFlowOnly){
 // Old narrated history has an explicit label; migration never pretends the new
 // scenes were played, invents an answer, refunds a score or pays a new reward.
 const oldTables=[campaign.LEGACY_QUEST_IDS,campaign.REVISION_TWO_QUEST_IDS,campaign.REVISION_THREE_QUEST_IDS,campaign.REVISION_FOUR_QUEST_IDS,campaign.REVISION_FIVE_QUEST_IDS,campaign.REVISION_SIX_QUEST_IDS,campaign.REVISION_SEVEN_QUEST_IDS,campaign.REVISION_EIGHT_QUEST_IDS,campaign.REVISION_NINE_QUEST_IDS];
-assert.equal(freshState().campaignRevision,14);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
+assert.equal(freshState().campaignRevision,15);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
 function legacy(id,revision,numeric,{answer,phase='talk',done=[],away=false,flags={}}={}){
  const raw=snapshot(create(id));raw.campaignRevision=revision;raw.quest=oldTables[revision-1].indexOf(id);assert.ok(raw.quest>=0);if(numeric)delete raw.questId;
  raw.map=['g06','g07'].includes(id)?'m51':QUESTS[index(id)].map;raw.hero.x=760;raw.hero.y=650;raw.phase=phase;raw.visited=[raw.map];raw.done=[...done];raw.claimedRewards=[...done];raw.flags={route:'good',evil:11,moral:-6,companion:'纳兰真',...flags};
@@ -157,7 +160,7 @@ for(let revision=1;revision<=9;revision++)for(const numeric of [false,true]){
   else{assert.equal(g.s.choices.g06,answer);assert.equal(g.s.flags.valleyCareRefused,answer===0);assert.equal(g.s.flags.valleyCareConsidered,answer===1);}
  }
  for(const id of ['g07','g08','g09','g15','g19']){
-  const raw=legacy(id,revision,numeric,{done:['g06','g07'],flags:{companion:'蔷薇'}}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,id==='g07'?'g08':id);assert.equal(g.s.flags.valleyLegacyCare,true);assert.equal(g.s.flags.companion,'蔷薇','completed history preserves later companion state');assert.ok(!g.s.flags.valleyCareSettled);
+  const raw=legacy(id,revision,numeric,{done:['g06','g07'],flags:{companion:'蔷薇'}}),g=new GameEngine(restoreState(raw));preserved(g,raw);assert.equal(g.q.id,id==='g07'?'g08':id);assert.equal(g.s.flags.valleyLegacyCare,true);assert.equal(g.s.flags.companion,id==='g19'?null:'蔷薇','pending tower reunion must locate Rose before restoring her escort');if(id==='g19'){assert.equal(g.s.flags.goodTowerLegacyAscent,true);assert.ok(!g.s.flags.goodTowerRoseFreed);}assert.ok(!g.s.flags.valleyCareSettled);
  }
 }
 for(const answer of [-1,2,99,'0',null]){
@@ -182,7 +185,7 @@ if(!migrationOnly){
 // Numeric revision-nine indices and their battle tiers are frozen before the
 // insertion, including the untouched evil route. No drift by global array index.
 for(const [oldIndex,id] of oldTables[8].entries()){
- const raw=snapshot(create(id));delete raw.questId;raw.campaignRevision=9;raw.quest=oldIndex;raw.skills[8]=21;raw.flags.switch8=true;raw.flags.route=QUESTS[index(id)].when?.route||'good';if(id==='g07')raw.map='m51';
- const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor'})[id]||id,id+' keeps its old numeric identity or an explicit new unfinished-stage migration');assert.equal(QUESTS[index(id)].encounterTier,Math.max(1,Math.floor(oldIndex/9)+1),id+' keeps its battle tier');legacyCases++;
+ const raw=copy(state(id));raw.campaignRevision=9;raw.quest=oldIndex;raw.skills[8]=21;raw.flags.switch8=true;raw.flags.route=QUESTS[index(id)].when?.route||'good';if(id==='g07')raw.map='m51';
+ const restored=restoreState(raw);assert.equal(QUESTS[restored.quest].id,({e06_rest:'e06_first_interlude',e05:'e04_homecoming',g14:'g14_dock_report',g13:'g13_hut',g16:'g15_escape',g18:'g17_manor',g20:'g19_return'})[id]||id,id+' keeps its old numeric identity or an explicit new unfinished-stage migration');assert.equal(QUESTS[index(id)].encounterTier,Math.max(1,Math.floor(oldIndex/9)+1),id+' keeps its battle tier');legacyCases++;
 }
 console.log(JSON.stringify({result:'PASS',mode:migrationOnly?'migration-only':legacyFlowOnly?'legacy-night-to-medicine':'full',branchCases,restoredSteps,midMoveRestores,timedRestores,travelRestores,companionChecks,legacyCases,paths:walkPaths,checks:migrationOnly?'revision 1–9 history, exact balances, pending/recorded/unknown answers, numeric identities and frozen encounter tiers':'exclusive answers without marriage/reward effects; care and thank-you itinerary; actual room doors and boat; saved staging and walking; unique obstacle-aware followers; settlement before medicine; revision 1–9 history and battle-tier compatibility'}));

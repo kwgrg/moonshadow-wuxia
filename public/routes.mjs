@@ -4,6 +4,15 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_leaf_memorial:{name:'落叶谷墓区',area:'谷中静地',art:'leaf-memorial',weather:'酉时 · 山风拂草',poem:'落叶知归处，故人长相念',shop:false,obstacles:[],routeOnly:true},
+ m62:{name:'通天塔第1层',area:'上下楼石廊',art:'tower-lower',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m63:{name:'通天塔第2层',area:'上下楼石廊',art:'tower-lower',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m64:{name:'通天塔第3层',area:'上下楼石廊',art:'tower-middle',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m65:{name:'通天塔第4层',area:'上下楼石廊',art:'tower-middle',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m66:{name:'通天塔第5层',area:'上下楼石廊',art:'tower-middle',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m67:{name:'通天塔第6层',area:'上下楼石廊',art:'tower-middle',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m68:{name:'通天塔第7层',area:'上下楼石廊',art:'tower-middle',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
+ m69:{name:'通天塔第8层',area:'塔顶囚室',art:'tower-prison',weather:'亥时 · 塔中灯火',poem:'石阶通去路，旧影待归人',shop:false,obstacles:[]},
  r_good_hanbo_road:{name:'寒波谷外山路',area:'通往惠安南郊',art:'forest-original',weather:'辰时 · 谷外清风',poem:'谷声留身后，旧路向人间',shop:false,obstacles:[],routeOnly:true},
  r_good_dunhuang_approach:{name:'敦煌外山道',area:'山庄外连接路',art:'forest-original',weather:'辰时 · 山间微风',poem:'庄门留身后，石路向西行',shop:false,obstacles:[],routeOnly:true},
  r_good_dunhuang_passage:{name:'敦煌洞口通路',area:'洞窟通行段',art:'cave',weather:'辰时 · 洞口微光',poem:'石窟留回声，行人辨去路',shop:false,obstacles:[],routeOnly:true},
@@ -66,7 +75,7 @@ const OPENING = [
  ['m2','m6','a05','先去武当问剑，下山后再沿商道前行。']
 ];
 const pairKey=(a,b)=>[a,b].sort().join('|');
-const REPLACED=new Set([['m49','m54'],['m54','m62'],['m61','m41'],['m61','m16'],['m61','r_hanbo_return'],['r_good_dungeon','r_good_hanbo_hut'],['r_good_hanbo_hut','m41'],['m59','m60'],['m60','m31'],['m60','r_mainland_dock'],['m59','r_good_seaside_hut'],['r_good_seaside_hut','m60'],['m60','r_good_forbidden_chamber'],['m60','m40'],['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
+const REPLACED=new Set([['m69','m51'],['m49','m54'],['m54','m62'],['m61','m41'],['m61','m16'],['m61','r_hanbo_return'],['r_good_dungeon','r_good_hanbo_hut'],['r_good_hanbo_hut','m41'],['m59','m60'],['m60','m31'],['m60','r_mainland_dock'],['m59','r_good_seaside_hut'],['r_good_seaside_hut','m60'],['m60','r_good_forbidden_chamber'],['m60','m40'],['m1','m2'],['m2','m3'],['m3','m4'],['m4','m5'],['m5','m6'],['m71','m57'],['m71','r_evil_ferry'],['m34','m57'],['r_evil_chamber','r_zhen_chamber'],['m57','r_forbidden_path'],['r_forbidden_path','r_island_village'],['r_mainland_dock','m49'],['m49','r_beimo_hero_room'],['m49','r_beimo_mei_room'],['r_beimo_hero_room','r_beimo_mei_room']].map(([a,b])=>pairKey(a,b)));
 
 // These links are independent web staging. A ferry is an explicit voyage,
 // while the mountain connector must be walked on both sides of the journey.
@@ -138,6 +147,11 @@ const GOOD_RESCUE_QUESTS=new Set(['g15_escape','g16','g16_homecoming','g17','g17
 const GOOD_RESCUE_DEPARTURE=[['r_hanbo_return','r_good_hanbo_road'],['r_good_hanbo_road','m41'],['m41','m49']];
 const GOOD_RESCUE_TOWER_ROUTE=[['m49','r_good_dunhuang_approach'],['r_good_dunhuang_approach','r_good_dunhuang_passage'],['r_good_dunhuang_passage','r_good_feilong_approach'],['r_good_feilong_approach','m54'],['m54','r_good_desert'],['r_good_desert','m62']];
 const GOOD_RESCUE_TOWER_PAIRS=new Set(GOOD_RESCUE_TOWER_ROUTE.map(([a,b])=>pairKey(a,b)));
+const GOOD_VALLEY_ROUTES=[['m51','r_leaf_memorial'],['m51','r_leaf_hero_room'],['m51','r_leaf_rose_room']];
+const GOOD_VALLEY_MAPS=new Set(['m51','r_leaf_memorial','r_leaf_hero_room','r_leaf_rose_room']);
+const GOOD_TOWER_ROUTES=Array.from({length:7},(_,i)=>['m'+(62+i),'m'+(63+i)]);
+const GOOD_TOWER_PAIRS=new Set([...GOOD_TOWER_ROUTES,...GOOD_RESCUE_TOWER_ROUTE].map(([a,b])=>pairKey(a,b)));
+const GOOD_TOWER_CORRIDOR=new Set([...Array.from({length:8},(_,i)=>'m'+(62+i)),'r_good_desert','m54','r_good_feilong_approach','r_good_dunhuang_passage','r_good_dunhuang_approach']);
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
 function matches(when,state){
@@ -147,6 +161,51 @@ function matches(when,state){
  if(when.not&&state.flags?.[when.not])return false;
  if(when.notAll?.some(key=>state.flags?.[key]))return false;
  return true;
+}
+function inferredPairAllowed(before,next,route){
+ return before.map!==next.map&&
+  !((before.map==='r_leaf_memorial'||next.map==='r_leaf_memorial')&&before.map!=='m51'&&next.map!=='m51')&&
+  !((before.map==='r_beimo_rose_room'||next.map==='r_beimo_rose_room')&&before.map!=='m49'&&next.map!=='m49')&&
+  !((LEAF_ROOMS.includes(before.map)||LEAF_ROOMS.includes(next.map))&&before.map!=='m51'&&next.map!=='m51')&&
+  pairKey(before.map,next.map)!==pairKey('m40','m33')&&!REPLACED.has(pairKey(before.map,next.map))&&
+  !(route==='evil'&&pairKey(before.map,next.map)===pairKey('m57','m41'));
+}
+// Test whether the two selected quest predicates can hold while every intervening
+// predicate is false. This avoids enumerating every global flag combination as
+// independent, unrelated story branches grow.
+function predicateLiterals(when,route){
+ if(when?.route&&when.route!==route)return null;
+ const literals=[];if(when?.flag)literals.push([when.flag,true]);if(when?.not)literals.push([when.not,false]);
+ for(const key of when?.notAll||[])literals.push([key,false]);return literals;
+}
+function satisfiable(clauses,assignment=new Map()){
+ let pending=clauses;
+ for(;;){
+  const reduced=[];let unit=null;
+  for(const clause of pending){
+   if(clause.some(([key,value])=>assignment.has(key)&&assignment.get(key)===value))continue;
+   const rest=clause.filter(([key])=>!assignment.has(key));if(!rest.length)return false;
+   if(rest.length===1)unit=rest[0];reduced.push(rest);
+  }
+  if(!reduced.length)return true;
+  if(!unit){const [key,value]=reduced.reduce((a,b)=>a.length<b.length?a:b)[0];return satisfiable(reduced,new Map([...assignment,[key,value]]))||satisfiable(reduced,new Map([...assignment,[key,!value]]));}
+  assignment.set(unit[0],unit[1]);pending=reduced;
+ }
+}
+function addPossibleItineraryEdges(quests,add){
+ for(const route of ['good','evil']){
+  const predicates=quests.map(q=>predicateLiterals(q.when,route));
+  for(let i=0;i<quests.length;i++){
+   if(predicates[i]===null)continue;
+   const skipped=[];
+   for(let j=i+1;j<quests.length;j++){
+    const next=predicates[j];if(next===null)continue;
+    if(inferredPairAllowed(quests[i],quests[j],route)&&satisfiable([...predicates[i].map(l=>[l]),...next.map(l=>[l]),...skipped]))add(quests[i].map,quests[j].map);
+    if(!next.length)break;
+    skipped.push(next.map(([key,value])=>[key,!value]));
+   }
+  }
+ }
 }
 function questIndex(state,quests){
  const id=state.currentQuestId||state.questId;
@@ -185,7 +244,7 @@ export function routeEdges(state={},quests=[]){
  const itinerary=quests.filter(q=>matches(q.when,state));
  for(let i=1;i<itinerary.length;i++){
   const before=itinerary[i-1],next=itinerary[i];
-  if(before.map===next.map||((before.map==='r_beimo_rose_room'||next.map==='r_beimo_rose_room')&&before.map!=='m49'&&next.map!=='m49')||((LEAF_ROOMS.includes(before.map)||LEAF_ROOMS.includes(next.map))&&before.map!=='m51'&&next.map!=='m51')||pairKey(before.map,next.map)===pairKey('m40','m33')||REPLACED.has(pairKey(before.map,next.map))||(state.flags?.route==='evil'&&pairKey(before.map,next.map)===pairKey('m57','m41')))continue;
+  if(!inferredPairAllowed(before,next,state.flags?.route||'good'))continue;
   // Hide future itineraries entirely. Merely having visited an unrelated map
   // cannot unlock another route, nor can the opposite morality branch do so.
   if(!arrived(next,state,quests))continue;
@@ -369,6 +428,40 @@ export function routeEdges(state={},quests=[]){
    }
   }
  }
+ // The good-route stair scripts have no clear-all or sheep-skin gate.
+ // Current enemies and their persistence belong to the tower encounter runtime.
+ if((flags.route||'good')==='good'&&!flags.cultPath){
+  const towerStart=quests.find(q=>q.id==='gTower1');
+  const towerKnown=!!towerStart&&questIndex(state,quests)>=quests.indexOf(towerStart);
+  if(towerKnown){
+   edges.set(pairKey('m49','m51'),{from:'m49',to:'m51',locked:false,inferred:true,design:'authored-good-tower-valley-road'});
+   for(const [from,to] of GOOD_TOWER_ROUTES)edges.set(pairKey(from,to),{from,to,locked:false,inferred:true,design:'authored-good-tower-stairs'});
+   // Preserve the real lower-floor/desert exit for old tower cursors without
+   // fabricating earlier wins. The corridor itself remains a walked journey.
+   for(const [from,to] of GOOD_RESCUE_TOWER_ROUTE)edges.set(pairKey(from,to),{from,to,locked:false,inferred:true,design:'authored-good-tower-return'});
+   if((current==='g19_departure'||flags.goodTowerRoseFreed)&&!flags.goodTowerDepartureReady&&!flags.goodTowerLegacyDeparture)for(const edge of edges.values())if(edge.from==='m69'||edge.to==='m69')Object.assign(edge,{lockedFrom:[...(edge.lockedFrom||[]),'m69'],departureReason:'先与蔷薇说好回谷的事，再一道下塔。'});
+   for(const edge of edges.values())if([edge.from,edge.to].some(id=>GOOD_TOWER_CORRIDOR.has(id))&&!GOOD_TOWER_PAIRS.has(pairKey(edge.from,edge.to)))Object.assign(edge,{locked:true,reason:'塔内须沿楼梯上下，出塔后循沙漠与来时山路返回。',design:'good-tower-physical-boundary'});
+  }
+ }
+ // The original late-valley coordinates are independently split into a
+ // courtyard, two rooms and a memorial. Leaving either room remains safe for
+ // historical saves; the sealed valley cannot bypass the night's outcome.
+ if((flags.route||'good')==='good'&&!flags.cultPath){
+  const late=flags.goodTowerHomecoming||flags.goodTowerLegacyNight||flags.goodTowerValleyLegacy||current==='g19_return'||current==='g19_burial'||current==='g20_escort'||current==='g20'||current?.startsWith('g20_');
+  if(late){
+   const buried=flags.goodTowerHomecoming||flags.goodTowerLegacyMengBuried||flags.goodTowerLegacyNight||flags.goodTowerValleyLegacy;
+   for(const [from,to] of GOOD_VALLEY_ROUTES)edges.set(pairKey(from,to),{from,to,locked:false,...(to==='r_leaf_memorial'&&!buried?{lockedFrom:[from],departureReason:'先回院中看望孟前辈，再往谷中静处。'}:{}),inferred:true,design:'authored-good-valley-night'});
+   edges.set(pairKey('m49','m51'),{from:'m49',to:'m51',locked:false,inferred:true,design:'authored-good-valley-return'});
+   for(const edge of edges.values()){
+    const other=edge.from==='m51'?edge.to:edge.to==='m51'?edge.from:null;
+    if(other&&!['m49','r_leaf_memorial','r_leaf_hero_room','r_leaf_rose_room'].includes(other))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m51'])],departureReason:'沿前院石阶出谷，房后的旧路已不便通行。'});
+   }
+   if((flags.goodTowerHomecoming||flags.goodTowerLegacyNight)&&!flags.goodRoseNightComplete&&!flags.goodRoseBuried&&!flags.goodTowerValleyLegacy)for(const edge of edges.values()){
+    const inside=[edge.from,edge.to].filter(id=>GOOD_VALLEY_MAPS.has(id));
+    if(inside.length===1)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside[0]])],departureReason:'谷中的后事与夜间交谈尚未了结，先留在谷内。'});
+   }
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -384,10 +477,8 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE])add(a,b);
-  const flagNames=[...new Set(quests.flatMap(q=>[q.when?.flag,q.when?.not,...(q.when?.notAll||[])]).filter(Boolean))];
-  const variations=flagNames.reduce((states,key)=>states.flatMap(flags=>[{...flags,[key]:false},{...flags,[key]:true}]),[{}]);
-  for(const route of ['good','evil'])for(const flags of variations)for(const edge of routeEdges({quest:quests.length,flags:{...flags,route}},quests))add(edge.from,edge.to);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE,...GOOD_TOWER_ROUTES,...GOOD_VALLEY_ROUTES])add(a,b);
+  addPossibleItineraryEdges(quests,add);
   cached={signature,byMap};neighborCache.set(quests,cached);
  }
  return [...(cached.byMap.get(mapId)||[])];

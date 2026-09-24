@@ -132,15 +132,15 @@ assert.equal(safeSave.s.phase,'training');
 assert.deepEqual(new Set(safeSave.s.training.defeated),new Set(chosen));
 assert.equal(safeSave.markers.some(m => m.kind === 'master'),true);
 
-// An interrupted bout is not a defeat. Loading it restores safe selection
-// without inventing a result or discarding the already earned victories.
+// An interrupted bout resumes the same opponent and army, without inventing
+// a result or discarding the already earned victories.
 selectOpponent(game,1);
 const interruptedSave = roundTrip(game);
-assert.equal(interruptedSave.s.phase,'training','未完成切磋读档应回到可选对手状态');
-assert.equal(interruptedSave.s.training.active,null);
+assert.equal(interruptedSave.s.phase,'battle','未完成切磋读档应恢复当前对手');
+assert.equal(interruptedSave.s.training.active,1);
 assert.equal(interruptedSave.s.training.master,false);
 assert.deepEqual(new Set(interruptedSave.s.training.defeated),new Set(chosen));
-assert.equal(interruptedSave.s.enemies.length,0);
+assert.deepEqual(interruptedSave.s.enemies,game.s.enemies);
 
 // A disciple loss uses the normal defeat/retry path. Only the later master
 // battle has the special story-defeat result; losing here cannot skip ahead.
@@ -221,7 +221,7 @@ assert.equal(migratedMaster.markers.some(m => m.kind === 'master'),true);
 const legacyAfter = {...legacy,hero:{...legacy.hero},phase:'after',wave:1};
 const migratedAfter = new GameEngine(restoreState(legacyAfter));
 assert.equal(migratedAfter.q.id,'a05');
-assert.equal(migratedAfter.s.phase,'after','已结束的旧比武不能强迫重新挑战');
+assert.equal(migratedAfter.s.phase,'training','只有旧after标签而无军阵，不能造出张惟宜结果');assert.deepEqual(migratedAfter.s.training.defeated,[0,1,2,3,4]);assert.equal(migratedAfter.challengeTraining(null),true);loseCurrentDuel(migratedAfter);assert.equal(migratedAfter.s.phase,'after');
 
 // A completed sparring session survives leaving the courtyard and reloading.
 migratedAfter.s.visited.push('m2');assert.equal(migratedAfter.travel('m2'),true);for(let i=0;i<8000&&migratedAfter.s.map!=='m2';i++)migratedAfter.tick(.05);assert.equal(migratedAfter.s.map,'m2');
@@ -235,7 +235,7 @@ console.log(JSON.stringify({result:'PASS',scenario:'武当自由切磋',checks:[
   '赢五名弟子后由玩家选择挑战张惟宜',
   '弟子败战重试原对手并保留胜场',
   '可完成其余五场可选切磋',
-  '战斗存档恢复到安全选择状态',
+  '战斗存档保留当前对手及既有胜场',
   '旧版 a05 数字任务存档兼容',
   '张惟宜剧情败局继续故事',
 ]},null,2));

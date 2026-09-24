@@ -87,6 +87,7 @@ function solid(scene, object, rectangle) {
 // Chapter-local layouts share only original paintings. No pursuit, jade
 // mechanism or letter-chest transaction is inherited from the evil aliases.
 const CHAPTER_SCENES={
+ r_leaf_memorial:{kind:'garden',art:'leaf-memorial',objective:{x:760,y:650},points:[point('leaf-memorial-grass','谷中草地',580,555,'山风掠过草叶，静处可以望见回院的石路。',{paintOnly:true,appearance:'trace'}),point('leaf-memorial-path','墓区石路',1110,610,'石路绕过草地伸向谷院，来时的脚步声已渐渐散去。',{paintOnly:true,appearance:'trace'})]},
  r_good_hanbo_road:{kind:'forest',art:'forest-original',objective:{x:950,y:620},points:[point('rescue-hanbo-outward','谷外山径',650,535,'溪声留在身后，谷外的路沿着树林折向镇郊。',{paintOnly:true,appearance:'trace'}),point('rescue-hanbo-wayback','回谷方向',1080,650,'山径的转角还能望见来时的树梢，回谷的方向清晰可辨。',{paintOnly:true,appearance:'trace'})]},
  r_good_dunhuang_approach:{kind:'forest',art:'forest-original',objective:{x:970,y:615},points:[point('rescue-west-ridge','西行山径',640,620,'山庄的檐角已被树林遮住，脚下的石路继续向洞口延伸。',{paintOnly:true,appearance:'trace'}),point('rescue-west-wind','林中风声',1070,545,'山风沿坡地掠过，远处隐约传来空洞的水声。',{paintOnly:true,appearance:'trace'})]},
  r_good_dunhuang_passage:{kind:'cave',art:'cave',objective:{x:960,y:650},points:[point('rescue-dunhuang-rock','洞口石纹',660,500,'石壁在两侧收拢，干燥的地面绕过低处积水通向另一端。',{paintOnly:true,appearance:'trace'}),point('rescue-dunhuang-air','洞外来风',1000,735,'空气从前方洞口流入，循着干地还能辨认回路。',{paintOnly:true,appearance:'trace'})]},
@@ -108,6 +109,7 @@ function goodForbiddenLayout(scene){
  const data=CHAPTER_SCENES[scene.id];if(!data)return false;
  Object.assign(scene,{kind:data.kind,art:data.art,objective:{...data.objective},ground:palettes[data.kind],points:data.points.map(p=>({...p})),props:[],paths:[],drawRoads:false});
  scene.atmosphere={light:['m59','m60','r_good_forbidden_path','r_good_seaside_hut','r_good_yitian','r_good_hanbo_hut','r_good_dunhuang_approach','r_good_feilong_approach','r_good_desert','r_good_hanbo_road'].includes(scene.id)?'day':'night',weather:'clear',indoor:['room','cave','hall'].includes(data.kind),particles:data.kind==='forest'?'leaves':'dust'};
+ if(scene.id==='r_leaf_memorial')scene.atmosphere={light:'day',weather:'clear',indoor:false,particles:'leaves'};
  if(scene.id==='r_good_dungeon'){
   const positions={};for(let i=0;i<28;i++)positions['rescue-dungeon-man-'+String(i+1).padStart(2,'0')]={x:760+(i%7)*75,y:450+Math.floor(i/7)*75};
   scene.skirmish={heroStart:{x:330,y:780},positions};scene.cells={zixuan:{x:970,y:280,approach:{x:945,y:410}}};
@@ -124,8 +126,48 @@ function goodForbiddenLayout(scene){
  }
  return true;
 }
+// Tower floors use independent paintings and real stair footprints. Their
+// physical layout is shared across route branches; lock rules remain in routes.
+const TOWER_ART={m62:'tower-lower',m63:'tower-lower',m64:'tower-middle',m65:'tower-middle',m66:'tower-middle',m67:'tower-middle',m68:'tower-middle',m69:'tower-prison'};
+// Separate watch groups leave circulation between the stair approaches. Slots
+// are interleaved across groups so smaller floor rosters are not concentrated
+// into the first few posts. Small fixed offsets vary floors without randomness.
+const TOWER_WATCH_GROUPS=[
+ [[350,500],[450,425],[525,505],[425,585],[565,390],[640,460],[330,620]],
+ [[725,340],[825,300],[915,350],[1040,315],[990,370],[845,420]],
+ [[1270,445],[1380,460],[1305,525],[1425,545],[1250,620],[1340,620]],
+ [[1065,670],[980,735],[860,750],[795,720],[735,805],[760,625],[945,635]],
+ [[700,520],[790,485],[885,515],[980,485],[1140,580],[1080,555],[870,620]],
+ [[235,515],[375,435],[550,630],[430,675],[610,580],[705,425],[1195,520],[635,345],[910,440],[820,560]]
+];
+function towerWatchPositions(floor){
+ const result=[];
+ for(let row=0;row<10;row++)for(let group=0;group<TOWER_WATCH_GROUPS.length;group++){
+  const point=TOWER_WATCH_GROUPS[group][row];if(!point)continue;
+  result.push({x:point[0]+((floor*3+group*2)%5-2)*4,y:point[1]+((floor+group*3)%5-2)*3});
+ }
+ return result;
+}
+function towerLayout(scene){
+ const art=TOWER_ART[scene.id];if(!art)return false;
+ const floor=Number(scene.id.slice(1))-61,top=floor===8,middle=art==='tower-middle';
+ Object.assign(scene,{kind:'tower',art,ground:palettes.tower,drawRoads:false,props:[],paths:[],objective:top?{x:1170,y:475}:{x:1020,y:595},atmosphere:{light:'night',weather:'clear',indoor:true,particles:'dust'}});
+ scene.points=top?[
+  point('tower-cell-threshold','囚室门前',1210,530,'敞开的铁栏通向小室，回廊另一端的石阶仍通往楼下。',{paintOnly:true,appearance:'trace'}),
+  point('tower-window-light','窗下石地',810,415,'高窗的微光落在石面上，塔下的风声从墙外传来。',{paintOnly:true,appearance:'trace'})
+ ]:[
+  point('tower-stair-wear','楼梯磨痕',1090,465,'阶脚被往来的脚步磨平，石梯从廊边继续向上。',{paintOnly:true,appearance:'trace'}),
+  point('tower-inner-floor','廊中石纹',665,610,'石地在廊中展开，沿两侧可辨认上下楼的方向。',{paintOnly:true,appearance:'trace'})
+ ];
+ const down=top?{exit:{x:225,y:275},entry:{x:380,y:455}}:middle?{exit:{x:300,y:900},entry:{x:540,y:760}}:{exit:{x:220,y:830},entry:{x:520,y:820}};
+ const up=top?null:middle?{exit:{x:1280,y:305},entry:{x:1120,y:440}}:{exit:{x:1280,y:350},entry:{x:1130,y:460}};
+ const guardPositions=top?[]:towerWatchPositions(floor);
+ scene.tower={floor,down,up,guardPositions,escortStart:{x:top?1220:560,y:top?470:760}};
+ scene.sidePositions=floor<8?{['sheep'+floor]:{x:floor%2?620:1180,y:floor%2?755:650}}:{};
+ return true;
+}
 function handcrafted(scene) {
-  if(goodForbiddenLayout(scene))return true;
+  if(towerLayout(scene)||goodForbiddenLayout(scene))return true;
   switch (scene.id) {
     case 'm52':
       scene.title='天池';scene.kind='shore';scene.art='tianchi-islet';scene.fallbackArt='snow';scene.ground=palettes.shore;
@@ -420,12 +462,16 @@ const LANDSCAPE_ART={forest:'forest-original',lake:'lake-original',town:'town-or
 const cache=new Map();
 
 /** Immutable-by-convention layout. The engine stores discoveries in its save state. */
-export function getScene(mapId,region={}) {
+export function getScene(mapId,region={},variant=null) {
   region=ROUTE_MAPS[mapId]||region;
-  const key=[mapId,region.name,region.weather].join('|');
+  const key=[mapId,region.name,region.weather,variant||''].join('|');
   if(cache.has(key))return cache.get(key);
   const scene=baseScene(mapId,region);
   if(!handcrafted(scene))generatedLayout(scene);
+  if(mapId==='m51'&&variant==='towerAftermath'){
+   Object.assign(scene,{variant,art:'leaf-ruined-courtyard',drawRoads:false,props:[],paths:[],objective:{x:760,y:650},allowedPortalTargets:['m49','r_leaf_hero_room','r_leaf_rose_room','r_leaf_memorial'],portalCoordinates:{m49:[[800,875],[800,750]],r_leaf_hero_room:[[485,310],[540,430]],r_leaf_rose_room:[[1150,310],[1100,435]],r_leaf_memorial:[[210,490],[335,535]]}});
+   scene.points=[point('ruined-court-stone','受损石院',620,645,'断木与碎瓦留在院边，中央石路仍连着两间屋子。',{paintOnly:true,appearance:'trace'}),point('ruined-court-return','院门石阶',1020,730,'向下的石阶通往谷外，西侧小路则绕向安静的草地。',{paintOnly:true,appearance:'trace'})];
+  }
   alignPaintedGround(scene);
   scene.art=LANDSCAPE_ART[scene.art]||scene.art;scene.fallbackArt=LANDSCAPE_ART[scene.fallbackArt]||scene.fallbackArt;
   attachPortals(scene);
@@ -437,7 +483,7 @@ export function getScene(mapId,region={}) {
   return scene;
 }
 
-export const SCENE_ART_KEYS=['desert-passage','hanbo-hut-yard','rescue-dungeon','cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
+export const SCENE_ART_KEYS=['leaf-ruined-courtyard','leaf-memorial','tower-lower','tower-middle','tower-prison','desert-passage','hanbo-hut-yard','rescue-dungeon','cliff','inn','temple','hall','island','cave','bedroom','cult-dungeon','forbidden-second','forbidden-gate','forbidden-chamber','zhen-chamber','wedding-dream','lake-dream','island-village','mainland-dock','beimo-garden-day','beimo-hero-room','beimo-mei-room','leaf-courtyard','leaf-infirmary','leaf-rose-room','tianchi-islet','forest-original','lake-original','town-original'];
 
 
 // Dream environments belong to the staging camera only. They never become maps,
@@ -493,6 +539,11 @@ function alignPaintedGround(scene){
     forest:{bounds:[270,380,1400,950],spawn:{x:775,y:875},exit:{x:1250,y:395},edges:[[270,760,355,950],[1315,650,1400,950],[560,380,825,430]]}
   };
   const paintedFloors={
+    'leaf-ruined-courtyard':{bounds:[75,265,1490,1024],polygon:[[420,285],[560,285],[580,325],[650,345],[1030,345],[1100,285],[1220,285],[1260,370],[1290,420],[1270,470],[1360,490],[1410,570],[1350,630],[1420,680],[1320,700],[1140,775],[1050,820],[1010,870],[980,1024],[640,1024],[600,875],[505,790],[360,760],[280,680],[240,640],[150,650],[130,590],[155,500],[225,435],[175,385],[110,345],[110,300],[200,285],[235,370],[320,405],[390,360]],spawn:{x:800,y:750},exit:{x:800,y:875},solids:[]},
+    'leaf-memorial':{bounds:[270,235,1520,1024],polygon:[[355,305],[565,250],[790,240],[1010,270],[1180,315],[1290,340],[1380,315],[1520,310],[1520,355],[1420,405],[1390,510],[1340,595],[1280,645],[1120,665],[960,710],[870,760],[820,830],[860,1024],[640,1024],[635,855],[670,785],[600,735],[485,695],[390,635],[330,570],[290,465],[285,370]],spawn:{x:750,y:790},exit:{x:745,y:925},solids:[]},
+    'tower-lower':{bounds:[65,200,1510,995],polygon:[[180,420],[390,330],[595,270],[825,210],[1000,255],[1090,280],[1170,250],[1295,280],[1400,315],[1400,420],[1490,450],[1490,610],[1410,680],[1320,735],[1170,760],[1070,835],[920,860],[850,920],[690,935],[600,975],[465,960],[440,880],[300,915],[180,945],[75,970],[75,875],[120,785],[170,730],[180,655],[100,600],[95,520]],spawn:{x:520,y:820},exit:{x:1280,y:350},solids:[[225,615,285,780],[285,705,350,810],[350,765,425,825],[1140,200,1210,330],[1360,245,1435,425]]},
+    'tower-middle':{bounds:[70,180,1495,1005],polygon:[[80,470],[240,415],[450,355],[650,295],[850,250],[1020,235],[1130,280],[1170,200],[1300,185],[1400,195],[1410,250],[1470,300],[1480,580],[1340,650],[1150,715],[940,785],[750,850],[585,920],[490,930],[445,855],[395,825],[340,880],[280,960],[160,995],[140,950],[220,820],[300,760],[200,700],[80,655]],spawn:{x:540,y:760},exit:{x:1280,y:305},solids:[[1150,180,1195,280],[1340,195,1400,355],[395,800,445,915],[140,745,235,850]]},
+    'tower-prison':{bounds:[65,205,1510,970],polygon:[[160,225],[300,235],[340,320],[430,300],[535,270],[780,275],[985,300],[1150,345],[1250,375],[1275,285],[1410,330],[1470,425],[1500,500],[1470,705],[1440,775],[1220,850],[1010,910],[950,935],[730,845],[540,780],[400,745],[250,660],[90,590],[90,525],[70,475],[90,385],[160,345]],spawn:{x:380,y:455},exit:{x:225,y:275},solids:[[140,315,220,475],[385,235,435,385],[1150,190,1240,340],[1430,215,1500,415]]},
     // The newly generated rescue dungeon has one closed northern cell, an
     // already-open right cell, and a left stair. Bars/walls and the open gate
     // leaf keep their actual painted footprints; no quest gate is invented.
@@ -629,6 +680,7 @@ function alignPaintedGround(scene){
   if(['m40','m34','r_evil_ferry','r_island_village','r_mainland_dock','m50','r_beimo_hero_room','r_beimo_mei_room','m51','r_leaf_zhen_room','r_leaf_mei_room','r_leaf_rose_room','r_leaf_hero_room','r_beimo_rose_room','r_hanbo_return','m52','m16'].includes(scene.id)){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
   }
+  if(TOWER_ART[scene.id]){scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());}
   if(CHAPTER_SCENES[scene.id]){
     scene.props=[];scene.paths=[];scene.drawRoads=false;scene.obstacles=mask.edges.map(r=>r.slice());
     if(scene.id==='m60'){
@@ -636,6 +688,12 @@ function alignPaintedGround(scene){
       // The temple painting's north-west pool is scenery, not walkable floor.
       scene.obstacles.push([280,325,555,385]);
     }
+  }
+  if(scene.id==='r_leaf_memorial'){
+   scene.props=[
+    prop('grave',700,500,80,95,{label:'孟知秋之墓',requireFlag:'goodTowerMengBuried',requireCue:{key:'goodTowerMeng',value:'buried'},footprint:[672,485,728,513]}),
+    prop('grave',1000,500,80,95,{label:'蔷薇之墓',requireFlag:'goodRoseBuried',requireCue:{key:'goodRoseMemorial',value:'buried'},footprint:[972,485,1028,513]})
+   ];
   }
   // Rescue forces use disjoint stable IDs; earlier manor battles retain their
   // quest-owned formations and heroStart. No per-unit placement is random.
@@ -695,13 +753,14 @@ function alignPaintedGround(scene){
 
 
 const AUTHORED_PORTALS={
+ r_leaf_memorial:{m51:[[745,925],[750,790]]},
  r_good_hanbo_road:{r_hanbo_return:[[1250,410],[1165,470]],m41:[[800,915],[800,800]]},
  r_good_dunhuang_approach:{m49:[[800,915],[800,800]],r_good_dunhuang_passage:[[1250,410],[1165,470]]},
  r_good_dunhuang_passage:{r_good_dunhuang_approach:[[830,915],[830,790]],r_good_feilong_approach:[[1270,410],[1160,490]]},
  r_good_feilong_approach:{r_good_dunhuang_passage:[[1250,410],[1165,470]],m54:[[800,915],[800,800]]},
  r_good_desert:{m54:[[220,810],[375,750]],m62:[[1260,300],[1130,390]]},
  m54:{r_good_feilong_approach:[[555,915],[585,800]],r_good_desert:[[805,365],[815,465]]},
- m62:{r_good_desert:[[765,915],[760,800]]},
+ m62:{r_good_desert:[[220,830],[520,820]]},
  r_good_dungeon:{m61:[[255,245],[330,410]]},
  r_good_yitian:{m61:[[1250,410],[1165,470]],r_hanbo_return:[[800,915],[800,800]]},
  r_good_hanbo_hut:{r_hanbo_return:[[1350,925],[1180,805]]},
@@ -760,7 +819,7 @@ const AUTHORED_PORTALS={
 
 /** Stable endpoints for every possible neighbour, including unvisited side maps. */
 function attachPortals(scene){
- const [left,top,right,bottom]=scene.bounds,neighbors=routeNeighbors(scene.id,QUESTS);
+ const [left,top,right,bottom]=scene.bounds,neighbors=routeNeighbors(scene.id,QUESTS).filter(id=>!scene.allowedPortalTargets||scene.allowedPortalTargets.includes(id));
  const open=(x,y)=>x>=left+18&&x<=right-18&&y>=top+18&&y<=bottom-18&&!scene.obstacles.some(r=>x>r[0]-18&&x<r[2]+18&&y>r[1]-18&&y<r[3]+18);
  const cells=[];for(let y=top+30;y<bottom-18;y+=25)for(let x=left+30;x<right-18;x+=25)if(open(x,y))cells.push({x,y});
  const project=p=>open(p.x,p.y)?p:cells.reduce((best,c)=>Math.hypot(c.x-p.x,c.y-p.y)<Math.hypot(best.x-p.x,best.y-p.y)?c:best,cells[0]||scene.spawn);
@@ -768,7 +827,9 @@ function attachPortals(scene){
  const candidates=[scene.exit,scene.spawn,{x:right-35,y:(top+bottom)/2},{x:left+35,y:(top+bottom)/2},{x:(left+right)/2,y:top+35},{x:(left+right)/2,y:bottom-35},{x:left+75,y:top+80},{x:right-75,y:bottom-80}].map(project);
  scene.portals={};
  for(const [index,to] of neighbors.entries()){
-  const authored=AUTHORED_PORTALS[scene.id]?.[to];
+  const floor=scene.tower?.floor,targetFloor=/^m6[2-9]$/.test(to)?Number(to.slice(1))-61:null;
+  const stair=scene.tower&&(targetFloor?targetFloor<floor?scene.tower.down:scene.tower.up:scene.tower.down);
+  const authored=scene.portalCoordinates?.[to]||AUTHORED_PORTALS[scene.id]?.[to]||(stair?[[stair.exit.x,stair.exit.y],[stair.entry.x,stair.entry.y]]:null);
   let exit=authored?project({x:authored[0][0],y:authored[0][1]}):null;
   if(!exit){
    const available=[...candidates,...cells.filter((_,i)=>i%7===0)];

@@ -56,7 +56,9 @@ assert.equal(rescue.q.id,'g03_return');assert.equal(rescue.s.skills[6],undefined
 walk(rescue,'m51','蔷薇');assert.equal(rescue.s.skills[6],undefined,'arrival alone must not claim the reward');greetAndComplete(rescue);
 assert.equal(rescue.q.id,'g03_invitation');assert.ok(Object.hasOwn(rescue.s.skills,6));assert.equal(rescue.companion,null);
 const rewarded=saved(rescue),mastery=rescue.s.skills[6];walk(rescue,'m49');greetAndComplete(rescue);assert.equal(rescue.q.id,'g04');
-walk(rescue,rescue.q.map);rescue.s.phase='after';rescue.completeQuest();assert.equal(rescue.companion?.name,'纳兰真','Zhen returns only after the misunderstanding is resolved');
+walk(rescue,rescue.q.map);rescue.beginObjective();assert.equal(rescue.s.phase,'battle');
+for(const enemy of rescue.s.enemies){enemy.hp=1;Object.assign(rescue.s.hero,{x:enemy.x,y:enemy.y});rescue.s.cooldowns[0]=0;rescue.cast(0);}
+assert.equal(rescue.s.phase,'after');rescue.completeQuest();assert.equal(rescue.companion?.name,'纳兰真','Zhen returns only after the misunderstanding is resolved');
 const duplicate=new GameEngine(restoreState(rewarded));duplicate.s.quest=index('g03_return');duplicate.s.map='m51';duplicate.s.phase='talk';
 const rewardBefore={exp:duplicate.s.hero.exp,coins:duplicate.s.coins};duplicate.completeQuest();
 assert.equal(duplicate.s.skills[6],mastery);assert.deepEqual({exp:duplicate.s.hero.exp,coins:duplicate.s.coins},rewardBefore);

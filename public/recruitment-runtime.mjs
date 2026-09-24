@@ -17,6 +17,8 @@ export const recruitmentMethods={
   const failure=this.s.failure,rule=this.q.refusalRule;
   if(!failure||failure.questId!==this.q.id||failure.kind!=='refusal'||!rule)return false;
   this.s.hero.hp=Math.max(1,Math.min(this.s.hero.maxHp,failure.hpBefore||Math.round(this.s.hero.maxHp*.25)));
-  this.s.flags['refusal_'+(rule.key||this.q.id)]=rule.limit-1;delete this.s.choices[this.q.id];this.s.failure=null;this.s.phase='choice';this.paused=false;this.emit('choice');return true;
+  this.s.flags['refusal_'+(rule.key||this.q.id)]=rule.limit-1;delete this.s.choices[this.q.id];this.s.failure=null;this.paused=false;
+  if(this.q.battleBeforeChoice&&!this.canCompleteCombat()){this.resetCombatAttempt();this.s.phase='talk';this.emit('toast',{text:'旧存档缺少交手结果，将先重新交手，再回到答复前。'});this.beginObjective();return true;}
+  this.s.phase='choice';this.emit('choice');return true;
  }
 };

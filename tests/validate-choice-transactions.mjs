@@ -16,6 +16,9 @@ function create(id){
  if(q.requireStaging)s.flags['staged_'+id]=true;
  const g=new GameEngine(s);Object.assign(g.s.hero,g.scene.spawn);return g;
 }
+
+// A bounded prior-battle fixture uses production outcomes before testing replies.
+function resolveDuel(g){g.startBattle();for(let n=0;n<20&&g.s.phase==='battle';n++){if(g.encounter.scriptedLoss){g.s.hero.hp=1;g.hurt(g.s.enemies[0],1);g.tick(.01);}else{const e=g.s.enemies.find(e=>e.hp>0);for(const other of g.s.enemies)Object.assign(other,{x:1300,y:850});Object.assign(g.s.hero,g.nearestOpen(650,750));Object.assign(e,{x:g.s.hero.x,y:g.s.hero.y,hp:1});g.s.cooldowns[0]=0;g.cast(0);}}assert.equal(g.s.phase,'choice');}
 function stage(g){
  g.onEvent=name=>{if(name==='stagingDialogue')g.advanceStaging();};g.beginObjective();assert.equal(g.s.phase,'staging');
  for(let i=0;i<12000&&g.s.phase==='staging';i++)g.tick(.05);
@@ -45,7 +48,7 @@ for(const id of ['a04','g06','e04','e06','e08','e09'])for(const answer of [undef
  const g=create(id);g.s.phase='after';if(answer!==undefined)g.s.choices[id]=answer;
  if(away){g.s.map=g.q.map==='m49'?'m51':'m49';g.s.phase='travel';g.s.objectiveProgress={questId:id,phase:'after',collectedIds:[]};}
  const old=snapshot(g),loaded=new GameEngine(restoreState(old)),before=copy(loaded.s);
- assert.equal(loaded.s.phase,away?'travel':loaded.q.battleBeforeChoice?'talk':'choice');
+ assert.equal(loaded.s.phase,away?'travel':loaded.q.battleBeforeChoice?'battle':'choice');if(!away&&loaded.q.battleBeforeChoice)assert.equal(loaded.s.combatProgress.failed,true);
  if(away)assert.equal(loaded.s.objectiveProgress.phase,loaded.q.battleBeforeChoice?'talk':'choice');
  loaded.completeQuest();assert.deepEqual(loaded.s,before,'no legal answer means no completion or reward');
  assert.deepEqual(budget(loaded),budget(g));assert.ok(!Object.hasOwn(loaded.s.choices,id));checks++;
@@ -74,7 +77,7 @@ for(const spec of [
   {id:'e09',answer,flags:{evil:7,evilManorDecision:false,evilMeiEscorted:answer===1,evilMeiAlone:answer===0,companion:'蔷薇'},affection:{mei:8}},
  ])
 ]){
- const g=create(spec.id);g.s.choices[spec.id]=spec.answer;Object.assign(g.s.flags,spec.flags);Object.assign(g.s.inventory,spec.inventory);Object.assign(g.s.affection,spec.affection);
+ const g=create(spec.id);if(g.q.battleBeforeChoice)resolveDuel(g);g.s.choices[spec.id]=spec.answer;Object.assign(g.s.flags,spec.flags);Object.assign(g.s.inventory,spec.inventory);Object.assign(g.s.affection,spec.affection);
  const effects=g.q.choice.options[spec.answer].effects,before=budget(g),beforeWrong=copy(g.s);
  assert.equal(g.choose(1-spec.answer),false);assert.deepEqual(g.s,beforeWrong,'a recorded answer cannot be overwritten');
  assert.equal(g.choose(spec.answer),true);assert.notEqual(g.q.id,spec.id,'same answer resumes its consequence');
@@ -113,12 +116,11 @@ for(const id of ['e06','e08','e09'])for(const away of [false,true]){
 }
 // Repeated refusal and switch trial choices are intentionally not single-use.
 {
- const g=create('e05');for(let n=1;n<=3;n++){assert.equal(g.choose(1),true);assert.equal(g.refusalCount(),n);}
+ const g=create('e05');resolveDuel(g);for(let n=1;n<=3;n++){assert.equal(g.choose(1),true);assert.equal(g.refusalCount(),n);}
  assert.equal(g.s.phase,'failed');assert.equal(g.retryRefusal(),true);assert.equal(g.choose(0),true);assert.equal(g.q.id,'e06');checks++;
 }
 {
- const g=create('g20');for(let n=1;n<=4;n++){assert.equal(g.choose(1),true);assert.equal(g.s.flags.refusals,n);assert.equal(g.s.affection.wei,-n);}
- assert.equal(g.s.flags.forsake,true);assert.notEqual(g.q.id,'g20');checks++;
+ const g=create('g20');g.s.flags.goodRoseNightReady=true;const affection=g.s.affection.wei;assert.equal(g.choose(1),true);assert.equal(g.q.id,'g20_return1');assert.equal(g.s.flags.goodRoseRefusal1,true);assert.equal(g.s.affection.wei,affection-1);const committed=snapshot(g);assert.equal(g.choose(1),false);assert.deepEqual(snapshot(g),committed,'the first reply is committed once before the separate walk and next call');assert.ok(!g.s.flags.forsake);checks++;
 }
 {
  const g=create('eSwitch6');g.s.flags.evil=0;g.s.choices.eSwitch6=1;assert.equal(g.choose(1),true);assert.equal(g.q.id,'eSwitch1');
@@ -143,7 +145,7 @@ for(let revision=1;revision<=4;revision++)for(const numeric of [false,true])for(
 // no override retain the prior calculation. This mutates only this process.
 {
  const g=create('e04'),q=g.q,prior=q.encounterTier;
- try{q.encounterTier=2;g.startBattle();assert.equal(g.s.enemies[0].tier,2);assert.equal(g.s.enemies[0].maxHp,190);delete q.encounterTier;g.startBattle();assert.equal(g.s.enemies[0].tier,Math.max(1,Math.floor(g.s.quest/9)+1));}
+ try{q.encounterTier=2;g.startBattle();assert.equal(g.s.enemies[0].tier,2);assert.equal(g.s.enemies[0].maxHp,190);delete q.encounterTier;const other=create('e04');other.startBattle();assert.equal(other.s.enemies[0].tier,Math.max(1,Math.floor(other.s.quest/9)+1));}
  finally{if(prior===undefined)delete q.encounterTier;else q.encounterTier=prior;}
  checks++;
 }

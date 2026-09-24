@@ -131,3 +131,42 @@
 依赖与部署配置方面：package.json只把validate-good-rescue专项加入总测试并新增test:good-rescue命令；dependencies/devDependencies均未改变，开发依赖仍为Wrangler 4.130.0，package-lock.json无差异。wrangler.jsonc无差异，静态资产目录仍是`./public`。本轮产品接入没有增加认证、服务器端存档或远端游戏内容服务，继续使用既有浏览器本地存档；本检查没有执行云端部署。
 
 本节属于本轮集成代码、文件引用、依赖差异和制作记录一致性的有限审查。它不包含所有Git历史对象取证、全部对白相似性检验、原版实机/图像比较、服务端生成记录认证或法律审查。未发现直接原资源运行依赖、制作记录完整或hash一致，均不等于取得授权、版权无风险或法律原创认证。
+
+
+## 2026-09-24：revision 15 塔内护送与落叶谷长夜增量复核
+
+本次独立检查仅访问当前仓库的 `public`、新增资源、来源文档、配置和测试；没有访问原游戏目录，没有解包，也没有打开仓库外的生成源文件。范围是 R15 的五幅新背景、`good-tower-valley-revisions/staging/migration.mjs`、`tower-runtime.mjs`、`combat-progress.mjs` 及其现有接入边界。此次只追加本文，不修改产品代码、图片、资源清单、部署配置或测试。剧情/战斗/浏览器是否完整另见各自验收记录，本节不替它们作结论。
+
+### 五幅新图及实际发布字节
+
+五图均在 [完整制作记录](tower-valley-art.md) 中明确记为内置 imagegen 纯文字生成、无输入图片。每项记录含完整提示词、指定生成源绝对路径、交付文件和 SHA-256；`asset-provenance.json` 的对应条目均为 `documented`，`referenceAssets: []`。本次从仓库交付 PNG 独立重新计算哈希、读取 PNG 头部尺寸，与制作文档和清单双重核对一致。
+
+| 当前发布文件 | 尺寸 | 字节数 | 实算 SHA-256 |
+| --- | --- | ---: | --- |
+| `public/assets/tower-prison.png` | 1536×1024 | 3,104,675 | `b816f37c87e1cb35a0f03f5f4e491bcda3d2255cd2556a9f25b650a359cb320d` |
+| `public/assets/tower-lower.png` | 1536×1024 | 2,898,847 | `5c0077265aaed07dcaa5dd1f22ceada8004a49bbee905204b4cc6d752144bedf` |
+| `public/assets/tower-middle.png` | 1536×1024 | 3,158,272 | `8884c5bd1447f6a63b05d8cbe33a338a0c664e181fe57815bbffb89461fdf63d` |
+| `public/assets/leaf-ruined-courtyard.png` | 1536×1024 | 3,649,862 | `cb22c8332fb1dd2a507f6312cb652b0b6657cbabb313242fd4db227887cd266b` |
+| `public/assets/leaf-memorial.png` | 1536×1024 | 4,006,487 | `63ef85b2209a7f239005ce9bb2b08f915c0af3c80ebed34ab6beb9c02908ce32` |
+
+五个 PNG 的容器均在 IEND 处结束，尾随字节为零；块类型均为 `IHDR / caBX / IDAT / IEND`。因此不能沿用早期审计中“不含附加块”的笼统描述：这批文件含 `caBX` 块，本次没有验证其内部声明或签名，也没有进行隐写取证。没有把这些块删掉、修改图片或另行重编码。
+
+`node tests/validate-asset-provenance.mjs` 当前通过：39项发布PNG、39项制作记录、20项负例，输出 `DOCUMENTED_RECORDS_ONLY`，未列出未确认参考输入。这个结果证实清单、当前字节、文档路径和输入依赖记录一致；**没有独立重演生成调用、读取生成源作逐字节比较或核验生成服务历史**，不能单凭文档声明与空参考列表证明法律意义的原创性、授权或视觉不相似。
+
+### 原版参考与产品实现的分界
+
+[本轮有界参考](good-tower-valley-reference.md)保存敌方数量与角色构成、上下楼/同行/安葬/邀请条件的独立概述，另以包哈希、包内条目标识、路径与行号定位。它不是可运行原脚本、完整对白、NPC配置或地图坐标副本，也不位于 `public`。本次没有回到原目录比对，因此不把审查仓库摘要说成又做了一次原版事件核验。
+
+新增产品模块使用本项目的任务、旗标、演出步骤、军阵槽位、生命值和迁移协议；对白与舞台动作是重新编写的表达。三组塔底图、受损院的完整 scene 变体、独立墓区与两房往返、墓碑 Canvas 绘制、守卫分散站位、跨层军阵保存及失败重试属于网页表现或存档适配。原同图的厅、墓位、房位没有被误宣称为原版多个独立 LoadMap；塔守卫保存也没有被宣称已经确认原引擎的全部 SaveNpc/LoadNpc 语义。
+
+限定扫描当前 `public` 文本与文件名未发现原目录运行路径、原包读取器、解压调用、原素材导入器、外部代码 import 或需要下载原版内容的运行入口。准确保留旧有例外：`cult-revisions.mjs` 与 `recruitment-revisions.mjs` 仍含 `script.pak`、`ini.pak` 和包项 hash 等**来源定位文字**，没有与之配套的读盘或加载调用。代码中的 `.npc` 属性访问不是原 `.npc` 文件引用，不能因关键词命中误报。
+
+### 当前发布目录与无需登录的边界
+
+检查时 `public` 共99个文件：39 PNG、57 MJS、1 JS、1 HTML、1 CSS。递归枚举未见 `.pak/.spr/.asf/.mpc/.mps/.npc/.ini/.map/.obj` 原格式实体、音频包、可执行程序或解包目录；未见符号链接、目录联接或其他重解析点。新增机制参考文档、生成源路径和仓库外原目录不是发布目录的文件或静态资源入口。此项是文件与引用检查，不能用文件扩展名扫描排除任何形式的隐藏内容。
+
+`wrangler.jsonc` 仍仅将 `./public` 配置为静态 assets，没有新 Worker 程序入口、认证服务或数据绑定。`package.json` 继续使用 Wrangler 静态开发/部署命令，部署前执行资源来源清单检查；本轮 `wrangler.jsonc` 和 `package-lock.json` 无差异。首页直接载入游戏 Canvas 与 `./journey.js`，存档/偏好读写浏览器 `localStorage`，没有新增账号步骤。
+
+本次实际运行 `node tests/validate-hosting.mjs http://127.0.0.1:8787` 通过：**99个匿名游戏资源、13个非发布路径检查**。请求使用 `credentials: 'omit'`；各游戏资源返回200与预期 MIME，无认证挑战、设置 Cookie 或登录重定向。原已撤出的七张旧图、配置/包文件、Git配置与测试入口均返回404。该结果仅覆盖当前本地静态服务；本次没有执行云端部署、没有查询生产 Cloudflare Access/账号设置，也不把本地匿名访问当成线上站点已经发布或远端权限配置已审计。
+
+此增量没有发现原资源进入当前发布目录或成为运行依赖的具体证据。它不包含全部 Git 历史对象、所有旧图片生成历史、原台词全语料相似性、原版实机或法律审查。来源记录完整、哈希一致与匿名静态检查通过，不等同权利授权、无版权风险、法律原创认证或全流程复刻达标。

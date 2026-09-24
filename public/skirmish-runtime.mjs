@@ -47,7 +47,7 @@ function declaredRoster(quest){
 }
 function explicitPosition(engine,entry){
  if(Object.hasOwn(entry,'x')||Object.hasOwn(entry,'y'))return {x:entry.x,y:entry.y};
- return engine.q.skirmish.positions?.[entry.id]??engine.scene.skirmish?.positions?.[entry.id];
+ return engine.battleQuest.skirmish.positions?.[entry.id]??engine.scene.skirmish?.positions?.[entry.id];
 }
 function placementAllocator(engine,reserved=[]){
  const hero=engine.s.hero,occupied=[hero,...reserved],slots=[];
@@ -161,9 +161,9 @@ export function restoreSkirmish(raw,quest,state){
 }
 export const skirmishMethods={
  startSkirmish(){
-  if(!this.q.skirmish||this.s.failure||this.s.skirmish?.failed)return false;
-  const roster=declaredRoster(this.q),originalHero=this.s.hero;
-  const start=this.q.skirmish.heroStart||this.scene.skirmish?.heroStart||{x:580,y:810};
+  if(!this.battleQuest.skirmish||this.s.failure||this.s.skirmish?.failed)return false;
+  const roster=declaredRoster(this.battleQuest),originalHero=this.s.hero;
+  const start=this.battleQuest.skirmish.heroStart||this.scene.skirmish?.heroStart||{x:580,y:810};
   const hero={...originalHero,...this.nearestOpen(start.x,start.y),direction:1},positions=new Map();
   this.s.hero=hero;
   try{
@@ -174,17 +174,17 @@ export const skirmishMethods={
    for(const {entry,side} of roster)if(!positions.has(entry.id))positions.set(entry.id,allocator.take(side));
   }finally{this.s.hero=originalHero;}
   Object.assign(originalHero,hero);
-  this.s.skirmish={questId:this.q.id,defeatedIds:[],finished:false,failed:false,failedReason:null};this.s.phase='battle';this.s.destination=null;
+  this.s.skirmish={questId:this.battleQuest.id,defeatedIds:[],finished:false,failed:false,failedReason:null};this.s.phase='battle';this.s.destination=null;
   this.s.enemies=roster.filter(unit=>unit.side==='enemy').map(({entry,side,index})=>({...baseUnit(entry,side,index),...positions.get(entry.id)}));
   this.s.allies=roster.filter(unit=>unit.side==='ally').map(({entry,side,index})=>({...baseUnit(entry,side,index),...positions.get(entry.id)}));
   this.target=null;this.waypoints=[];this.attackTarget=null;this.autoInteract=null;
   this._skirmishSave=0;this.emit('battle');return true;
  },
  repairSkirmishPositions(){
-  if(this.s.skirmish?.questId!==this.q.id||this.s.map!==this.q.map)return;
+  if(this.s.skirmish?.questId!==this.battleQuest.id||this.s.map!==this.battleQuest.map)return;
   const units=[...this.s.enemies,...this.s.allies],repair=units.filter(unit=>unit._needsPlacement||!hasPoint(unit)||!this.passable(unit.x,unit.y));
   if(repair.length){
-   const allocator=placementAllocator(this,units.filter(unit=>!repair.includes(unit))),roster=declaredRoster(this.q);
+   const allocator=placementAllocator(this,units.filter(unit=>!repair.includes(unit))),roster=declaredRoster(this.battleQuest);
    for(const unit of repair){const {entry,side}=roster.find(candidate=>candidate.entry.id===unit.id),preferred=explicitPosition(this,entry);
     Object.assign(unit,(preferred&&allocator.claim(preferred))||allocator.take(side));
    }
@@ -193,21 +193,21 @@ export const skirmishMethods={
  },
  markSkirmishDefeat(enemy,byHero=false){
   const battle=this.s.skirmish;
-  if(!battle||battle.questId!==this.q.id||battle.finished||battle.failed||this.s.phase!=='battle'||!enemy||enemy.hp!==0||!this.s.enemies.includes(enemy)||!this.q.skirmish.enemies.some(entry=>entry.id===enemy.id)||battle.defeatedIds.includes(enemy.id))return false;
+  if(!battle||battle.questId!==this.battleQuest.id||battle.finished||battle.failed||this.s.phase!=='battle'||!enemy||enemy.hp!==0||!this.s.enemies.includes(enemy)||!this.battleQuest.skirmish.enemies.some(entry=>entry.id===enemy.id)||battle.defeatedIds.includes(enemy.id))return false;
   battle.defeatedIds.push(enemy.id);this.addEffect('spark',enemy.x,enemy.y-40,40,'#c5b895',.5);
   this.emit('skirmishProgress');return true;
  },
  checkSkirmishOutcome(){
-  const battle=this.s.skirmish;if(!battle||battle.questId!==this.q.id||battle.finished||battle.failed)return;
-  const critical=criticalIds(this.q),down=critical.find(id=>this.s.allies.some(unit=>unit.id===id&&unit.hp<=0));
+  const battle=this.s.skirmish;if(!battle||battle.questId!==this.battleQuest.id||battle.finished||battle.failed)return;
+  const critical=criticalIds(this.battleQuest),down=critical.find(id=>this.s.allies.some(unit=>unit.id===id&&unit.hp<=0));
   const missing=critical.some(id=>this.s.allies.filter(unit=>unit.id===id&&Number.isFinite(unit.hp)).length!==1);
-  const failedReason=this.s.hero.hp<=0?'hero':down||(missing||(captureRule(this.q)&&!completeRoster(this.q,this.s))?'incomplete-roster':null);
+  const failedReason=this.s.hero.hp<=0?'hero':down||(missing||(captureRule(this.battleQuest)&&!completeRoster(this.battleQuest,this.s))?'incomplete-roster':null);
   if(failedReason){battle.failed=true;battle.failedReason=failedReason;this.paused=true;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys?.clear();this.emit('skirmishProgress');this.emit('defeat');return;}
-  if(captureRule(this.q)){
-   if(resolveCapture(this.q,this.s,battle)){this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.keys?.clear();this.emit('storyBattleOutcome',{kind:'capture',reason:battle.outcomeReason});}
+  if(captureRule(this.battleQuest)){
+   if(resolveCapture(this.battleQuest,this.s,battle)){this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.keys?.clear();this.emit('storyBattleOutcome',{kind:'capture',reason:battle.outcomeReason});}
    return;
   }
-  if(rosterCleared(this.q,this.s)){battle.finished=true;battle.clearedRoster=completedRoster(this.s);this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.emit('victory');}
+  if(rosterCleared(this.battleQuest,this.s)){battle.finished=true;battle.clearedRoster=completedRoster(this.s);this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.emit('victory');}
  },
  moveCombatant(unit,target,dt){
   if(range(unit,target)<86)return;
@@ -236,7 +236,7 @@ export const skirmishMethods={
    if(unit.attackTimer<=0&&range(unit,target)<115){unit.attackTimer=unit.boss?1.15:1.6;hit(unit,target,1);this.addEffect('slash',unit.x,unit.y-30,35,unit.ally?'#92c8b7':'#db9085',.25);}
   };
   for(const unit of enemyList)act(unit,[hero,...allies]);
-  for(const unit of allies)act(unit,enemyList);
+  for(const unit of allies)if(unit.role!=='escort')act(unit,enemyList);
   this.checkSkirmishOutcome();this._skirmishSave=(this._skirmishSave||0)+dt;
   if(this._skirmishSave>=3&&this.s.phase==='battle'){this._skirmishSave=0;this.emit('skirmishProgress');}
  }

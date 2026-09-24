@@ -110,7 +110,51 @@ export class Renderer {
         c.fillStyle='#514a3d';c.fillRect(-w*.38,-h*.9,w*.1,h*.9);c.fillRect(w*.28,-h*.9,w*.1,h*.9);c.fillStyle='#8e8060';c.fillRect(-w*.4,-h*.87,w*.8,16);
         this.polygon([[-w*.56,-h*.82],[-w*.35,-h],[w*.35,-h],[w*.56,-h*.82]],'#3d5550','#a9b299aa',2);this.polygon([[-w*.53,-h*.82],[w*.53,-h*.82],[w*.42,-h*.74],[-w*.42,-h*.74]],'#63716a');
         c.fillStyle='#a99060';c.fillRect(-w*.16,-h*.78,w*.32,28);c.font=`15px ${FONT}`;c.textAlign='center';c.fillStyle='#253733';c.fillText(p.label||'山门',0,-h*.78+20);break;
-      case 'grave':case 'stele':{
+      case 'grave':{
+        // Original procedural stone, with a small grounded soil mound. Keep
+        // the existing 107px silhouette and footprint; no texture asset input.
+        const earth=c.createRadialGradient(7,-1,3,7,0,43);
+        earth.addColorStop(0,'#4d4431b3');earth.addColorStop(.58,'#74624770');earth.addColorStop(1,'#675c4200');
+        this.ellipse(6,3,43,17,earth);this.ellipse(11,7,33,10,'#302d2433');
+        this.ellipse(3,-2,34,11,'#77644b83');
+        for(let i=0;i<25;i++){
+          const a=i*2.39996,r=13+(i%7)*3.5,x=3+Math.cos(a)*r,y=-1+Math.sin(a)*r*.29;
+          this.ellipse(x,y,1.3+(i%3)*.55,.6+(i%2)*.4,i%3?'#a18b653b':'#3e3a2c52');
+        }
+        const stone=c.createLinearGradient(-29,-99,34,7);
+        stone.addColorStop(0,'#a49f90');stone.addColorStop(.32,'#8b897e');stone.addColorStop(.76,'#74776d');stone.addColorStop(1,'#62675f');
+        const side=c.createLinearGradient(24,-80,36,-75);
+        side.addColorStop(0,'#62665e');side.addColorStop(1,'#454c46');
+        this.polygon([[25,1],[34,-6],[34,-94],[24,-103],[17,-106],[25,-95]],side,'#454a423b',.8);
+        this.polygon([[-29,1],[-29,-88],[-27,-94],[-19,-104],[-15,-106],[17,-106],[25,-96],[27,-90],[26,1]],stone,'#464e4552',.8);
+        c.save();c.clip();
+        // Fixed mineral flecks and subtle bedding remain still between frames.
+        for(let i=0;i<100;i++){
+          const n=(i*73+Math.round(p.x)*7+Math.round(p.y)*3)%997;
+          const x=-28+(n%57),y=-104+((i*47+n*3)%102);
+          c.fillStyle=i%4===0?'#ded8c530':i%3===0?'#303d3430':'#c5c2ae1f';
+          c.fillRect(x,y,.45+(i%3)*.45,.45+((i+1)%3)*.4);
+        }
+        c.lineWidth=.65;c.strokeStyle='#d7d0ba25';
+        for(let i=0;i<7;i++){const y=-93+i*13;c.beginPath();c.moveTo(-25,y);c.bezierCurveTo(-12,y+2,6,y-2,25,y+1);c.stroke();}
+        c.strokeStyle='#39483c35';c.beginPath();c.moveTo(-23,-86);c.lineTo(-20,-72);c.lineTo(-23,-63);c.moveTo(24,-42);c.lineTo(19,-36);c.lineTo(21,-23);c.stroke();
+        c.restore();
+        // Narrow bevels catch light without a bright flat rectangular inset.
+        c.strokeStyle='#d0cab18c';c.lineWidth=.9;c.beginPath();c.moveTo(-28,-1);c.lineTo(-28,-87);c.lineTo(-18,-103);c.lineTo(16,-104);c.stroke();
+        c.strokeStyle='#3a433a55';c.lineWidth=.8;c.beginPath();c.moveTo(22,-93);c.lineTo(23,-3);c.stroke();
+        c.font=`12px ${FONT}`;c.textAlign='center';
+        (p.label||'杨熙烈之墓').slice(0,6).split('').forEach((letter,i)=>{
+          const y=-82+i*13;c.fillStyle='#d1c9b673';c.fillText(letter,-.25,y+.65);c.fillStyle='#42493ef0';c.fillText(letter,-1,y);
+        });
+        const plinth=c.createLinearGradient(0,-8,0,12);
+        plinth.addColorStop(0,'#9b998a');plinth.addColorStop(.38,'#7b7f70');plinth.addColorStop(1,'#555d51');
+        this.polygon([[-40,2],[-30,-8],[29,-8],[41,1],[39,11],[-38,11]],plinth,'#3c49383b',.7);
+        c.strokeStyle='#bbb8a56b';c.lineWidth=.7;c.beginPath();c.moveTo(-38,2);c.lineTo(38,2);c.stroke();
+        for(let i=0;i<17;i++){const x=-35+(i*19)%70,y=3+(i*7)%7;c.fillStyle=i%3?'#bdbaa430':'#343f303d';c.fillRect(x,y,1.1+(i%3),.8);}
+        this.ellipse(-25,5,8,2,'#58604352');this.ellipse(29,5,6,2,'#505b4050');
+        break;
+      }
+      case 'stele':{
         const tall=p.kind==='grave'?92:70;this.polygon([[-31,2],[-31,-tall],[-19,-tall-15],[19,-tall-15],[31,-tall],[31,2]],'#8c9b90','#ced0b3aa',2);
         c.fillStyle='#52655d';c.fillRect(-24,-tall+3,48,tall-9);c.fillStyle='#d5cfac';c.font=`${p.kind==='grave'?13:12}px ${FONT}`;c.textAlign='center';
         (p.label||(p.kind==='grave'?'杨熙烈之墓':'旧碑')).slice(0,6).split('').forEach((s,i)=>c.fillText(s,0,-tall+16+i*13));

@@ -54,8 +54,8 @@ for(const [id,limit,nextId] of [['e05',3,'e06'],['e07',2,'e08_interlude']]){
 
  // Acceptance is possible after any nonfatal number of refusals, including zero.
  for(let count=0;count<limit;count++){
-  const accepting=create(id);accepting.s.phase='choice';accepting.s.flags['refusal_'+id]=count;assert.equal(accepting.choose(0),true);assert.equal(accepting.q.id,nextId);assert.equal(accepting.s.failure,null);assert.ok(accepting.s.done.includes(id));
+  const accepting=create(id);enterChoice(accepting);accepting.s.flags['refusal_'+id]=count;assert.equal(accepting.choose(0),true);assert.equal(accepting.q.id,nextId);assert.equal(accepting.s.failure,null);assert.ok(accepting.s.done.includes(id));
  }
- const old=create(id);old.s.phase='choice';const raw=snapshot(old);raw.campaignRevision=2;const migrated=new GameEngine(restoreState(raw));assert.equal(migrated.q.id,id);assert.equal(migrated.s.phase,'choice');assert.equal(migrated.refusalCount(),0,'legacy offers start with no fabricated refusal history');
+ const old=create(id);old.s.phase='choice';const raw=snapshot(old);raw.campaignRevision=2;const migrated=new GameEngine(restoreState(raw));assert.equal(migrated.q.id,id);assert.equal(migrated.s.phase,'talk');assert.equal(migrated.s.combatLegacyNoKillRewards[id],true);assert.equal(migrated.refusalCount(),0,'legacy offers start with no fabricated refusal history');enterChoice(migrated);assert.equal(migrated.s.phase,'choice');
 }
 console.log(JSON.stringify({result:'PASS',quests:['e05','e07'],restoredFailureChecks:restoredFailures,checks:'forced duel loss, refusal thresholds, no early rewards, persistent fatal state, blocked bypasses, reply retry, acceptance and legacy choice saves'}));

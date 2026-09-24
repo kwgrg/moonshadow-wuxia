@@ -51,7 +51,7 @@ function walk(engine,to){
 // Frozen from commit 228a84a before revision14 registration; never derive the
 // expected legacy tiers or IDs from the modified campaign at test run time.
 assert.equal(revisionThirteen.length,209);
-assert.equal(freshState().campaignRevision,14);
+assert.equal(freshState().campaignRevision,15);
 assert.deepEqual(campaign.REVISION_THIRTEEN_QUEST_IDS,revisionThirteen.map(([id])=>id));
 for(const [id,tier] of revisionThirteen)assert.equal(QUESTS[index(id)].encounterTier??Math.max(1,Math.floor(index(id)/9)+1),tier,id+' retains revision13 effective encounter tier');
 // Recruitment remains a three-answer transaction; only the terminal refusal
