@@ -31,8 +31,17 @@ const names=[...Object.keys(core),'SOURCES','Renderer','npcCellFor','document','
 const values=[...Object.values(core),SOURCES,Renderer,npcCellFor,document,window,localStorage,Image,raf,timer,()=>{},timer,()=>{},()=>({matches:false}),{now:()=>0},{reload(){}}];
 const ui=await new AsyncFunction(...names,source)(...values);
 assert.equal(nodes.get('loading').hidden,false);assert.equal(ui.engine.q.id,'a01');
+// The browser yields between animation frames so queued image onload handlers
+// can complete. Keep the actual loading guard; do not run thousands of fake
+// frames in the same JavaScript task while its asset promise is pending.
+async function finishSceneLoad(){
+ for(let turns=0;ui.engine.sceneLoading&&turns<20;turns++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(ui.engine.sceneLoading,false,'the scene image load completes before interaction');
+ assert.equal(ui.engine.sceneLoadFailed,false,'the fixture must not continue after a failed scene load');
+}
+await finishSceneLoad();
 for(const show of [()=>ui.showCharacter(),()=>ui.showCharacter('equipment'),()=>ui.showCharacter('skills'),ui.showBag,ui.showJournal,()=>ui.showJournal('side'),()=>ui.showJournal('endings'),ui.showMap,()=>ui.showMap(true),ui.showSaves,ui.showSettings,ui.showAbout,ui.showHelp]){show();assert.equal(nodes.get('panel').open,true);ui.closePanel();assert.equal(ui.engine.paused,false);}
-ui.engine.s.hero.x=ui.engine.npc.x;ui.engine.s.hero.y=ui.engine.npc.y;ui.track();let steps=0;while(ui.engine.q.id==='a01'&&steps++<1500){ui.engine.tick(.05);if(!nodes.get('dialogue').hidden){if(nodes.get('dialogue-next').hidden)nodes.get('start-normal')?.click();else ui.nextDialogue();}}assert.equal(ui.engine.q.id,'a02');
+ui.engine.s.hero.x=ui.engine.npc.x;ui.engine.s.hero.y=ui.engine.npc.y;ui.track();let steps=0;while(ui.engine.q.id==='a01'&&steps++<1500){await finishSceneLoad();ui.engine.tick(.05);if(!nodes.get('dialogue').hidden){if(nodes.get('dialogue-next').hidden)nodes.get('start-normal')?.click();else ui.nextDialogue();}}assert.equal(ui.engine.q.id,'a02');await finishSceneLoad();
 // Browser regression: an uncancelled Escape opens settings and then invokes
 // the native dialog cancel default on the same key. Model that default here.
 function escapeKey(repeat=false){
@@ -54,7 +63,7 @@ escapeKey(true);assert.equal(nodes.get('panel').open,true,'holding the opening E
 events.keyup({key:'Escape'});assert.equal(escapeKey().defaultPrevented,false);
 assert.equal(nodes.get('panel').open,false,'a second deliberate Escape closes settings');assert.equal(ui.engine.paused,false);
 events.keyup({key:'Escape'});
-ui.engine.travel(ui.engine.q.map);for(let i=0;i<3000&&ui.engine.s.map!==ui.engine.q.map;i++)ui.engine.tick(.05);ui.showShop();assert.equal(nodes.get('panel').open,true);ui.closePanel();
+ui.engine.travel(ui.engine.q.map);for(let i=0;i<3000&&ui.engine.s.map!==ui.engine.q.map;i++){await finishSceneLoad();ui.engine.tick(.05);}await finishSceneLoad();ui.showShop();assert.equal(nodes.get('panel').open,true);ui.closePanel();
 for(const marker of ui.engine.markers.filter(m=>m.kind==='side')){ui.showSide(marker.id);ui.closePanel();}
 globalThis.innerWidth=1440;globalThis.innerHeight=900;globalThis.devicePixelRatio=1;
 const gradient=(...coordinates)=>{

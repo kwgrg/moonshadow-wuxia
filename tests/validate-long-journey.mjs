@@ -35,6 +35,12 @@ for(const difficulty of ['normal','story']) for(const outcome of ['reunion','thr
    }
    if(q.training&&g.s.phase==='training')continue;
    if(q.battleBeforeChoice){assert.equal(g.s.phase,'choice');g.choose(option(g,outcome));continue;}
+   if(q.dreamCombat){
+    assert.equal(g.q.id,'e14_father',q.id+' actual battle outcome wakes at the father memorial');
+    assert.equal(g.hasDreamCombatOutcome(q.id),true,'dream must archive a validated win or loss receipt');
+    assert.ok(['victory','dream-loss'].includes(g.s.flags.evilFinalDreamOutcome));
+    assert.equal(g.s.failure,null);assert.equal(g.s.hero.hp,g.s.hero.maxHp);continue;
+   }
    assert.equal(g.s.phase,'after',`${outcome} ${q.id} battle should complete (hp ${g.s.hero.hp}, tick ${ticks})`);
   }
   if(q.towerPassage){
@@ -69,7 +75,7 @@ const save=restoreState(JSON.parse(JSON.stringify(fragments.s)));assert.equal(sa
 // encounters and faction rosters keep their explicit counts and conditions.
 for(const q of QUESTS.filter(q=>q.type==='boss'||q.type==='battle')){
  if(q.skirmish){const ids=q.skirmish.enemies.map(enemy=>enemy.id);assert.ok(ids.length>0,q.id+' declares an army');assert.equal(new Set(ids).size,ids.length,q.id+' army identities are unique');}
- else if(q.distributedCombat){assert.equal(q.count,{gBad_road:34,gBad2:45}[q.id],q.id+' audited distributed count');assert.equal(q.victoryTarget,q.id==='gBad2'?'boss':undefined,q.id+' declared victory condition');}
+ else if(q.distributedCombat){assert.equal(q.count,{gBad_road:34,gBad2:45,e14:29}[q.id],q.id+' audited distributed count');assert.equal(q.victoryTarget,q.id==='gBad2'?'boss':undefined,q.id+' declared victory condition');}
  else assert.ok((q.count||3)<=4,q.id);
 }
 for(const m of Object.values(MAPS))assert.ok(fs.existsSync(new URL('../public/assets/'+m.art+'.png',import.meta.url)));

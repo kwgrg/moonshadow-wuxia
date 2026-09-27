@@ -1,3 +1,4 @@
+import {drawEvilEndingDetails,drawEvilCellGate} from './evil-ending-renderer.mjs';
 import {drawDreamAccessories,drawDreamOverlay} from './night-dream-renderer.mjs';
 import {drawForbiddenGate,drawForbiddenProp,drawForbiddenAction} from './forbidden-renderer.mjs';
 import {clamp} from './runtime.mjs';
@@ -38,7 +39,14 @@ export class Renderer {
   get allies(){const main=this.e.s.phase==='after'?this.e.markers.find(marker=>marker.main):null;return this.e.s.map===this.e.q.map&&this.e.q.skirmish?(this.e.s.allies||[]).filter(ally=>!main||ally.name!==main.name):[];}
   get background(){const s=this.scene;return this.assets[s.art]||this.assets[s.fallbackArt]||this.assets[this.e.chapter.art];}
   resize(){this.w=this.canvas.clientWidth;this.h=this.canvas.clientHeight;this.dpr=Math.min(devicePixelRatio||1,this.e.settings.quality==='high'?2:1.25);this.canvas.width=Math.round(this.w*this.dpr);this.canvas.height=Math.round(this.h*this.dpr);this.s=Math.max(this.w/W,this.h/H);if(this.w<760)this.s=Math.max(this.s,.75);}
-  camera(){const focus=this.e.stagingFocus?.()||this.e.s.hero;const x=clamp(this.w/2-focus.x*this.s,this.w-W*this.s,0),y=clamp(this.h*.61-focus.y*this.s,this.h-H*this.s,0);this.cameraX+=(x-this.cameraX)*.08;this.cameraY+=(y-this.cameraY)*.08;}
+  camera(){
+    const focus=this.e.stagingFocus?.()||this.e.s.hero,cinematic=this.e.s.phase==='staging'&&/^e14_/.test(this.e.q.id),framing=cinematic ? .46 : .61;
+    // Keep this chapter's seated actors and serving table above the dialogue.
+    // Taller windows can pan into the dark footer covered by the dialogue UI.
+    const bottom=cinematic?Math.min(this.h-H*this.s,-this.h*.22):this.h-H*this.s;
+    const x=clamp(this.w/2-focus.x*this.s,this.w-W*this.s,0),y=clamp(this.h*framing-focus.y*this.s,bottom,0);
+    this.cameraX+=(x-this.cameraX)*.08;this.cameraY+=(y-this.cameraY)*.08;
+  }
   toWorld(x,y){return{x:(x-this.cameraX)/this.s,y:(y-this.cameraY)/this.s};}
   backgroundImage(c,w,h){if(this.background)c.drawImage(this.background,0,0,w,h);else{c.fillStyle='#24403d';c.fillRect(0,0,w,h);}}
   polygon(points,fill,stroke=null,width=1){const c=this.ctx;c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
@@ -84,6 +92,7 @@ export class Renderer {
     c.restore();
   }
   drawProp(p){
+    if(p.kind==='cellGate'){drawEvilCellGate.call(this,p);return;}
     if(p.paintOnly)return;
     if(p.render==='point'||p.render==='marker'||p.interactive){this.drawInteractiveItem(p);return;}
     const c=this.ctx,w=p.w||70,h=p.h||55,t=this.e.time;c.save();c.translate(p.x,p.y);
@@ -416,11 +425,12 @@ export class Renderer {
     const poseStep=this.e.s.sequence&&this.e.stagingDefinition()?.steps[this.e.s.sequence.step];
     if(a.renderAt&&a.pose==='stand'&&poseStep?.type==='pose'&&poseStep.actor===a.id){const t=clamp(this.e.s.sequence.elapsed/(poseStep.duration||1),0,1);a={...a,x:a.renderAt.x+(a.x-a.renderAt.x)*t,y:a.renderAt.y+(a.y-a.renderAt.y)*t};}
     if(a.pose==='fallen'){this.drawFallenActor(a);return;}
+    if(hero&&a.pose==='ill'){this.drawGroundSeatedActor(a,true);return;}
     if(a.pose==='sit'&&(hero||a.groundSeated)){this.drawGroundSeatedActor(a,hero);return;}
     if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:(a.npcCell??npcCellFor(a.name)),useNpcAtlas=npcCell!==null&&this.assets.npcs;
-    const kneeling=a.pose==='kneel',c=this.ctx,height=kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=(hero?142:height)*384/1024;
+    const kneeling=a.pose==='kneel',child=!hero&&(a.child||a.name==='杨纳康'),c=this.ctx,height=child?90:kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=child?60:(hero?142:height)*384/1024;
     const bob=hero&&this.e.walkTime?Math.sin(this.e.walkTime)*2:Math.sin(this.e.time*1.5+a.x)*.5,lift=a.jumpHeight??(hero&&this.e.dashTime>0?Math.sin(this.e.dashTime/.6*Math.PI)*27:0);
     c.save();c.translate(a.x,a.y);this.ellipse(0,0,width*.67,9,'#02172066');
     if(hero){this.ellipse(0,0,29,10,null,'#c2e6ceaa',1.2);this.ellipse(0,0,34,13,null,'#a1d5bd35');}else if(a.ally)this.ellipse(0,1,23,7,null,'#71cbaa88',1.1);
@@ -430,7 +440,9 @@ export class Renderer {
     if(step?.type==='wallImpact'&&!hero&&step.actor===a.id)c.rotate(Math.sin(clamp(sequence.elapsed/(step.duration||.45),0,1)*Math.PI)*.2);
     if(a.flash>0)c.filter='brightness(1.8)';else if(!hero&&!a.ally&&this.e.q.friendly&&a.hp!==undefined)c.filter='saturate(.4) brightness(.8)';
     const sprite=hero?(this.e.q.playAs==='纳兰真'?1:0):clamp(a.sprite||0,0,3);
-    if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
+    if(child&&this.assets['yang-child-original'])c.drawImage(this.assets['yang-child-original'],0,0,1024,1536,-30,-90,60,90);
+    else if(a.name==='可容'&&this.assets['kerong-original'])c.drawImage(this.assets['kerong-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
+    else if(a.name==='月眉儿'&&this.assets['mei-original'])c.drawImage(this.assets['mei-original'],0,0,1024,1536,-height/3,-height*.98,height*2/3,height);
     else if(useNpcAtlas){const tileWidth=height*.75,anchorY=[486,487,486,490,466,466,466,467][npcCell];c.drawImage(this.assets.npcs,(npcCell%4)*384,Math.floor(npcCell/4)*512,384,512,-tileWidth/2,-height*anchorY/512,tileWidth,height);}
     else if(this.assets['characters-original']){if(kneeling&&this.assets['hero-kneel-original']){const w=height*854/1360;c.drawImage(this.assets['hero-kneel-original'],64,96,854,1360,-w/2,-height,w,height);}else c.drawImage(this.assets['characters-original'],sprite*384,0,384,1024,-width/2,-height,width,height);}c.restore();
     // Original restrained pose cue for the escort scene, drawn over our own art.
@@ -511,7 +523,7 @@ export class Renderer {
       objects.push({...prop,...(actor?{x:actor.x,y:actor.y,direction:actor.direction,sortY:actor.y+2}:{}),render:'stagingProp',cues:presentation.cues,actors:presentation.actors,definition:presentation.definition});
     }
     objects.sort((a,b)=>(a.sortY??a.y)-(b.sortY??b.y)).forEach(o=>{if(o.render==='actor')this.drawActor(o,o.hero);else if(o.render==='marker')this.drawMarker(o);else if(o.render==='stagingProp')this.drawStagingProp(o);else{this.drawProp(o);if(o.render==='point')this.drawMarkerHint(o,o.opened);}});
-    drawDreamAccessories.call(this);this.drawPowerTransmission();this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();drawDreamOverlay.call(this);c.restore();this.drawMini();
+    drawDreamAccessories.call(this);drawEvilEndingDetails.call(this);this.drawPowerTransmission();this.drawStagingStrike();drawForbiddenAction.call(this);this.drawEffects();this.drawWeather();drawDreamOverlay.call(this);c.restore();this.drawMini();
   }
   drawMini(){
     const c=this.mctx,size=180,s=this.scene;c.clearRect(0,0,size,size);this.backgroundImage(c,size,size);c.fillStyle='#072c2c88';c.fillRect(0,0,size,size);c.lineJoin='round';c.lineCap='round';c.strokeStyle='#cfcc9c99';

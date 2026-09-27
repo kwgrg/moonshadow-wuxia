@@ -149,6 +149,36 @@
       ]
     },
     {
+      "path": "public/assets/evil-family-shore.png",
+      "sha256": "633c61cf78bf143ed0291b84342e9cb18b3798dcd35c14c520e14f8fa813b073",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-ending-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置image_gen纯文字独立生成，无图像输入；完整提示词与源文件记录见文档。"
+      ]
+    },
+    {
+      "path": "public/assets/evil-final-dream.png",
+      "sha256": "178bce733502daedbcdcfcac053f6c9708cc09cb3b7334dbdeded8b9765a29d3",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-ending-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置image_gen纯文字独立生成，无图像输入；完整提示词与源文件记录见文档。"
+      ]
+    },
+    {
       "path": "public/assets/forbidden-chamber.png",
       "sha256": "7e95918f506fa2115de8068610b01444096f9ebbd41197fa4d639e9af93d922e",
       "status": "documented",
@@ -300,6 +330,22 @@
       "referenceAssets": [],
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
+      ]
+    },
+    {
+      "path": "public/assets/kerong-original.png",
+      "sha256": "209a75256816d832df615d26ad09c648ae31255dfcfeb8e385a31f8550b0bcfb",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-ending-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 独立文生图，无输入图；完整提示词、生成源和交付哈希见制作记录。",
+        "documented仅表示制作记录存在，不代表原版相似度或法律认证。"
       ]
     },
     {
@@ -508,6 +554,22 @@
       ]
     },
     {
+      "path": "public/assets/sakura-memorial.png",
+      "sha256": "927080d17ebddacafbed26ea6de0d5a601524ad4765e170f10e60de08cb41ca6",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/sakura-memorial-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置image_gen纯文字独立生成，无参考图输入；完整提示词、生成源与交付哈希见制作记录。",
+        "documented仅表示制作记录存在，不代表法律认证。"
+      ]
+    },
+    {
       "path": "public/assets/temple.png",
       "sha256": "527a69b14abbe42cc86fd3eec724b7fcc5595448a270e88d57cbdb017d2ff364",
       "status": "documented",
@@ -615,6 +677,21 @@
       ]
     },
     {
+      "path": "public/assets/yang-child-original.png",
+      "sha256": "ce6277e91d65e2d7066fa92bf2187a7578b11a727912328bcd3b37ad340987c4",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/evil-ending-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置image_gen纯文字独立生成，无图像输入；完整提示词与源文件记录见文档。"
+      ]
+    },
+    {
       "path": "public/assets/zhen-chamber.png",
       "sha256": "6f94481784ef53728b1ec3bac7a0726ff78fe0c0ad62e04e4e7b90adbdb9e54b",
       "status": "documented",
@@ -627,22 +704,6 @@
       "referenceAssets": [],
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
-      ]
-    },
-    {
-      "path": "public/assets/sakura-memorial.png",
-      "sha256": "927080d17ebddacafbed26ea6de0d5a601524ad4765e170f10e60de08cb41ca6",
-      "status": "documented",
-      "documents": [
-        {
-          "path": "docs/sakura-memorial-art.md",
-          "kind": "creation-record"
-        }
-      ],
-      "referenceAssets": [],
-      "notes": [
-        "内置image_gen纯文字独立生成，无参考图输入；完整提示词、生成源与交付哈希见制作记录。",
-        "documented仅表示制作记录存在，不代表法律认证。"
       ]
     }
   ]

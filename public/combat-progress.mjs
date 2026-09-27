@@ -18,14 +18,14 @@ function descriptor(q,s,key){
   if(!Number.isInteger(wave)||wave<0||wave>=(q.waves?.length||1))return null;
   const w=q.waves?.[wave];if(w)encounter={...q,...w,type:w.boss?'boss':'battle',boss:w.boss||null,scriptedLoss:!!w.scriptedLoss};
  }
- if(q.legacyCombatCount&&s.flags?.[q.legacyCombatCount.flag])encounter={...encounter,count:q.legacyCombatCount.count};
+ if(q.legacyCombatCount&&s.flags?.[q.legacyCombatCount.flag])encounter={...encounter,count:q.legacyCombatCount.count,...(q.legacyCombatCount.enemy?{enemy:q.legacyCombatCount.enemy,enemyNames:null,enemySprites:null}:{})};
  const tier=q.encounterTier??Math.max(1,Math.floor(QUESTS.findIndex(x=>x.id===q.id)/9)+1),count=encounter.count||3;
  return {key:entryKey(wave,index,master),wave,index,master,encounter,tier,count};
 }
 function declarations(q,s,key){
  const d=descriptor(q,s,key);if(!d)return null;
  const actors=q.training?[]:(STAGED_QUESTS[q.id]?.actors||[]).filter(actor=>actor.enemy);
- const units=Array.from({length:d.count},(_,id)=>{const boss=!!(d.encounter.type==='boss'||d.encounter.boss)&&id===d.count-1;return {id,boss,maxHp:d.encounter.scriptedLoss?8000:(boss?430:120)+d.tier*(boss?125:35),role:boss?'master':d.encounter.friendly?'sword':id%3===1?'ranged':id%3===2?'brute':'sword',sprite:d.encounter.enemySprite??(d.encounter.friendly?0:3),name:d.encounter.enemyNames?.[id]||actors[id]?.name||(boss?(d.encounter.boss||q.npc||'首领'):(d.encounter.enemy||'敌方武人')),tier:d.tier};});
+ const units=Array.from({length:d.count},(_,id)=>{const boss=!!(d.encounter.type==='boss'||d.encounter.boss)&&id===d.count-1;return {id,boss,maxHp:d.encounter.scriptedLoss?8000:(boss?430:120)+d.tier*(boss?125:35),role:boss?'master':d.encounter.friendly?'sword':id%3===1?'ranged':id%3===2?'brute':'sword',sprite:d.encounter.enemySprites?.[id]??d.encounter.enemySprite??(d.encounter.friendly?0:3),name:d.encounter.enemyNames?.[id]||actors[id]?.name||(boss?(d.encounter.boss||q.npc||'首领'):(d.encounter.enemy||'敌方武人')),tier:d.tier};});
  return {...d,units};
 }
 function zone(raw){
@@ -52,15 +52,16 @@ function victoryReached(encounter,units){
 function validEntry(q,s,raw){
  const d=descriptor(q,s,raw?.key),units=roster(q,s,raw?.key,raw?.roster);if(!d||!units||!validIds(raw.defeatedIds,units))return null;
  const dead=units.filter(e=>e.hp===0).map(e=>e.id);if(dead.length!==raw.defeatedIds.length||dead.some(id=>!raw.defeatedIds.includes(id)))return null;
- const outcome=raw.outcome;if(!['active','victory','scripted-loss','failed'].includes(outcome))return null;
+ const outcome=raw.outcome;if(!['active','victory','scripted-loss','dream-loss','failed'].includes(outcome))return null;
  if(outcome==='victory'&&(d.encounter.forcedOutcome==='defeat'||!victoryReached(d.encounter,units)||!finite(raw.heroHpAtOutcome,Number.MIN_VALUE,10000)))return null;
  if(outcome==='scripted-loss'&&(!d.encounter.scriptedLoss||raw.heroHpAtOutcome!==0))return null;
+ if(outcome==='dream-loss'&&(!d.encounter.dreamCombat||raw.heroHpAtOutcome!==0))return null;
  return {key:d.key,wave:d.wave,trainingIndex:d.index??null,master:d.master,roster:units,defeatedIds:[...raw.defeatedIds],outcome,heroHpAtOutcome:outcome==='active'?null:raw.heroHpAtOutcome??null};
 }
 function freshProgress(q){return {version:1,questId:q.id,activeKey:null,encounters:{},failed:false,failedReason:null,finished:false,legacyPriorWaves:[],legacyTrainingWins:[]};}
 const current=(q,s)=>s.combatProgress?.questId===q.id?s.combatProgress:null;
 const active=(q,s)=>{const p=current(q,s);return p?.encounters?.[p.activeKey]||null;};
-const resolved=e=>e?.outcome==='victory'||e?.outcome==='scripted-loss';
+const resolved=e=>e?.outcome==='victory'||e?.outcome==='scripted-loss'||e?.outcome==='dream-loss';
 function hasPrior(q,s,p,d){
  if(q.training)return true;
  return Array.from({length:d.wave},(_,wave)=>wave).every(wave=>p.encounters['wave:'+wave]?resolved(validEntry(q,s,p.encounters['wave:'+wave])):p.legacyPriorWaves?.includes(wave));
@@ -91,6 +92,17 @@ function repairPhase(q,s,p){
  }else s.phase=p.failed?'battle':p.finished?(q.battleBeforeChoice?'choice':'after'):'battle';
  if(e?.outcome==='active'||p.failed)s.enemies=e?.roster||[];else s.enemies=[];
 }
+// Completed dream encounters retain their own evidence after the quest clears
+// current combatProgress. Invalid summaries never establish a dream outcome.
+export function restoreDreamCombatOutcomes(raw,state){
+ state.dreamCombatOutcomes={};
+ for(const q of QUESTS.filter(q=>q.dreamCombat)){
+  const entry=validEntry(q,state,raw.dreamCombatOutcomes?.[q.id]);
+  if(entry&&['victory','dream-loss'].includes(entry.outcome))state.dreamCombatOutcomes[q.id]=entry;
+ }
+ const ending=state.dreamCombatOutcomes.e14_dream;
+ if(ending)state.flags.evilFinalDreamOutcome=ending.outcome;else delete state.flags.evilFinalDreamOutcome;
+}
 // Call after other chapter migrations and existing staging/skirmish restoration.
 // This routine never awards resources or fabricates task done/claimed records.
 export function restoreCombatProgress(raw,q,s){
@@ -109,7 +121,13 @@ export function restoreCombatProgress(raw,q,s){
   if(e){s.wave=e.wave;if(!hasPrior(q,s,p,descriptor(q,s,e.key)))invalid=true;}else if(battleTrace||saved.failed||Object.keys(p.encounters).length)invalid=true;
   p.failed=saved.failed===true;p.failedReason=p.failed?(saved.failedReason==='hero'?'hero':'incomplete-roster'):null;
   if(!p.failed&&e?.outcome==='failed')invalid=true;
-  if(raw.hero?.hp<=0&&e?.outcome!=='scripted-loss'){p.failed=true;p.failedReason='hero';s.hero.hp=0;if(e)e.outcome='failed';}
+  if(raw.hero?.hp<=0&&e?.outcome!=='scripted-loss'){
+   // A save between the real dream death and its next tick may still be active.
+   // Only the fully validated current roster can turn that precise state into
+   // a dream result. Failed or incomplete encounters always stay failed.
+   if(raw.hero.hp===0&&!invalid&&!p.failed&&q.dreamCombat&&e&&['active','dream-loss'].includes(e.outcome)){e.outcome='dream-loss';e.heroHpAtOutcome=0;}
+   else{p.failed=true;p.failedReason='hero';s.hero.hp=0;if(e)e.outcome='failed';}
+  }
   if(invalid){p.failed=true;p.failedReason='incomplete-roster';p.finished=false;}
   s.combatProgress=p;repairPhase(q,s,p);
   s.cooldowns=SKILLS.map((skill,id)=>Math.max(0,Math.min(skill?.cooldown||0,Number(raw.cooldowns?.[id])||0)));return;
@@ -165,7 +183,7 @@ export const combatMethods={
   if(!p||p.failed||!e||e.outcome!=='active'||this.s.hero.hp<=0||!d||!e.roster.includes(enemy)||enemy.hp!==0||e.defeatedIds.includes(enemy.id))return null;
   if(!roster(this.q,this.s,e.key,e.roster)){this.failCombatProgress('incomplete-roster');return null;}
   e.defeatedIds.push(enemy.id);const key=this.q.id+'|'+e.key+'|enemy:'+enemy.id;this.s.combatClaims??=[];
-  if(this.s.combatClaims.includes(key)||this.s.combatLegacyNoKillRewards?.[this.q.id])return null;
+  if(d.encounter.suppressKillRewards||this.s.combatClaims.includes(key)||this.s.combatLegacyNoKillRewards?.[this.q.id])return null;
   this.s.combatClaims.push(key);const base=declarations(this.q,this.s,e.key).units.find(u=>u.id===enemy.id);return {coins:d.encounter.friendly?0:base.boss?80:15,xp:base.boss?100:25,kills:d.encounter.friendly?0:1};
  },
  finishCombatProgress(outcome){
@@ -174,11 +192,28 @@ export const combatMethods={
   if(e.outcome!=='active')return e.outcome===outcome&&!!validEntry(this.q,this.s,e);
   if(!validEntry(this.q,this.s,e)){this.failCombatProgress('incomplete-roster');return false;}
   if(outcome==='victory'){if(this.s.hero.hp<=0){this.failCombatProgress('hero');return false;}if(d.encounter.forcedOutcome==='defeat'||!victoryReached(d.encounter,e.roster))return false;}
-  else if(outcome==='scripted-loss'){if(!d.encounter.scriptedLoss||this.s.hero.hp>0)return false;}else return false;
+  else if(outcome==='scripted-loss'){if(!d.encounter.scriptedLoss||this.s.hero.hp>0)return false;}else if(outcome==='dream-loss'){if(!d.encounter.dreamCombat||this.s.hero.hp!==0)return false;}else return false;
   e.outcome=outcome;e.heroHpAtOutcome=this.s.hero.hp;p.finished=complete(this.q,this.s);return true;
  },
  failCombatProgress(reason='hero'){
   if(!isOrdinaryCombat(this.q))return false;let p=current(this.q,this.s);if(!p)this.s.combatProgress=p=freshProgress(this.q);p.failed=true;p.failedReason=reason==='hero'?'hero':'incomplete-roster';p.finished=false;const e=active(this.q,this.s);if(e){e.outcome='failed';e.heroHpAtOutcome=this.s.hero.hp;}this.paused=true;this.target=null;this.waypoints=[];this.attackTarget=null;return true;
+ },
+ hasDreamCombatOutcome(id){
+  const q=QUESTS.find(q=>q.id===id);if(!q?.dreamCombat)return false;
+  const entry=validEntry(q,this.s,this.s.dreamCombatOutcomes?.[id]);return !!entry&&['victory','dream-loss'].includes(entry.outcome);
+ },
+ archiveDreamCombatOutcome(){
+  if(!this.q.dreamCombat||!complete(this.q,this.s))return false;
+  const entry=validEntry(this.q,this.s,active(this.q,this.s));
+  if(!entry||!['victory','dream-loss'].includes(entry.outcome))return false;
+  this.s.dreamCombatOutcomes??={};this.s.dreamCombatOutcomes[this.q.id]=clone(entry);
+  if(this.q.id==='e14_dream')this.s.flags.evilFinalDreamOutcome=entry.outcome;
+  return true;
+ },
+ settleDreamCombat(){
+  if(!this.q.dreamCombat||!complete(this.q,this.s))return false;
+  const id=this.q.id;this.s.phase='after';this.attackTarget=null;this.target=null;this.waypoints=[];this.autoInteract=null;
+  this.completeQuest();if(this.q.id===id){this.failCombatProgress('incomplete-roster');return false;}return true;
  },
  canCompleteCombat(){return complete(this.q,this.s);},
  resetCombatAttempt(){

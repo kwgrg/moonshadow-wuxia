@@ -4,6 +4,10 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_evil_final_room:{name:'悲魔山庄静养卧房',area:'窗前与床侧',art:'beimo-hero-room',weather:'辰时 · 一窗清光',poem:'归来灯犹在，旧事入深帘',shop:false,obstacles:[],routeOnly:true},
+ r_evil_final_graves:{name:'庄外双冢',area:'山庄外静地',art:'leaf-memorial',weather:'酉时 · 草木无言',poem:'两冢留残照，归人独听风',shop:false,obstacles:[],routeOnly:true},
+ r_evil_family_shore:{name:'五年后海岸',area:'临海沙地',art:'evil-family-shore',weather:'辰时 · 海风晴和',poem:'海风吹旧事，童语唤归人',shop:false,obstacles:[],routeOnly:true},
+ r_evil_father_peak:{name:'凌绝峰父墓',area:'峰顶故地',art:'cliff',weather:'卯时 · 晨雾未散',poem:'千山风未改，孤影对旧碑',shop:false,obstacles:[],routeOnly:true},
  r_good_grief_pass:{name:'天山归途',area:'离谷封路处',art:'forest-original',weather:'辰时 · 山风渐紧',poem:'谷口春声远，前路剑光寒',shop:false,obstacles:[],routeOnly:true},
  r_sakura_memorial:{name:'樱花谷墓园',area:'谷中静地',art:'sakura-memorial',weather:'辰时 · 花落无声',poem:'花落归寂土，风来忆故人',shop:false,obstacles:[],routeOnly:true},
  r_good_manor_infirmary:{name:'悲魔山庄静养客房',area:'园中西侧客房',art:'leaf-infirmary',weather:'辰时 · 窗前清光',poem:'药香留帘内，归人待春风',shop:false,obstacles:[],routeOnly:true},
@@ -166,6 +170,12 @@ const GOOD_TOWER_PAIRS=new Set([...GOOD_TOWER_ROUTES,...GOOD_RESCUE_TOWER_ROUTE]
 const GOOD_TOWER_CORRIDOR=new Set([...Array.from({length:8},(_,i)=>'m'+(62+i)),'r_good_desert','m54','r_good_feilong_approach','r_good_dunhuang_passage','r_good_dunhuang_approach']);
 const SIDE_ROUTES=[['m10','m72','a11'],['m72','m74','a11'],['m18','m73','a22'],['m7','m75','a07']];
 
+// The last manor visit has two actual doors. Graves and both epilogues are
+// scripted transfers; the dream is a camera and is deliberately not a map.
+const EVIL_FINAL_ROUTES=[['r_evil_final_room','m49'],['r_evil_final_room','m50']];
+const EVIL_FINAL_MAPS=new Set(['r_evil_final_room','r_evil_final_graves','r_evil_family_shore','r_evil_father_peak']);
+const EVIL_FINAL_QUESTS=new Set(['e14_report','e14','e14_recovery','e14_letter','e14_poison','e14_mercy','e14_family','e14_zhen_fall','e14_antidote','e14_mei_fall','e14_burial','e14_sleep','e14_dream','e14_father']);
+
 function matches(when,state){
  if(!when)return true;
  if(when.route&&(state.flags?.route||'good')!==when.route)return false;
@@ -176,6 +186,7 @@ function matches(when,state){
 }
 function inferredPairAllowed(before,next,route){
  return before.map!==next.map&&
+  !EVIL_FINAL_MAPS.has(before.map)&&!EVIL_FINAL_MAPS.has(next.map)&&
   !((GOOD_MEDICINE_ROOMS.includes(before.map)||GOOD_MEDICINE_ROOMS.includes(next.map))&&before.map!=='m50'&&next.map!=='m50')&&
   !((before.map==='r_leaf_memorial'||next.map==='r_leaf_memorial')&&before.map!=='m51'&&next.map!=='m51')&&
   !((before.map==='r_beimo_rose_room'||next.map==='r_beimo_rose_room')&&before.map!=='m49'&&next.map!=='m49')&&
@@ -529,9 +540,44 @@ export function routeEdges(state={},quests=[]){
    if(!revenge&&key===pairKey('r_hanbo_return','r_good_yitian'))Object.assign(edge,{locked:true,reason:'先回小筑查访，并为故人办完后事，再赴摘星楼。'});
   }
  }
+ // Returning from the eighth switch to the fifth-floor cell still uses each
+ // actual stair. A consecutive quest map change is not a three-floor exit.
+ if(flags.route==='evil'&&current==='e13'){
+  for(const [from,to] of GOOD_TOWER_ROUTES)edges.set(pairKey(from,to),{from,to,locked:false,inferred:true,design:'authored-evil-rescue-stairs'});
+  for(const edge of edges.values())if(/^m6[2-9]$/.test(edge.from)&&/^m6[2-9]$/.test(edge.to)&&Math.abs(Number(edge.from.slice(1))-Number(edge.to.slice(1)))>1)Object.assign(edge,{locked:true,reason:'回第五层须逐层沿楼梯下行。',design:'evil-rescue-stair-boundary'});
+ }
+ // R18 keeps both exits of the new room under the current scene's earned
+ // action. Earlier manor aliases never become an alternative entry or exit.
+ if(flags.route==='evil'&&EVIL_FINAL_QUESTS.has(current)){
+  const legacy=flags.evilFinalLegacyGate||flags.evilFinalLegacyRescued||flags.evilFinalLegacyBattleWon;
+  const returning=legacy&&!EVIL_FINAL_MAPS.has(state.map)&&state.map!=='m49'&&!(current==='e14_letter'&&state.map==='m50');
+  if(returning){
+   // Before R18, e13 -> e14 was a direct authored tower/manor link. Keep that
+   // historical doorway for recovery, then orient old edges toward the manor.
+   edges.set(pairKey('m66','m49'),{from:'m66',to:'m49',locked:false,inferred:true,design:'legacy-evil-final-return'});
+   const old=[...edges.values()].filter(e=>!EVIL_FINAL_MAPS.has(e.from)&&!EVIL_FINAL_MAPS.has(e.to));
+   const depth=new Map([['m49',0]]),queue=['m49'];
+   for(let i=0;i<queue.length;i++)for(const edge of old){const next=edge.from===queue[i]?edge.to:edge.to===queue[i]?edge.from:null;if(next&&!depth.has(next)){depth.set(next,depth.get(queue[i])+1);queue.push(next);}}
+   for(const edge of old){
+    const a=depth.get(edge.from),b=depth.get(edge.to);if(a===undefined||b===undefined)continue;
+    Object.assign(edge,{locked:false,lockedFrom:[edge.from,edge.to].filter(id=>depth.get(id)<=depth.get(id===edge.from?edge.to:edge.from)),departureReason:'沿归庄方向返回，旧日行程已经结束。',design:'legacy-evil-final-return'});
+   }
+  }
+  for(const edge of edges.values())for(const inside of ['m49','m50',...EVIL_FINAL_MAPS]){
+   if(returning&&inside==='m50')continue;
+   if(edge.from===inside||edge.to===inside)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'先完成当前的交谈，再从相应房门继续。'});
+  }
+  const gateReady=current==='e14'&&(flags.evilFinalReported||flags.evilFinalLegacyGate);
+  const roomReady=(current==='e14_recovery'&&(flags.evilFinalBattleWon||flags.evilFinalLegacyBattleWon))||(current==='e14_report'&&flags.evilFinalLegacyRescued);
+  const gardenReady=current==='e14_letter'&&flags.evilFinalRecovered;
+  for(const [from,to] of EVIL_FINAL_ROUTES){
+   const outward=to==='m49'?gateReady:gardenReady,inward=to==='m49'?roomReady:false;
+   edges.set(pairKey(from,to),{from,to,locked:false,lockedFrom:[...(!outward?[from]:[]),...(!inward?[to]:[])],departureReason:to==='m49'?'先办完房内的事，再前往庄门；来敌未退，暂不能回房。':'先过完三月静养，再到园中与侍女相谈。',inferred:true,design:'authored-evil-final'});
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
- if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
+ if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if((edge.from==='m57'||edge.to==='m57')&&edge.design!=='legacy-evil-final-return')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
  return [...edges.values()];
 }
 
@@ -544,7 +590,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE,...GOOD_TOWER_ROUTES,...GOOD_VALLEY_ROUTES,...GOOD_MEDICINE_ROUTES,...GOOD_GRIEF_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE,...GOOD_TOWER_ROUTES,...GOOD_VALLEY_ROUTES,...GOOD_MEDICINE_ROUTES,...GOOD_GRIEF_ROUTES,...EVIL_FINAL_ROUTES,['m66','m49']])add(a,b);
   addPossibleItineraryEdges(quests,add);
   cached={signature,byMap};neighborCache.set(quests,cached);
  }

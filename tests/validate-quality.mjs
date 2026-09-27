@@ -102,7 +102,11 @@ lever.s.quest=QUESTS.findIndex(q=>q.id==='eSwitch6');lever.s.map=lever.q.map;lev
 assert.equal(lever.choose(lever.puzzleCorrect(0)?0:1),true);assert.equal(lever.s.flags.switch6,true);assert.equal(lever.q.id,'eTower7');
 const rescue=new GameEngine();rescue.s.quest=QUESTS.findIndex(q=>q.id==='e13');rescue.s.map=rescue.q.map;rescue.s.flags.route='evil';
 rescue.completeQuest();assert.equal(rescue.q.id,'e13','八层机关未全开不能救人');
-for(let i=1;i<=8;i++)rescue.s.flags['switch'+i]=true;rescue.completeQuest();assert.equal(rescue.q.id,'e14');
+for(let i=1;i<=8;i++)rescue.s.flags['switch'+i]=true;
+rescue.completeQuest();assert.equal(rescue.q.id,'e13','机关齐全仍需实际开门接人');
+rescue.onEvent=type=>{if(type==='stagingDialogue')rescue.advanceStaging();};rescue.beginObjective();
+for(let ticks=0;ticks<5000&&rescue.q.id==='e13';ticks++)rescue.tick(.05);
+assert.equal(rescue.q.id,'e14_report');assert.equal(rescue.s.flags.evilFinalRescued,true);assert.equal(rescue.s.map,'r_evil_final_room','救出后直接回房照料，不能跳到庄门战');
 
 // Imported pre-expansion saves retain quest identity after insertion changes numeric indices.
 const {LEGACY_QUEST_IDS}=await import('../public/campaign.mjs');

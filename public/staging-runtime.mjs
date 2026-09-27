@@ -21,6 +21,17 @@ function restoreCues(raw,definition,state,index){
  for(const step of definition.steps.slice(0,index))if(stepMatches(step,state)&&step.type==='cue'&&raw?.[step.key]===step.value)cues[step.key]=step.value;
  return cues;
 }
+function restoredHeroPose(raw,definition,state){
+ let pose='stand';
+ for(const step of definition.steps.slice(0,raw.step)){
+  if(!stepMatches(step,state))continue;
+  if(step.type==='scene')pose='stand';
+  if(step.type==='pose'&&step.actor==='hero'&&poses.has(step.pose))pose=step.pose;
+ }
+ const current=definition.steps[raw.step];
+ if(raw.elapsed>0&&current?.type==='pose'&&current.actor==='hero'&&stepMatches(current,state)&&poses.has(current.pose))pose=current.pose;
+ return pose;
+}
 export function hasStagingBranch(quest,state){if(!quest.exclusiveFlags)return true;const count=quest.exclusiveFlags.filter(key=>state.flags[key]).length;return count===1||(count===0&&state.flags[quest.exclusiveLegacyFlag]===true);}
 export function restoreStaging(raw,quest,state){
  const definition=STAGED_QUESTS[quest.id];
@@ -36,7 +47,7 @@ export function restoreStaging(raw,quest,state){
  const origin=raw.origin?.map===state.map&&Number.isFinite(raw.origin.x)&&Number.isFinite(raw.origin.y)?{map:state.map,x:raw.origin.x,y:raw.origin.y,direction:raw.origin.direction===-1?-1:1}:null;
  const needsOrigin=sceneKey&&(definition.returnToOrigin||definition.steps.some(step=>step.type==='scene'&&step.hero?.restore));
  if(needsOrigin){if(!origin)return null;const real=getScene(state.map,MAPS[state.map]),[left,top,right,bottom]=real.bounds;if(origin.x<left||origin.x>right||origin.y<top||origin.y>bottom||real.obstacles.some(r=>origin.x>r[0]-8&&origin.x<r[2]+8&&origin.y>r[1]-8&&origin.y<r[3]+8))return null;}
- return {questId:quest.id,step,sceneKey,origin,cues:restoreCues(raw.cues,definition,state,step),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:['kneel','sit'].includes(raw.heroPose)?raw.heroPose:'stand',focus:typeof raw.focus==='string'?raw.focus:'hero'};
+ return {questId:quest.id,step,sceneKey,origin,cues:restoreCues(raw.cues,definition,state,step),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:restoredHeroPose({...raw,step},definition,state),focus:typeof raw.focus==='string'?raw.focus:'hero'};
 }
 export const stagingMethods={
  stagingDefinition(){return this.s.map===this.q.map?STAGED_QUESTS[this.q.id]:null;},

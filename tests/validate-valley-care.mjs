@@ -129,7 +129,7 @@ if(!migrationOnly&&!legacyFlowOnly){
 // Old narrated history has an explicit label; migration never pretends the new
 // scenes were played, invents an answer, refunds a score or pays a new reward.
 const oldTables=[campaign.LEGACY_QUEST_IDS,campaign.REVISION_TWO_QUEST_IDS,campaign.REVISION_THREE_QUEST_IDS,campaign.REVISION_FOUR_QUEST_IDS,campaign.REVISION_FIVE_QUEST_IDS,campaign.REVISION_SIX_QUEST_IDS,campaign.REVISION_SEVEN_QUEST_IDS,campaign.REVISION_EIGHT_QUEST_IDS,campaign.REVISION_NINE_QUEST_IDS];
-assert.equal(freshState().campaignRevision,17);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
+assert.equal(freshState().campaignRevision,18);assert.ok(Array.isArray(oldTables[8]));assert.ok(!oldTables[8].includes('g06_confide'));
 function legacy(id,revision,numeric,{answer,phase='talk',done=[],away=false,flags={}}={}){
  const raw=snapshot(create(id));raw.campaignRevision=revision;raw.quest=oldTables[revision-1].indexOf(id);assert.ok(raw.quest>=0);if(numeric)delete raw.questId;
  raw.map=['g06','g07'].includes(id)?'m51':QUESTS[index(id)].map;raw.hero.x=760;raw.hero.y=650;raw.phase=phase;raw.visited=[raw.map];raw.done=[...done];raw.claimedRewards=[...done];raw.flags={route:'good',evil:11,moral:-6,companion:'纳兰真',...flags};

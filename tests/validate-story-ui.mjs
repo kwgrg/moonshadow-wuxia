@@ -36,7 +36,15 @@ const ui=await new AsyncFunction(...names,source)(...values);
 
 
 let checks = 0;
-function preset(id){
+async function finishSceneLoad(){
+  // Real animation frames yield to image onload promises before input resumes.
+  for(let n=0;ui.engine.sceneLoading&&n<20;n++)await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(ui.engine.sceneLoading,false,'scene load must settle before fixture interaction');
+  assert.equal(ui.engine.sceneLoadFailed,false,'ordinary fixtures must not suppress a load failure');
+}
+await finishSceneLoad();
+async function preset(id){
+  await finishSceneLoad();
   if(nodes.get('panel').open) ui.closePanel();
   ui.engine.s = core.freshState();
   ui.engine.s.quest = core.QUESTS.findIndex(q => q.id === id);
@@ -83,12 +91,12 @@ function clickOption(index){
 }
 
 // Acceptance enters the complete cult route; refusals do not share its dialogue.
-preset('g15');ui.engine.s.phase='choice';
+await preset('g15');ui.engine.s.phase='choice';
 const rejectionLines=ui.engine.q.choice.options[1].after.map(line=>line[1]);
 ui.showChoice();const accepted=clickOption(0);
 assert.equal(ui.engine.s.ending,null);assert.equal(ui.engine.q.id,'gCult_wudang');assert.equal(ui.engine.s.flags.cultPath,true);
 assert.ok(accepted.length>0);for(const text of rejectionLines)assert.ok(!accepted.includes(text));checks++;
-preset('g15');ui.engine.s.phase='choice';ui.showChoice();
+await preset('g15');ui.engine.s.phase='choice';ui.showChoice();
 for(let refusal=1;refusal<=3;refusal++){
  const lines=clickOption(1);assert.equal(ui.engine.s.flags.refusal_g15,refusal);assert.equal(ui.engine.s.ending,null);
  if(refusal<3){assert.equal(ui.engine.q.id,'g15');assert.equal(ui.engine.s.flags.moral,0);for(const text of rejectionLines)assert.ok(!lines.includes(text),'cannot announce leaving before the final refusal');}
@@ -98,7 +106,7 @@ assert.ok(!ui.engine.s.flags.cultPath);checks++;
 
 // Neither trap choice may announce the outcome before the player fights.
 for(const index of [0,1]){
-  preset('b04');
+  await preset('b04');
   const resultLines=ui.engine.q.after.map(line=>line[1]);
   talkToCurrent();
   assert.equal(ui.engine.s.phase,'choice');
@@ -125,7 +133,7 @@ for(const index of [0,1]){
 
 // The invitation precedes the infiltration. The book revelation belongs to discovery.
 for(const index of [0,1]){
-  preset('a49');
+  await preset('a49');
   const invitation=talkToCurrent();
   assert.equal(ui.engine.s.phase,'choice');
   assert.ok(!invitation.some(text=>/武道德经|禁地深处听见|听见了交谈声/.test(text)),
@@ -231,12 +239,12 @@ for(const mode of ['new-ledger','loaded-old-state','live-old-state']){
 }
 // Regression from actual browser QA: the third bout must persist the choice,
 // not leave a battle save that forces all three bouts to replay on reload.
-preset('e02');resolveDuel(ui.engine);
+await preset('e02');resolveDuel(ui.engine);
 const weddingSave=JSON.parse(local.get('moonshadow-journey-v3'));
 assert.equal(weddingSave.phase,'choice');assert.equal(weddingSave.questId,'e02');assert.equal(nodes.get('speaker-name').textContent,'纳兰真');assert.equal(core.restoreState(weddingSave).phase,'choice');assert.equal(ui.engine.scene.atmosphere.light,'night');checks++;
 // Recruitment options must repeat without showing the accepted-route aftermath.
 for(const [id,limit] of [['e05',3],['e07',2]]){
- preset(id);if(id==='e07')Object.assign(ui.engine.s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});resolveDuel(ui.engine);ui.showChoice();
+ await preset(id);if(id==='e07')Object.assign(ui.engine.s.flags,{evilZhenMissing:true,evilGateOpened:true,staged_e07:true});resolveDuel(ui.engine);ui.showChoice();
  const initialCoins=ui.engine.s.coins;
  for(let refusal=1;refusal<=limit;refusal++){
   const seen=clickOption(1);
@@ -254,13 +262,13 @@ for(const [id,limit] of [['e05',3],['e07',2]]){
  checks++;
 }
 // Answers must persist even when the player reloads before consequence text finishes.
-preset('e05');resolveDuel(ui.engine);ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
+await preset('e05');resolveDuel(ui.engine);ui.engine.s.flags.refusal_e05=2;ui.showChoice();nodes.get('choices').children[1].click();
 assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('dialogue-next').hidden,false);
 const interruptedAnswer=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(interruptedAnswer.phase,'failed');assert.equal(interruptedAnswer.flags.refusal_e05,3);assert.equal(core.restoreState(interruptedAnswer).hero.hp,0);drain();checks++;
 
 // An empty near-field action must not fall back to auto-walking toward a remote
 // marker, particularly next to a fallen actor after this route has ended.
-preset('gCult_epilogue');ui.engine.s.completed=true;ui.engine.s.ending='cult';ui.engine.s.phase='complete';
+await preset('gCult_epilogue');ui.engine.s.completed=true;ui.engine.s.ending='cult';ui.engine.s.phase='complete';
 ui.engine.s.flags.staged_gCult_zixuan=true;ui.engine.s.map='r_cult_dungeon';
 Object.assign(ui.engine.s.hero,{x:650,y:610});ui.updateUi();
 assert.equal(nodes.get('interaction').hidden,true);
@@ -270,7 +278,7 @@ nodes.get('mobile-talk').click();assert.equal(ui.engine.target,null);assert.equa
 assert.equal(nodes.get('dialogue').hidden,true);assert.equal(nodes.get('panel').open,false);checks++;
 
 // Loading a different pursuit must discard the previous actor route and auto-follow.
-preset('e07_first');ui.engine.s.flags.route='evil';ui.engine.s.flags.evilTrailEntry=true;ui.engine.beginObjective();ui.engine.followPursuit();for(let i=0;i<20;i++)ui.engine.tick(.05);
+await preset('e07_first');ui.engine.s.flags.route='evil';ui.engine.s.flags.evilTrailEntry=true;ui.engine.beginObjective();ui.engine.followPursuit();for(let i=0;i<20;i++)ui.engine.tick(.05);
 const savedTrail=JSON.parse(JSON.stringify({...ui.engine.s,questId:ui.engine.q.id}));
 ui.engine._pursuitPath=[{x:1400,y:350}];ui.engine._pursuitFollow=true;
 ui.loadState(savedTrail);assert.equal(ui.engine._pursuitPath,null);assert.equal(ui.engine._pursuitFollow,false);assert.equal(ui.engine.s.pursuit.actor.x,savedTrail.pursuit.actor.x);
@@ -298,8 +306,8 @@ assert.equal(npcCellFor('孟知秋'),3,'Meng uses the same elder atlas cell as h
 
 // Reusing the faction engine must not leak the former battle's title into the
 // island HUD. Check the actual UI text and its live enemy count after a defeat.
-preset('e08_island_battle');ui.engine.s.flags.evilTowerInterludeComplete=true;ui.engine.s.flags.staged_e08_island_battle=true;
-ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;ui.engine.startSkirmish();ui.updateUi();
+await preset('e08_island_battle');ui.engine.s.flags.evilTowerInterludeComplete=true;ui.engine.s.flags.staged_e08_island_battle=true;
+await finishSceneLoad();ui.engine.startSkirmish();ui.updateUi();
 assert.match(nodes.get('quest-description').textContent,/村中解围.*0 \/ 36/);
 assert.doesNotMatch(nodes.get('quest-description').textContent,/武当/);
 ui.engine.s.enemies[0].hp=0;ui.engine.markSkirmishDefeat(ui.engine.s.enemies[0]);ui.updateUi();
@@ -307,7 +315,7 @@ assert.match(nodes.get('quest-description').textContent,/村中解围.*1 \/ 36/)
 
 // A cleared manor uses the hero's inspection prompt, not a conversation with
 // the now-defeated leader. Drive the actual skirmish outcome before updating UI.
-preset('g14_manor_battle');Object.assign(ui.engine.s.flags,{valleyManorReported:true,staged_g14_manor_battle:true});
+await preset('g14_manor_battle');Object.assign(ui.engine.s.flags,{valleyManorReported:true,staged_g14_manor_battle:true});
 ui.engine.startSkirmish();for(const enemy of ui.engine.s.enemies){enemy.hp=0;ui.engine.markSkirmishDefeat(enemy);}ui.engine.checkSkirmishOutcome();assert.equal(ui.engine.s.phase,'after');ui.updateUi();
 assert.match(nodes.get('quest-description').textContent,/检视院中.*落叶谷/);assert.doesNotMatch(nodes.get('quest-description').textContent,/与丁戈交谈/);
 assert.equal(ui.engine.npc.name,'检视山庄');assert.equal(ui.engine.npc.sprite,null);checks++;
@@ -315,7 +323,7 @@ assert.equal(ui.engine.npc.name,'检视山庄');assert.equal(ui.engine.npc.sprit
 // Manor answers have no deferred aftermath text: both must be saved at the
 // click, before any doorway travel or consequence animation can begin.
 for(const answer of [0,1]){
- preset('e09');ui.engine.s.phase='choice';Object.assign(ui.engine.s.flags,{evilManorFirstWoke:true,evilManorNightStarted:true,staged_e09:true,evil:9});ui.engine.s.affection.mei=4;
+ await preset('e09');ui.engine.s.phase='choice';Object.assign(ui.engine.s.flags,{evilManorFirstWoke:true,evilManorNightStarted:true,staged_e09:true,evil:9});ui.engine.s.affection.mei=4;
  const money=ui.engine.s.coins,xp=ui.engine.s.hero.exp;ui.showChoice();nodes.get('choices').children[answer].click();
  const raw=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(raw.questId,answer===0?'e09_room_talk':'e09_part');assert.equal(raw.choices.e09,answer);
  assert.equal(raw.flags.evil,9+(answer===0?2:-1));assert.equal(raw.affection.mei,4+(answer===0?1:0));assert.equal(raw.coins,money);assert.equal(raw.hero.exp,xp);
@@ -323,14 +331,14 @@ for(const answer of [0,1]){
 }
 // The real residentDialogue UI finishes without invoking the current teaching
 // objective, issuing rewards or making the resident follow the player.
-preset('e10_teaching');ui.engine.s.map='m50';ui.engine.s.phase='travel';Object.assign(ui.engine.s.flags,{evilManorNightStarted:true,evilManorNightComplete:true,evilMeiStaysAtManor:true,staged_e09_morning:true,companion:null});
+await preset('e10_teaching');ui.engine.s.map='m50';ui.engine.s.phase='travel';Object.assign(ui.engine.s.flags,{evilManorNightStarted:true,evilManorNightComplete:true,evilMeiStaysAtManor:true,staged_e09_morning:true,companion:null});
 const resident=ui.engine.markers.find(marker=>marker.name==='月眉儿');assert.ok(resident?.dialogue?.length);Object.assign(ui.engine.s.hero,{x:resident.x,y:resident.y});
 const beforeResident=JSON.stringify(ui.engine.s);assert.equal(ui.engine.interact(resident),true);assert.equal(nodes.get('dialogue').hidden,false);
 assert.deepEqual(drain(),resident.dialogue.map(line=>line[1]));assert.equal(JSON.stringify(ui.engine.s),beforeResident);assert.equal(ui.engine.paused,false);assert.equal(ui.engine.companion,null);checks++;
 
 // The actual UI saves ordinary defeat, and closing/reloading cannot retry it.
-preset('a06');ui.engine.startBattle();const paidEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(paidEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.cast(0);const onceCoins=ui.engine.s.coins;ui.engine.s.hero.hp=1;ui.engine.hurt(ui.engine.s.enemies[1],1);ui.engine.tick(.01);
-const ordinaryFailure=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(ordinaryFailure.hero.hp,0);assert.equal(ordinaryFailure.combatProgress.failed,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('close-panel').click();assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);let prevented=false;for(const fn of nodes.get('panel').listeners.cancel||[])fn({preventDefault(){prevented=true}});assert.equal(prevented,true);ui.loadState(ordinaryFailure);assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('retry-battle').click();assert.equal(ui.engine.s.hero.hp,ui.engine.s.hero.maxHp);assert.equal(ui.engine.s.phase,'battle');assert.equal(ui.engine.paused,false);const retriedEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(retriedEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.s.cooldowns[0]=0;ui.engine.cast(0);assert.equal(ui.engine.s.coins,onceCoins);checks++;
+await preset('a06');ui.engine.startBattle();const paidEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(paidEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.cast(0);const onceCoins=ui.engine.s.coins;ui.engine.s.hero.hp=1;ui.engine.hurt(ui.engine.s.enemies[1],1);ui.engine.tick(.01);
+const ordinaryFailure=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(ordinaryFailure.hero.hp,0);assert.equal(ordinaryFailure.combatProgress.failed,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('close-panel').click();assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);let prevented=false;for(const fn of nodes.get('panel').listeners.cancel||[])fn({preventDefault(){prevented=true}});assert.equal(prevented,true);ui.loadState(ordinaryFailure);await finishSceneLoad();assert.equal(ui.engine.s.hero.hp,0);assert.equal(ui.engine.paused,true);assert.ok(nodes.get('panel-content').innerHTML.includes('再战'));nodes.get('retry-battle').click();assert.equal(ui.engine.s.hero.hp,ui.engine.s.hero.maxHp);assert.equal(ui.engine.s.phase,'battle');assert.equal(ui.engine.paused,false);const retriedEnemy=ui.engine.s.enemies[0];for(const e of ui.engine.s.enemies)Object.assign(e,{x:1300,y:850});Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(retriedEnemy,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});ui.engine.s.cooldowns[0]=0;ui.engine.cast(0);assert.equal(ui.engine.s.coins,onceCoins);checks++;
 console.log(JSON.stringify({result:'PASS',checks,
   covered:['山庄清场后检视提示不复生丁戈','山庄两答复立即保存与留庄闲谈无副作用','岛战进度使用当前战名与实际清敌计数','手动与导入梦境存档的图片失败锁定及重试','终局与拒绝对白分流','招揽计数、剧情死亡保存与返回末次答复','捕兽夹两种选择的战前战后顺序','潜入邀请先于线索发现','旧新存档槽标题与读取一致','错杆重拨不重复奖励，包括旧存档'],
   note:'UI functions run in a DOM stub; this guards narrative state transitions and does not replace visual browser QA.'
@@ -339,20 +347,20 @@ console.log(JSON.stringify({result:'PASS',checks,
 
 // First conversation is an actual actor interaction; storage commits before dialogue.
 for(const answer of [0,1]){
- preset('g23');ui.engine.s.flags.goodMedicineFarewellReady=true;nodes.get('track-button').click();assert.equal(ui.engine.s.choices.g23,undefined,'tracking never chooses a person for the player');assert.equal(ui.engine.autoInteract,null);const actor=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);assert.ok(actor);
+ await preset('g23');ui.engine.s.flags.goodMedicineFarewellReady=true;nodes.get('track-button').click();assert.equal(ui.engine.s.choices.g23,undefined,'tracking never chooses a person for the player');assert.equal(ui.engine.autoInteract,null);const actor=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);assert.ok(actor);
  Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(actor.x-15,actor.y+10));assert.equal(ui.engine.interact(actor),true);assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('choices').children.length,0,'no first-person selection menu');
  const saved=[...local.values()].map(value=>{try{return JSON.parse(value)}catch{return null}}).find(s=>s?.questId==='g23');assert.ok(saved);assert.equal(saved.choices.g23,answer,'selected person saved before first result line');assert.equal(saved.done.includes('g23'),false);assert.equal(ui.engine.q.id,'g23');
- ui.loadState(saved);nodes.get('dialogue').hidden=true;ui.engine.paused=false;const resumed=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);const other=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index!==answer);assert.equal(other.interactive,false);Object.assign(ui.engine.s.hero,resumed);ui.engine.interact(resumed);drain();assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);checks++;
+ ui.loadState(saved);await finishSceneLoad();nodes.get('dialogue').hidden=true;ui.engine.paused=false;const resumed=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);const other=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index!==answer);assert.equal(other.interactive,false);Object.assign(ui.engine.s.hero,resumed);ui.engine.interact(resumed);drain();assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);checks++;
 }
 console.log(JSON.stringify({firstMeetingUI:'PASS',cases:2,scope:'production journey with DOM stub: actor click, save before lines, reload resume; not browser visual verification'}));
 
 // Use the real visibility predicate with the actual canvas pointer handler.
 // A surviving guard occupying the after-battle marker must not intercept it.
 function pointerAt(point){for(const handler of nodes.get('world').listeners.pointerdown||[])handler({offsetX:point.x,offsetY:point.y,ctrlKey:false,altKey:false});}
-preset('gBad2');Object.assign(ui.engine.s.flags,{forsake:true,goodRoseBuried:true,staged_gBad2:true});
+await preset('gBad2');Object.assign(ui.engine.s.flags,{forsake:true,goodRoseBuried:true,staged_gBad2:true});
 for(const flag of ui.engine.q.requiredFlags||[])ui.engine.s.flags[flag]=true;
 for(const group of ui.engine.q.requiredAnyFlags||[])ui.engine.s.flags[group[0]]=true;
-ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;ui.engine.startBattle();
+await finishSceneLoad();ui.engine.startBattle();
 assert.equal(ui.engine.s.phase,'battle');assert.equal(ui.engine.s.enemies.length,45);
 const finalBoss=ui.engine.s.enemies.find(enemy=>enemy.boss),survivingGuard=ui.engine.s.enemies.find(enemy=>!enemy.boss);
 const afterPoint={x:ui.engine.q.x??ui.engine.scene.objective.x,y:ui.engine.q.y??ui.engine.scene.objective.y,...ui.engine.q.afterMarker};
@@ -375,7 +383,7 @@ for(const [id,prepare] of [
  ['g16',game=>{game.s.flags.goodRescueHallCleared=true;game.ensureRescueEncounter();}],
  ['e08_island_battle',game=>{Object.assign(game.s.flags,{evilTowerInterludeComplete:true,staged_e08_island_battle:true});game.startSkirmish();}],
 ]){
- preset(id);ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;prepare(ui.engine);assert.equal(ui.engine.s.phase,'battle');
+ await preset(id);await finishSceneLoad();prepare(ui.engine);assert.equal(ui.engine.s.phase,'battle');
  const enemy=ui.engine.s.enemies.find(unit=>unit.hp>0);assert.ok(enemy,id+' has an active target');
  pointerAt(enemy);assert.equal(ui.engine.attackTarget,enemy,id+' visible enemy still receives pointer targeting');
 }

@@ -37,7 +37,7 @@ const tables=[campaign.LEGACY_QUEST_IDS,...['TWO','THREE','FOUR','FIVE','SIX','S
 function old(revision,id,extra={}){const g=make(id),raw=snap(g);raw.campaignRevision=revision;raw.quest=tables[revision-1].indexOf(id);delete raw.questId;assert.ok(raw.quest>=0);raw.coins=321;raw.hero.exp=83;raw.inventory={wood_box:1};raw.flags={route:'good',companion:'蔷薇'};Object.assign(raw,extra);return raw;}
 for(let revision=1;revision<=15;revision++){
  for(const id of ['g21','g22','g23','g24']){
-  const raw=old(revision,id),prior=resources(raw),r=new GameEngine(restoreState(raw));assert.equal(r.q.id,id==='g22'?'g21_return':id==='g24'?'g23':id);assert.deepEqual(resources(r.s),prior);assert.equal(r.s.campaignRevision,17);if(id==='g24'){assert.equal(r.s.flags.goodMedicineLegacyUnknownFirstMeeting,true);assert.equal(r.s.ending,null);}legacyCases++;
+  const raw=old(revision,id),prior=resources(raw),r=new GameEngine(restoreState(raw));assert.equal(r.q.id,id==='g22'?'g21_return':id==='g24'?'g23':id);assert.deepEqual(resources(r.s),prior);assert.equal(r.s.campaignRevision,18);if(id==='g24'){assert.equal(r.s.flags.goodMedicineLegacyUnknownFirstMeeting,true);assert.equal(r.s.ending,null);}legacyCases++;
  }
  for(const answer of [0,1]){
   const raw=old(revision,'g24',{choices:{g23:answer},done:['g23'],claimedRewards:['g23']});raw.flags.firstWoman=answer?'zi':'mei';const r=new GameEngine(restoreState(raw));assert.equal(r.q.id,'g24');assert.equal(r.s.flags.firstWoman,answer?'mei':'zi');assert.equal(r.s.flags.goodFirstZi,answer===0);assert.deepEqual(resources(r.s),resources(raw));assert.ok(!r.s.done.includes('g23_pickup'));assert.ok(!r.s.flags.goodMedicineReunited);legacyCases++;
