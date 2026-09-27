@@ -61,9 +61,10 @@ for(const id of ['g19_burial','g20','g20_return1','g20_call2','g20_return2','g20
  for(const map of valleyIds)for(const outside of ['m49','m23','m52','m16','m69']){assert.deepEqual(shortestRoute(map,outside,s,QUESTS),[],id+' cannot leave before night outcome');routeChecks++;}
  for(const map of valleyIds)assert.ok(shortestRoute(map,'m51',s,QUESTS).length,'sealed valley still allows room/memorial return');
 }
-for(const [id,flags] of [['g21',{goodRoseNightComplete:true}],['gBad1',{goodRoseBuried:true,forsake:true}],['gBad1',{goodTowerValleyLegacy:true,forsake:true}]]){
+for(const [id,flags] of [['g21',{goodRoseNightComplete:true}],['gBad1',{goodRoseBuried:true,goodGriefRoadCleared:true,forsake:true}],['gBad1',{goodTowerValleyLegacy:true,goodGriefLegacyNews:true,forsake:true}]]){
  const s=state(id,{goodTowerHomecoming:true,...flags});for(const from of valleyIds){assert.ok(shortestRoute(from,'m49',s,QUESTS).length,'resolved/legacy chapter can leave the valley');routeChecks++;}
 }
+assert.deepEqual(shortestRoute('m51','m49',state('gBad_road',{goodTowerHomecoming:true,goodRoseBuried:true,forsake:true}),QUESTS),[],'bereavement alone cannot skip the new blockade');routeChecks++;
 for(const oldRoom of ['r_leaf_zhen_room','r_leaf_mei_room'])assert.deepEqual(shortestRoute(oldRoom,'m51',state('g20',{goodTowerHomecoming:true,valleyLegacyCare:true}),QUESTS),[oldRoom,'m51'],'historical side-room cursor is not stranded');
 const evil=state('eTower1',{route:'evil',goodTowerHomecoming:true,goodTowerRoseFreed:true});
 assert.ok(!routeEdges(evil,QUESTS).some(e=>e.design?.startsWith('authored-good-tower')||e.design==='authored-good-valley-night'),'opposite-route flags cannot enable good tower/valley edges');

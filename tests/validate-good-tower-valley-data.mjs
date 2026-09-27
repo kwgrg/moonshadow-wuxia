@@ -38,7 +38,7 @@ for(const visit of [0,1]){
  assert.equal(flags.forsake,true);assert.equal(dataNext('g20_call4',flags),'g20_cry');assert(!flags.goodRoseDead);
  Object.assign(flags,get('g20_cry').choice.options[visit].effects.flags);
  const death=dataNext('g20_cry',flags);assert.equal(death,visit===0?'g20_lastwords':'g20_founddead');assert(!flags.goodRoseDead);
- Object.assign(flags,get(death).rewards.flags);assert.equal(dataNext(death,flags),'g20_rose_burial');Object.assign(flags,get('g20_rose_burial').rewards.flags);assert.equal(dataNext('g20_rose_burial',flags),'gBad1');
+ Object.assign(flags,get(death).rewards.flags);assert.equal(dataNext(death,flags),'g20_rose_burial');Object.assign(flags,get('g20_rose_burial').rewards.flags);assert.equal(dataNext('g20_rose_burial',flags),'gBad_road');
 }
 let cases=0;
 function migrate(version,id,extra={},numeric=false){

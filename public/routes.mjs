@@ -4,6 +4,8 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_good_grief_pass:{name:'天山归途',area:'离谷封路处',art:'forest-original',weather:'辰时 · 山风渐紧',poem:'谷口春声远，前路剑光寒',shop:false,obstacles:[],routeOnly:true},
+ r_sakura_memorial:{name:'樱花谷墓园',area:'谷中静地',art:'sakura-memorial',weather:'辰时 · 花落无声',poem:'花落归寂土，风来忆故人',shop:false,obstacles:[],routeOnly:true},
  r_good_manor_infirmary:{name:'悲魔山庄静养客房',area:'园中西侧客房',art:'leaf-infirmary',weather:'辰时 · 窗前清光',poem:'药香留帘内，归人待春风',shop:false,obstacles:[],routeOnly:true},
  r_good_manor_zhen_room:{name:'悲魔山庄真儿客房',area:'园中东侧客房',art:'zhen-chamber',weather:'亥时 · 灯下相谈',poem:'窗前留旧语，门外月光深',shop:false,obstacles:[],routeOnly:true},
  r_leaf_memorial:{name:'落叶谷墓区',area:'谷中静地',art:'leaf-memorial',weather:'酉时 · 山风拂草',poem:'落叶知归处，故人长相念',shop:false,obstacles:[],routeOnly:true},
@@ -149,6 +151,9 @@ const GOOD_RESCUE_QUESTS=new Set(['g15_escape','g16','g16_homecoming','g17','g17
 const GOOD_RESCUE_DEPARTURE=[['r_hanbo_return','r_good_hanbo_road'],['r_good_hanbo_road','m41'],['m41','m49']];
 const GOOD_RESCUE_TOWER_ROUTE=[['m49','r_good_dunhuang_approach'],['r_good_dunhuang_approach','r_good_dunhuang_passage'],['r_good_dunhuang_passage','r_good_feilong_approach'],['r_good_feilong_approach','m54'],['m54','r_good_desert'],['r_good_desert','m62']];
 const GOOD_RESCUE_TOWER_PAIRS=new Set(GOOD_RESCUE_TOWER_ROUTE.map(([a,b])=>pairKey(a,b)));
+const GOOD_GRIEF_ROUTES=[["r_leaf_memorial","m51"],["m51","r_good_grief_pass"],["r_good_grief_pass","m49"],["m49","m41"],["m41","r_good_hanbo_road"],["r_good_hanbo_road","r_hanbo_return"],["r_hanbo_return","m16"],["m16","m17"],["m17","r_sakura_memorial"],["r_hanbo_return","r_good_yitian"],["r_good_yitian","m71"]];
+const GOOD_GRIEF_PAIRS=new Set(GOOD_GRIEF_ROUTES.map(([a,b])=>pairKey(a,b)));
+const GOOD_GRIEF_MAPS=new Set(GOOD_GRIEF_ROUTES.flat());
 const GOOD_MEDICINE_ROOMS=['r_good_manor_infirmary','r_good_manor_zhen_room'];
 const GOOD_MEDICINE_MANOR=new Set(['m49','m50',...GOOD_MEDICINE_ROOMS]);
 const GOOD_MEDICINE_ROUTES=[['m49','m50'],['m50','r_good_manor_infirmary'],['m50','r_good_manor_zhen_room'],['m49','m41'],['m41','r_good_hanbo_road'],['r_good_hanbo_road','m17'],['m17','m16'],['m49','m70']];
@@ -501,6 +506,29 @@ export function routeEdges(state={},quests=[]){
    if((current==='g21'&&(edge.from==='m23'||edge.to==='m23'))||(current==='g24_departure'&&(edge.from==='m34'||edge.to==='m34')))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),current==='g21'?'m23':'m34'])],departureReason:'先完成这里的交谈，再一同启程。'});
   }
  }
+ // R17 independently authored physical journey. Scripted hut/burial and island
+ // transfers are explicit quest transitions, never unlocked shortcut roads.
+ if(flags.route==='good'&&flags.forsake&&!flags.cultPath&&/^gBad/.test(current)){
+  const road=flags.goodGriefRoadCleared||flags.goodGriefLegacyNews;
+  const news=flags.goodGriefNewsTold||flags.goodGriefLegacyNews;
+  const revenge=flags.goodGriefBuried||flags.goodGriefLegacyRevenge;
+  // Old report/revenge saves could freely visit the hut. Permit their return
+  // without treating the newly authored investigation as completed.
+  const legacyHutExit=(current==='gBad1'&&flags.goodGriefLegacyNews)||(['gBad2','gBad2_aftermath'].includes(current)&&flags.goodGriefLegacyRevenge);
+  for(const [from,to] of GOOD_GRIEF_ROUTES)edges.set(pairKey(from,to),{from,to,locked:false,inferred:true,design:'authored-good-grief'});
+  for(const edge of edges.values()){
+   const key=pairKey(edge.from,edge.to);
+   for(const inside of [...GOOD_GRIEF_MAPS,...(current==='gBad2_departure'?['m34']:[])])if((edge.from===inside||edge.to===inside)&&!GOOD_GRIEF_PAIRS.has(key))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'循当前旅程的谷口、山路与楼前石阶前行。'});
+   for(const [id,ready,reason] of [
+    ['r_good_grief_pass',road,'归路被无忧教众封住，须先清除堵路之人。'],
+    ['m49',news,'先找到真儿，把蔷薇的消息亲口告诉她。'],
+    ['m16',!!flags.goodGriefHutFound||!!legacyHutExit,'屋里无人应声，先走近查明情况。'],
+    ['r_sakura_memorial',!!flags.goodGriefBuried,'先在墓前办妥故人的后事。'],
+    ['m71',false,'眼前的对峙与后事尚未结束。'],
+   ])if(!ready&&(edge.from===id||edge.to===id))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),id])],departureReason:reason});
+   if(!revenge&&key===pairKey('r_hanbo_return','r_good_yitian'))Object.assign(edge,{locked:true,reason:'先回小筑查访，并为故人办完后事，再赴摘星楼。'});
+  }
+ }
  // Future itinerary edges and historical saves must not provide a second way
  // into the evil-line chamber before the actual gate-opening transaction.
  if(state.flags?.route==='evil'&&!state.flags.evilGateOpened)for(const edge of edges.values())if(edge.from==='m57'||edge.to==='m57')Object.assign(edge,{locked:true,requiresFlag:'evilGateOpened',reason:'密门仍未开启，须先循着身影找到机关。'});
@@ -516,7 +544,7 @@ export function routeNeighbors(mapId,quests=[]){
  let cached=neighborCache.get(quests);
  if(!cached||cached.signature!==signature){
   const byMap=new Map(),add=(a,b)=>{if(!byMap.has(a))byMap.set(a,new Set());if(!byMap.has(b))byMap.set(b,new Set());byMap.get(a).add(b);byMap.get(b).add(a);};
-  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE,...GOOD_TOWER_ROUTES,...GOOD_VALLEY_ROUTES,...GOOD_MEDICINE_ROUTES])add(a,b);
+  for(const [a,b] of [...OPENING,...SIDE_ROUTES,...EVIL_ROUTES,...FORBIDDEN_ROUTES,...DOCK_ROUTES,...MANOR_ROUTES,...LEAF_ROUTES,...GOOD_RETURN_ROUTES,...HUT_RETURN_ROUTES,...VALLEY_DEFENSE_ROUTES,...GOOD_FORBIDDEN_ROUTES,...GOOD_RESCUE_ROUTES,...GOOD_RESCUE_DEPARTURE,...GOOD_RESCUE_TOWER_ROUTE,...GOOD_TOWER_ROUTES,...GOOD_VALLEY_ROUTES,...GOOD_MEDICINE_ROUTES,...GOOD_GRIEF_ROUTES])add(a,b);
   addPossibleItineraryEdges(quests,add);
   cached={signature,byMap};neighborCache.set(quests,cached);
  }

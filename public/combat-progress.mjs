@@ -18,13 +18,14 @@ function descriptor(q,s,key){
   if(!Number.isInteger(wave)||wave<0||wave>=(q.waves?.length||1))return null;
   const w=q.waves?.[wave];if(w)encounter={...q,...w,type:w.boss?'boss':'battle',boss:w.boss||null,scriptedLoss:!!w.scriptedLoss};
  }
+ if(q.legacyCombatCount&&s.flags?.[q.legacyCombatCount.flag])encounter={...encounter,count:q.legacyCombatCount.count};
  const tier=q.encounterTier??Math.max(1,Math.floor(QUESTS.findIndex(x=>x.id===q.id)/9)+1),count=encounter.count||3;
  return {key:entryKey(wave,index,master),wave,index,master,encounter,tier,count};
 }
 function declarations(q,s,key){
  const d=descriptor(q,s,key);if(!d)return null;
  const actors=q.training?[]:(STAGED_QUESTS[q.id]?.actors||[]).filter(actor=>actor.enemy);
- const units=Array.from({length:d.count},(_,id)=>{const boss=!!(d.encounter.type==='boss'||d.encounter.boss)&&id===d.count-1;return {id,boss,maxHp:d.encounter.scriptedLoss?8000:(boss?430:120)+d.tier*(boss?125:35),role:boss?'master':d.encounter.friendly?'sword':id%3===1?'ranged':id%3===2?'brute':'sword',sprite:d.encounter.enemySprite??(d.encounter.friendly?0:3),name:actors[id]?.name||(boss?(d.encounter.boss||q.npc||'首领'):(d.encounter.enemy||'敌方武人')),tier:d.tier};});
+ const units=Array.from({length:d.count},(_,id)=>{const boss=!!(d.encounter.type==='boss'||d.encounter.boss)&&id===d.count-1;return {id,boss,maxHp:d.encounter.scriptedLoss?8000:(boss?430:120)+d.tier*(boss?125:35),role:boss?'master':d.encounter.friendly?'sword':id%3===1?'ranged':id%3===2?'brute':'sword',sprite:d.encounter.enemySprite??(d.encounter.friendly?0:3),name:d.encounter.enemyNames?.[id]||actors[id]?.name||(boss?(d.encounter.boss||q.npc||'首领'):(d.encounter.enemy||'敌方武人')),tier:d.tier};});
  return {...d,units};
 }
 function zone(raw){
@@ -43,11 +44,16 @@ function roster(q,s,key,raw){
  return result;
 }
 const validIds=(ids,units)=>Array.isArray(ids)&&new Set(ids).size===ids.length&&ids.every(id=>Number.isInteger(id)&&units.some(e=>e.id===id));
+function victoryReached(encounter,units){
+ if(!Array.isArray(units)||!units.length)return false;
+ if(encounter.victoryTarget==='boss'){const targets=units.filter(unit=>unit.boss);return targets.length===1&&targets[0].hp===0;}
+ return units.every(unit=>unit.hp===0);
+}
 function validEntry(q,s,raw){
  const d=descriptor(q,s,raw?.key),units=roster(q,s,raw?.key,raw?.roster);if(!d||!units||!validIds(raw.defeatedIds,units))return null;
  const dead=units.filter(e=>e.hp===0).map(e=>e.id);if(dead.length!==raw.defeatedIds.length||dead.some(id=>!raw.defeatedIds.includes(id)))return null;
  const outcome=raw.outcome;if(!['active','victory','scripted-loss','failed'].includes(outcome))return null;
- if(outcome==='victory'&&(d.encounter.forcedOutcome==='defeat'||dead.length!==units.length||!finite(raw.heroHpAtOutcome,Number.MIN_VALUE,10000)))return null;
+ if(outcome==='victory'&&(d.encounter.forcedOutcome==='defeat'||!victoryReached(d.encounter,units)||!finite(raw.heroHpAtOutcome,Number.MIN_VALUE,10000)))return null;
  if(outcome==='scripted-loss'&&(!d.encounter.scriptedLoss||raw.heroHpAtOutcome!==0))return null;
  return {key:d.key,wave:d.wave,trainingIndex:d.index??null,master:d.master,roster:units,defeatedIds:[...raw.defeatedIds],outcome,heroHpAtOutcome:outcome==='active'?null:raw.heroHpAtOutcome??null};
 }
@@ -122,7 +128,7 @@ export function restoreCombatProgress(raw,q,s){
  if(units){
   p.activeKey=d.key;p.legacyPriorWaves=q.training?[]:Array.from({length:d.wave},(_,i)=>i);
   const defeatedIds=units.filter(e=>e.hp===0).map(e=>e.id);for(const id of defeatedIds){const key=q.id+'|'+d.key+'|enemy:'+id;if(!s.combatClaims.includes(key))s.combatClaims.push(key);}
-  p.encounters[d.key]={key:d.key,wave:d.wave,trainingIndex:d.index??null,master:d.master,roster:units,defeatedIds,outcome:units.every(e=>e.hp===0)&&d.encounter.forcedOutcome!=='defeat'&&raw.hero.hp>0?'victory':'active',heroHpAtOutcome:raw.hero.hp>0?raw.hero.hp:null};
+  p.encounters[d.key]={key:d.key,wave:d.wave,trainingIndex:d.index??null,master:d.master,roster:units,defeatedIds,outcome:victoryReached(d.encounter,units)&&d.encounter.forcedOutcome!=='defeat'&&raw.hero.hp>0?'victory':'active',heroHpAtOutcome:raw.hero.hp>0?raw.hero.hp:null};
   if(raw.hero.hp<=0){p.failed=true;p.failedReason='hero';s.hero.hp=0;p.encounters[d.key].outcome='failed';}
   repairPhase(q,s,p);s.cooldowns=SKILLS.map((skill,id)=>Math.max(0,Math.min(skill?.cooldown||0,Number(raw.cooldowns?.[id])||0)));return;
  }
@@ -130,6 +136,18 @@ export function restoreCombatProgress(raw,q,s){
  if(raw.hero.hp<=0){p.failed=true;p.failedReason='hero';s.hero.hp=0;repairPhase(q,s,p);}else{s.phase=s.map===q.map?(q.training?'training':'talk'):'travel';if(s.objectiveProgress?.questId===q.id)s.objectiveProgress.phase=q.training?'training':'talk';}
 }
 export const combatMethods={
+ combatVictoryReady(){const d=descriptor(this.q,this.s);return !!d&&victoryReached(d.encounter,this.s.enemies);},
+ combatSpawnPositions(count){
+  if(!this.q.distributedCombat||this.s.flags[this.q.legacyCombatCount?.flag])return null;
+  const occupied=[this.s.hero],positions=[];
+  for(let y=390;y<=865;y+=68)for(let x=350;x<=1280;x+=75){
+   const point={x,y};if(!this.passable(x,y)||occupied.some(p=>Math.hypot(p.x-x,(p.y-y)*1.3)<58))continue;
+   if(!this.clearSegment(this.s.hero,point)&&!this.findPath(x,y).length)continue;
+   occupied.push(point);positions.push(point);
+  }
+  if(positions.length<count)throw Error('当前战场缺少独立可达站位');
+  return positions.slice(0,count);
+ },
  resumeCombatEncounter(){
   if(!isOrdinaryCombat(this.q))return false;const p=current(this.q,this.s);if(!p)return false;
   if(p.failed){this.paused=true;return true;}if(p.finished){if(!complete(this.q,this.s)){this.failCombatProgress('incomplete-roster');return true;}repairPhase(this.q,this.s,p);return true;}const d=descriptor(this.q,this.s),e=d&&p.encounters[d.key];if(!e)return false;
@@ -155,7 +173,7 @@ export const combatMethods={
   if(outcome==='victory'&&this.s.hero.hp<=0){this.failCombatProgress('hero');return false;}
   if(e.outcome!=='active')return e.outcome===outcome&&!!validEntry(this.q,this.s,e);
   if(!validEntry(this.q,this.s,e)){this.failCombatProgress('incomplete-roster');return false;}
-  if(outcome==='victory'){if(this.s.hero.hp<=0){this.failCombatProgress('hero');return false;}if(d.encounter.forcedOutcome==='defeat'||e.roster.some(u=>u.hp>0))return false;}
+  if(outcome==='victory'){if(this.s.hero.hp<=0){this.failCombatProgress('hero');return false;}if(d.encounter.forcedOutcome==='defeat'||!victoryReached(d.encounter,e.roster))return false;}
   else if(outcome==='scripted-loss'){if(!d.encounter.scriptedLoss||this.s.hero.hp>0)return false;}else return false;
   e.outcome=outcome;e.heroHpAtOutcome=this.s.hero.hp;p.finished=complete(this.q,this.s);return true;
  },

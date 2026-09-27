@@ -1,4 +1,4 @@
-import {npcCellFor} from '../public/renderer-v3.mjs';
+import {Renderer as ActualRenderer,npcCellFor} from '../public/renderer-v3.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as core from '../public/runtime.mjs';
@@ -22,7 +22,8 @@ const local=new Map();const localStorage={getItem:k=>local.get(k)||null,setItem:
 const window={addEventListener(k,fn){events[k]=fn},matchMedia:()=>({matches:false})};
 const failingArt=new Set(),artRequests=[];
 class Image{set src(value){artRequests.push(value);queueMicrotask(()=>failingArt.has(value)?this.onerror():this.onload())}}
-class Renderer{resize(){}draw(){}toWorld(x,y){return{x,y}}}
+class Renderer{constructor(_canvas,_mini,engine){this.e=engine;}resize(){}draw(){}toWorld(x,y){return{x,y}}}
+Object.defineProperty(Renderer.prototype,'visibleEnemies',Object.getOwnPropertyDescriptor(ActualRenderer.prototype,'visibleEnemies'));
 const raf=()=>0,timer=()=>0;
 let source=fs.readFileSync(new URL('../public/journey.js',import.meta.url),'utf8').replace(/^import .+;$/gm,'');
 source+='\nreturn {engine,updateUi,showCharacter,showBag,showShop,showJournal,showMap,showSaves,showSettings,showAbout,showHelp,showSide,showDialogue,nextDialogue,showChoice,closePanel,track,loadState};';
@@ -344,3 +345,38 @@ for(const answer of [0,1]){
  ui.loadState(saved);nodes.get('dialogue').hidden=true;ui.engine.paused=false;const resumed=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);const other=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index!==answer);assert.equal(other.interactive,false);Object.assign(ui.engine.s.hero,resumed);ui.engine.interact(resumed);drain();assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);checks++;
 }
 console.log(JSON.stringify({firstMeetingUI:'PASS',cases:2,scope:'production journey with DOM stub: actor click, save before lines, reload resume; not browser visual verification'}));
+
+// Use the real visibility predicate with the actual canvas pointer handler.
+// A surviving guard occupying the after-battle marker must not intercept it.
+function pointerAt(point){for(const handler of nodes.get('world').listeners.pointerdown||[])handler({offsetX:point.x,offsetY:point.y,ctrlKey:false,altKey:false});}
+preset('gBad2');Object.assign(ui.engine.s.flags,{forsake:true,goodRoseBuried:true,staged_gBad2:true});
+for(const flag of ui.engine.q.requiredFlags||[])ui.engine.s.flags[flag]=true;
+for(const group of ui.engine.q.requiredAnyFlags||[])ui.engine.s.flags[group[0]]=true;
+ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;ui.engine.startBattle();
+assert.equal(ui.engine.s.phase,'battle');assert.equal(ui.engine.s.enemies.length,45);
+const finalBoss=ui.engine.s.enemies.find(enemy=>enemy.boss),survivingGuard=ui.engine.s.enemies.find(enemy=>!enemy.boss);
+const afterPoint={x:ui.engine.q.x??ui.engine.scene.objective.x,y:ui.engine.q.y??ui.engine.scene.objective.y,...ui.engine.q.afterMarker};
+for(const enemy of ui.engine.s.enemies)Object.assign(enemy,{x:1300,y:850});
+Object.assign(survivingGuard,{x:afterPoint.x,y:afterPoint.y});
+Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(650,750));Object.assign(finalBoss,{x:ui.engine.s.hero.x,y:ui.engine.s.hero.y,hp:1});
+ui.engine.s.cooldowns[0]=0;assert.equal(ui.engine.cast(0),true);assert.equal(ui.engine.s.phase,'after');assert.equal(ui.engine.canCompleteCombat(),true);
+const afterMarker=ui.engine.markers.find(marker=>marker.main);assert.ok(afterMarker);assert.equal(afterMarker.sprite,null);
+assert.equal(survivingGuard.x,afterMarker.x);assert.equal(survivingGuard.y,afterMarker.y);assert.ok(survivingGuard.hp>0,'the guard remains alive in the receipt');
+Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(afterMarker.x-15,afterMarker.y+10));ui.engine.attackTarget=null;
+const survivingRoster=JSON.stringify(ui.engine.s.combatProgress.encounters['wave:0'].roster);
+pointerAt(afterMarker);assert.equal(ui.engine.attackTarget,null,'hidden guards cannot capture the ground marker click');
+assert.equal(JSON.stringify(ui.engine.s.combatProgress.encounters['wave:0'].roster),survivingRoster,'clicking the aftermath does not invent guard deaths');
+assert.equal(nodes.get('dialogue').hidden,false);drain();assert.equal(ui.engine.q.id,'gBad2_aftermath');
+
+// Active ordinary, tower, rescue and allied combat keep target selection.
+for(const [id,prepare] of [
+ ['a06',game=>game.startBattle()],
+ ['gTower1',game=>{game.s.flags.goodRescueFortCleared=true;game.ensureTowerEncounter();}],
+ ['g16',game=>{game.s.flags.goodRescueHallCleared=true;game.ensureRescueEncounter();}],
+ ['e08_island_battle',game=>{Object.assign(game.s.flags,{evilTowerInterludeComplete:true,staged_e08_island_battle:true});game.startSkirmish();}],
+]){
+ preset(id);ui.engine.sceneLoading=false;ui.engine.sceneLoadFailed=false;prepare(ui.engine);assert.equal(ui.engine.s.phase,'battle');
+ const enemy=ui.engine.s.enemies.find(unit=>unit.hp>0);assert.ok(enemy,id+' has an active target');
+ pointerAt(enemy);assert.equal(ui.engine.attackTarget,enemy,id+' visible enemy still receives pointer targeting');
+}
+console.log(JSON.stringify({canvasTargeting:'PASS',cases:5,scope:'real pointer handler and renderer visibility; boss-only victory receipt retained and ground aftermath clickable'}));

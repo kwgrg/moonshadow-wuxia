@@ -65,10 +65,11 @@ path.keys.add('ArrowLeft');for(let i=0;i<2000;i++)path.tick(.05);assert.ok(path.
 const donation=new GameEngine();const beggar=SIDE_QUESTS.find(q=>q.repeat);donation.s.map=beggar.map;donation.s.coins=800;for(let i=0;i<9;i++)assert.equal(donation.side(beggar.id),true);assert.equal(donation.s.sideDone.includes(beggar.id),false);donation.side(beggar.id);assert.equal(donation.s.sideDone.includes(beggar.id),true);assert.ok(donation.s.skills[11]!==undefined);assert.equal(donation.side(beggar.id),false);
 const fragments=new GameEngine();for(const side of SIDE_QUESTS.filter(q=>q.id.startsWith('sheep'))){fragments.s.map=side.map;assert.ok(fragments.side(side.id));}assert.equal(fragments.s.inventory.sheepskin,7);assert.ok(Object.hasOwn(fragments.s.skills,18));
 const save=restoreState(JSON.parse(JSON.stringify(fragments.s)));assert.equal(save.inventory.sheepskin,7);assert.throws(()=>restoreState({version:1}));assert.throws(()=>restoreState({...freshState(),hero:{hp:'NaN'}}));
-// Ordinary encounters retain their four-opponent cap; faction encounters use
-// explicit, independently persistent rosters (55, 39 and 36 in current content).
+// Compact encounters retain their four-opponent cap. Audited distributed
+// encounters and faction rosters keep their explicit counts and conditions.
 for(const q of QUESTS.filter(q=>q.type==='boss'||q.type==='battle')){
  if(q.skirmish){const ids=q.skirmish.enemies.map(enemy=>enemy.id);assert.ok(ids.length>0,q.id+' declares an army');assert.equal(new Set(ids).size,ids.length,q.id+' army identities are unique');}
+ else if(q.distributedCombat){assert.equal(q.count,{gBad_road:34,gBad2:45}[q.id],q.id+' audited distributed count');assert.equal(q.victoryTarget,q.id==='gBad2'?'boss':undefined,q.id+' declared victory condition');}
  else assert.ok((q.count||3)<=4,q.id);
 }
 for(const m of Object.values(MAPS))assert.ok(fs.existsSync(new URL('../public/assets/'+m.art+'.png',import.meta.url)));

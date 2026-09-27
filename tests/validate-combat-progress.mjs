@@ -8,7 +8,7 @@ function game(id){const q=QUESTS.find(q=>q.id===id);assert(q);return Object.assi
 function spawn(g){
  const q=g.q,t=g.s.training,w=q.waves?.[g.s.wave];const e=q.training?{...q,type:t.master?'boss':'battle',boss:t.master?q.boss:null,count:1,friendly:true,scriptedLoss:t.master}:w?{...q,...w,type:w.boss?'boss':'battle',boss:w.boss||null}:q;
  const tier=q.encounterTier??Math.max(1,Math.floor(g.s.quest/9)+1);
- g.s.enemies=Array.from({length:e.count||3},(_,id)=>{const boss=!!(e.type==='boss'||e.boss)&&id===(e.count||3)-1,hp=e.scriptedLoss?8000:(boss?430:120)+tier*(boss?125:35);return {id,x:700+id*80,y:650,hp,maxHp:hp,boss,attackTimer:1.2,skillTimer:2.1,telegraph:0,telegraphZone:null,slow:0,flash:0,direction:-1,tier};});g.s.phase='battle';assert.equal(g.recordCombatStart(),true);return g;
+ g.s.enemies=Array.from({length:e.count||3},(_,id)=>{const boss=!!(e.type==='boss'||e.boss)&&id===(e.count||3)-1,hp=e.scriptedLoss?8000:(boss?430:120)+tier*(boss?125:35);return {id,x:700+(id%8)*80,y:650+Math.floor(id/8)*50,hp,maxHp:hp,boss,attackTimer:1.2,skillTimer:2.1,telegraph:0,telegraphZone:null,slow:0,flash:0,direction:-1,tier};});g.s.phase='battle';assert.equal(g.recordCombatStart(),true);return g;
 }
 function reload(g,revision=15){const raw=copy(g.s);raw.campaignRevision=revision;const r=game(g.q.id);r.s={...r.s,...copy(raw),hero:{...raw.hero,hp:Math.max(1,raw.hero.hp)},enemies:[],combatProgress:null,phase:raw.phase==='battle'?'talk':raw.phase};if(r.q.training)r.s.training={...raw.training,active:null,master:false};restoreCombatProgress(raw,r.q,r.s);return r;}
 function kill(g,id){const e=g.s.enemies.find(e=>e.id===id);e.hp=0;return g.claimCombatDefeat(e);}
