@@ -1,3 +1,4 @@
+import {GOOD_ROAD_STAGING} from './good-road-staging.mjs';
 import {EVIL_ENDING_STAGING} from './evil-ending-staging.mjs';
 import {GOOD_GRIEF_STAGING} from './good-grief-staging.mjs';
 import {GOOD_MEDICINE_REUNION_STAGING} from './good-medicine-reunion-staging.mjs';
@@ -207,3 +208,5 @@ Object.assign(STAGED_QUESTS,GOOD_MEDICINE_REUNION_STAGING);
 Object.assign(STAGED_QUESTS,GOOD_GRIEF_STAGING);
 
 Object.assign(STAGED_QUESTS,EVIL_ENDING_STAGING);
+
+Object.assign(STAGED_QUESTS,GOOD_ROAD_STAGING);

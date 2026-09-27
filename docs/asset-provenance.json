@@ -705,6 +705,66 @@
       "notes": [
         "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
       ]
+    },
+    {
+      "path": "public/assets/beimo-ridge-road.png",
+      "sha256": "019ad2a12c1234be8162e1d7dfafed41d4072876a96b7f2a8e4ecd0cbd8bbe5f",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
+      ]
+    },
+    {
+      "path": "public/assets/huian-pine-road.png",
+      "sha256": "3a7b2221804fe83a13d5942968df0a2c45e6bb1cb7769026611adbe1b26b1bac",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
+      ]
+    },
+    {
+      "path": "public/assets/yaowang-outer-valley.png",
+      "sha256": "d3f24019236acedef1e09cf18af9328431199962084594aed7b5cee7163b5d88",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
+      ]
+    },
+    {
+      "path": "public/assets/eagle-original.png",
+      "sha256": "a418e40c937b3417e0e29506185e74e0d06ca4f5a1e1f1609eabd72fc12f4d45",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成的透明苍鹰；未输入原版或其他参考图片。记录不是权属认证。"
+      ]
     }
   ]
 }

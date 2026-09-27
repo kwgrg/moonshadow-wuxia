@@ -16,7 +16,7 @@ for(let accepted=1;accepted<=4;accepted++){
   if(call>1){assert.equal(g.q.id,'g20_return'+(call-1));assert.equal(g.beginObjective(),undefined);assert.equal(g.q.id,'g20_return'+(call-1),'cannot skip room travel');arrive(g);g=stage(g,true);assert.equal(g.q.id,'g20_call'+call);arrive(g);}
   g=stage(g,true);assert.equal(g.s.phase,'choice');const id=g.q.id;assert.equal(g.choose(call===accepted?0:1),true);assert.equal(g.choose(1),false,'committed choice cannot be replayed');g=new GameEngine(restoreState(snapshot(g)));assert.equal(g.s.affection.wei,affection-(call-1)+(call===accepted?2:-1));assert.ok(g.s.done.includes(id));
  }
- assert.equal(g.q.id,'g20_stay');assert.equal(g.s.flags.forsake,false);assert.equal(g.s.flags.goodRoseDead,undefined);arrive(g);g=stage(g,true);assert.equal(g.q.id,'g21');assert.equal(g.s.map,'m23');assert.equal(g.s.flags.companion,'蔷薇');assert.equal(g.s.coins,coins+15,'only existing first choice pays');assert.equal(g.s.flags.goodRoseNightComplete,true);checks++;
+ assert.equal(g.q.id,'g20_stay');assert.equal(g.s.flags.forsake,false);assert.equal(g.s.flags.goodRoseDead,undefined);arrive(g);g=stage(g,true);assert.equal(g.q.id,'g21');assert.equal(g.s.map,'r_good_medicine_edge');assert.equal(g.s.enemies.length,30);assert.equal(g.s.flags.companion,'蔷薇');assert.equal(g.s.coins,coins+15,'only existing first choice pays');assert.equal(g.s.flags.goodRoseNightComplete,true);checks++;
 }
 for(const visit of [0,1]){
  let g=setupNight();const coins=g.s.coins;

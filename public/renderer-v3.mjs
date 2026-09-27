@@ -420,6 +420,15 @@ export class Renderer {
     const top=a.y-(a.boss?152:116);c.fillText(a.name,a.x,top);
     c.fillStyle='#142627dd';c.fillRect(a.x-28,top+8,56,4);c.fillStyle=a.boss?'#ce7c68':'#bda272';c.fillRect(a.x-28,top+8,56*a.hp/a.maxHp,4);c.restore();
   }
+  drawEagle(a){
+    const c=this.ctx,t=this.e.settings.motion?this.e.time:0,seed=Number(a.id?.split('-').at(-1))||0,width=96+(seed%4)*5,lift=43+Math.sin(t*2.1+seed)*5,im=this.assets['eagle-original'];
+    if(!im)return;
+    c.save();c.translate(a.x,a.y);this.ellipse(0,1,width*.22,6,'#11252340');c.translate(0,-lift);c.scale(a.direction===-1?-1:1,1);c.rotate(Math.sin(t*.9+seed)*.065);
+    if(a.flash>0)c.filter='brightness(1.55)';c.drawImage(im,-width/2,-width/3,width,width*2/3);c.restore();
+    if(this.visibleEnemies.length<=16||this.labelledUnits?.has(a.id)||this.e.attackTarget?.id===a.id){
+      c.save();c.textAlign='center';c.font='13px '+FONT;c.shadowColor='#10202a';c.shadowBlur=5;c.fillStyle='#e0d3b9';c.fillText(a.name,a.x,a.y-88);c.fillStyle='#142627dd';c.fillRect(a.x-24,a.y-80,48,4);c.fillStyle='#bda272';c.fillRect(a.x-24,a.y-80,48*clamp(a.hp/a.maxHp,0,1),4);c.restore();
+    }
+  }
   drawActor(a,hero=false){
     if(a.hidden)return;
     const poseStep=this.e.s.sequence&&this.e.stagingDefinition()?.steps[this.e.s.sequence.step];
@@ -428,6 +437,7 @@ export class Renderer {
     if(hero&&a.pose==='ill'){this.drawGroundSeatedActor(a,true);return;}
     if(a.pose==='sit'&&(hero||a.groundSeated)){this.drawGroundSeatedActor(a,hero);return;}
     if(!hero&&['ill','sit'].includes(a.pose)){this.drawRestingActor(a);return;}
+    if(!hero&&a.kind==='eagle'){this.drawEagle(a);return;}
     if(!hero&&a.hp!==undefined&&/蝙蝠/.test(a.name)){this.drawBat(a);return;}
     const npcCell=hero?null:(a.npcCell??npcCellFor(a.name)),useNpcAtlas=npcCell!==null&&this.assets.npcs;
     const kneeling=a.pose==='kneel',child=!hero&&(a.child||a.name==='杨纳康'),c=this.ctx,height=child?90:kneeling?94:a.boss?158:hero?142:useNpcAtlas?140:130,width=child?60:(hero?142:height)*384/1024;

@@ -35,9 +35,10 @@ function restoredHeroPose(raw,definition,state){
 export function hasStagingBranch(quest,state){if(!quest.exclusiveFlags)return true;const count=quest.exclusiveFlags.filter(key=>state.flags[key]).length;return count===1||(count===0&&state.flags[quest.exclusiveLegacyFlag]===true);}
 export function restoreStaging(raw,quest,state){
  const definition=STAGED_QUESTS[quest.id];
- if(!definition||!stepMatches(quest,state)||state.map!==quest.map||state.flags[completeKey(quest.id)]||state.flags[quest.legacyStagingFlag]||quest.requiredFlags?.some(key=>!state.flags[key])||quest.requiredAnyFlags?.some(group=>!group.some(key=>state.flags[key])))return null;
+ if(!definition||definition.presentationOnly||!stepMatches(quest,state)||state.map!==quest.map||state.flags[completeKey(quest.id)]||state.flags[quest.legacyStagingFlag]||quest.requiredFlags?.some(key=>!state.flags[key])||quest.requiredAnyFlags?.some(group=>!group.some(key=>state.flags[key])))return null;
  if(!hasStagingBranch(quest,state))return null;
  if(!raw||raw.questId!==quest.id||!Number.isInteger(raw.step)||raw.step<0||raw.step>=definition.steps.length)return null;
+ if(quest.firstMeeting&&(!Number.isInteger(raw.firstMeetingIndex)||raw.firstMeetingIndex!==state.choices[quest.id]))return null;
  const lastScene=definition.steps.slice(0,raw.step).filter(step=>step.type==='scene'&&stepMatches(step,state)).at(-1);
  const sceneKey=lastScene?.scene??null;
  if((raw.sceneKey??null)!==sceneKey||(sceneKey&&(!definition.sceneKeys?.includes(sceneKey)||!getStagingScene(sceneKey))))return null;
@@ -47,7 +48,7 @@ export function restoreStaging(raw,quest,state){
  const origin=raw.origin?.map===state.map&&Number.isFinite(raw.origin.x)&&Number.isFinite(raw.origin.y)?{map:state.map,x:raw.origin.x,y:raw.origin.y,direction:raw.origin.direction===-1?-1:1}:null;
  const needsOrigin=sceneKey&&(definition.returnToOrigin||definition.steps.some(step=>step.type==='scene'&&step.hero?.restore));
  if(needsOrigin){if(!origin)return null;const real=getScene(state.map,MAPS[state.map]),[left,top,right,bottom]=real.bounds;if(origin.x<left||origin.x>right||origin.y<top||origin.y>bottom||real.obstacles.some(r=>origin.x>r[0]-8&&origin.x<r[2]+8&&origin.y>r[1]-8&&origin.y<r[3]+8))return null;}
- return {questId:quest.id,step,sceneKey,origin,cues:restoreCues(raw.cues,definition,state,step),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:restoredHeroPose({...raw,step},definition,state),focus:typeof raw.focus==='string'?raw.focus:'hero'};
+ return {questId:quest.id,...(quest.firstMeeting?{firstMeetingIndex:raw.firstMeetingIndex}:{}),step,sceneKey,origin,cues:restoreCues(raw.cues,definition,state,step),handoverItems:{...state.stagedHandovers[quest.id]},elapsed:Math.min(30,Math.max(0,Number(raw.elapsed)||0)),actors,heroPose:restoredHeroPose({...raw,step},definition,state),focus:typeof raw.focus==='string'?raw.focus:'hero'};
 }
 export const stagingMethods={
  stagingDefinition(){return this.s.map===this.q.map?STAGED_QUESTS[this.q.id]:null;},
@@ -64,10 +65,10 @@ export const stagingMethods={
  hasQuestItems(){return Object.entries(this.outstandingItems(this.q.requiredItems)).every(([id,count])=>(this.s.inventory[id]||0)>=count);},
  requireQuestItems(){return this.requireItems(this.outstandingItems(this.q.requiredItems));},
  stagingFocus(){if(this.scene.hidePlayer&&(!this.s.sequence?.focus||this.s.sequence.focus==='hero'))return this.scene.focus||this.scene.spawn;return this.s.sequence?this.stagingActor(this.s.sequence.focus)||this.s.hero:this.s.hero;},
- canStartStaging(){if(this.q.rescueMission)return this.canStartRescueStaging();return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
+ canStartStaging(){if(this.stagingDefinition()?.presentationOnly||this.q.firstMeeting&&!this.firstMeetingReady())return false;if(this.q.rescueMission)return this.canStartRescueStaging();return this.s.phase==='talk'&&!!this.stagingDefinition()&&!this.s.flags[completeKey(this.q.id)]&&!this.s.flags[this.q.legacyStagingFlag];},
  startStaging(){
   if(!this.canStartStaging()||this.s.sequence||!this.requireQuestItems()||!this.requireQuestFlags())return false;
-  const definition=this.stagingDefinition();if(this.q.rescueMission&&near(this.s.hero,definition.startPoint||this.scene.objective)>135)return false;if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
+  const definition=this.stagingDefinition();if(this.q.rescueMission&&near(this.s.hero,definition.startPoint||this.scene.objective)>135)return false;if(this.scene.jumps?.length&&definition.startPoint&&!this.findPath(definition.startPoint.x,definition.startPoint.y).length)return false;this.s.sequence={questId:this.q.id,...(this.q.firstMeeting?{firstMeetingIndex:this.s.choices[this.q.id]}:{}),step:0,elapsed:0,sceneKey:null,origin:null,actors:clone(definition.actors||[]),heroPose:'stand',focus:'hero',cues:{},handoverItems:{...this.handoverCredit()}};
   if(definition.heroStart)Object.assign(this.s.hero,this.nearestOpen(definition.heroStart.x,definition.heroStart.y),{direction:definition.heroStart.direction||1});
   this.effects=[];this.numbers=[];this.hitTime=0;this.dashTime=0;this.s.phase='staging';this.s.destination=null;this.target=null;this.waypoints=[];this.autoInteract=null;this.attackTarget=null;this.keys.clear();this.meditating=false;this._stagingPrompt=null;this._stagingMove=null;this.emit('stagingStep');return true;
  },
@@ -92,7 +93,7 @@ export const stagingMethods={
    this.advanceStaging();this.emit('stagingScene');return;
   }
   if(!step||step.type==='release'){if(sequence.sceneKey)return;
-   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose=definition.finalHeroPose||'stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;if(this.q.rescueMission){this.resumeRescueCombat();return;}this.s.phase='talk';this.walkTime=0;this.beginObjective();return;
+   this.s.flags[completeKey(this.q.id)]=true;this.s.hero.pose=definition.finalHeroPose||'stand';this.s.sequence=null;this._stagingPrompt=null;this._stagingMove=null;if(this.q.rescueMission){this.resumeRescueCombat();return;}this.s.phase='talk';this.walkTime=0;if(this.q.firstMeeting){this.finishFirstMeeting();return;}this.beginObjective();return;
   }
   if(step.type==='handover'){
    const outstanding=this.outstandingItems(step.items);

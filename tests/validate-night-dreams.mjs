@@ -88,7 +88,7 @@ for(const id of ['e06_night','e06_night_visit']){
 }
 
 let legacyCases=0;
-assert.equal(freshState().campaignRevision,18);assert.ok(campaign.REVISION_SIX_QUEST_IDS.includes('e06_night_visit'));
+assert.equal(freshState().campaignRevision,19);assert.ok(campaign.REVISION_SIX_QUEST_IDS.includes('e06_night_visit'));
 for(const choice of [0,1,null])for(const numeric of [false,true]){
  const old=create(),raw=snapshot(old);raw.campaignRevision=6;delete raw.flags.evilQiangweiKill;delete raw.flags.evilQiangweiRefuse;if(choice===null)delete raw.choices.e06;else raw.choices.e06=choice;raw.phase='staging';raw.sequence={questId:'e06_night',step:4,elapsed:1,actors:[],cues:{evilNight:'dark'}};if(numeric){delete raw.questId;raw.quest=campaign.REVISION_SIX_QUEST_IDS.indexOf('e06_night');}
  const game=new GameEngine(restoreState(raw));assert.equal(game.q.id,'e06_night');assert.equal(game.s.sequence,null,'old compressed dream restarts the expanded sequence');assert.equal(game.s.phase,'talk');assert.deepEqual(resources(game),resources(old));assert.ok(!game.s.flags.staged_e06_night);assert.ok(!game.s.done.includes('e06_night'));

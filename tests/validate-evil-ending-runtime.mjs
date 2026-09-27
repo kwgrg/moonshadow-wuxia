@@ -11,7 +11,7 @@ const economy=s=>copy({coins:s.coins,kills:s.kills,potions:s.potions,elixirs:s.e
 const history=s=>copy({done:s.done,claimedRewards:s.claimedRewards});
 const snapshot=g=>copy({...g.s,questId:g.q.id});
 let identityCases=0,migrationCases=0,combatCases=0,dreamCases=0,branchCases=0;
-assert.equal(freshState().campaignRevision,18);
+assert.equal(freshState().campaignRevision,19);
 assert.equal(campaign.REVISION_SEVENTEEN_QUEST_IDS.length,243);
 assert.equal(crypto.createHash('sha256').update(JSON.stringify(campaign.REVISION_SEVENTEEN_QUEST_IDS.map(id=>[id,QUESTS[idx(id)].encounterTier]))).digest('hex'),'643e3e00c4757077a56d78d914a73b0fe905ae32c60e70f9c947c1354cdfc024');identityCases++;
 function fixture(id){const s=freshState(),q=QUESTS[idx(id)];assert(q,id);s.quest=idx(id);s.questId=id;s.map=q.map;s.flags.route='evil';s.coins=417;s.hero.exp=73;s.inventory={wood_box:1};s.affection.zhen=-2;s.skills[4]=9;for(let i=1;i<=8;i++)s.flags['switch'+i]=true;return s;}

@@ -19,7 +19,7 @@ assert.equal(enemyIds.length,252);assert.equal(new Set(enemyIds).size,252);asser
 assert.equal(get('g20').repeatRefusal,false);assert.equal(get('g20').xp,65);assert.equal(get('g20').money,15);
 for(const {quests} of GOOD_TOWER_VALLEY_ADDITIONS)for(const q of quests){assert.equal(q.xp,0);assert.equal(q.money,0);assert.equal(q.map,GOOD_TOWER_VALLEY_STAGING[q.id].map);assert.equal(GOOD_TOWER_VALLEY_STAGING[q.id].steps.at(-1).type,'release');}
 for(const id of ['g19','g20','g20_call2','g20_call3','g20_call4','g20_cry'])assert.equal(get(id).commitBeforeDialogue,true,id);
-assert.equal(get('g19_return').rewards.companion,null);assert.equal(get('g19_burial').rewards.companion,'蔷薇');assert.equal(get('g20_escort').rewards.companion,null);assert.equal(get('g20_stay').rewards.companion,'蔷薇');assert.deepEqual(get('g20_stay').transition,{map:'m23'});
+assert.equal(get('g19_return').rewards.companion,null);assert.equal(get('g19_burial').rewards.companion,'蔷薇');assert.equal(get('g20_escort').rewards.companion,null);assert.equal(get('g20_stay').rewards.companion,'蔷薇');assert.deepEqual(get('g20_stay').transition,{map:'r_good_medicine_edge'});assert.equal(get('g21').map,'m23','the clinic remains the diagnosis objective beyond the optional eagle road');
 const matches=(w,f)=>!w||(!w.route||w.route===f.route)&&(!w.flag||f[w.flag])&&(!w.not||!f[w.not])&&!w.notAll?.some(k=>f[k]);
 const dataNext=(id,flags)=>QUESTS.slice(QUESTS.indexOf(get(id))+1).find(q=>matches(q.when,flags))?.id;
 for(let accepted=1;accepted<=4;accepted++){

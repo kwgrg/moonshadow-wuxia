@@ -47,7 +47,7 @@ assert.deepEqual(path('m49','r_good_manor_infirmary','g21_visit',{goodMedicineCu
 assert.deepEqual(path('r_good_manor_infirmary','r_good_manor_zhen_room','g22',{goodMedicineCured:true,goodMedicineVisited:true}),['r_good_manor_infirmary','m50','r_good_manor_zhen_room']);
 for(const id of ['g21_return','g21_visit','g22','g22_dawn'])for(const from of ['m49','m50','r_good_manor_infirmary','r_good_manor_zhen_room'])for(const to of ['m17','m16','m70','m51'])assert.deepEqual(path(from,to,id,{goodMedicineCured:true}),[],id+' cannot leave before morning farewell');
 assert.deepEqual(path('r_good_manor_zhen_room','m50','g21_return'),['r_good_manor_zhen_room','m50'],'a room can always be left even before its entry gate');
-assert.deepEqual(path('m49','m17','g23',{goodMedicineCured:true,goodMedicineFarewellReady:true}),['m49','m41','r_good_hanbo_road','m17']);
+assert.deepEqual(path('m49','m17','g23',{goodMedicineCured:true,goodMedicineFarewellReady:true}),['m49','r_good_manor_outer','r_good_huian_pass','m41','r_good_hanbo_road','m17']);
 assert.deepEqual(path('m17','m49','g23',{goodMedicineFarewellReady:true}),[],'first meeting temporarily closes return path');
 for(const [id,flag] of [['g23_pickup','goodFirstZi'],['g23_farewell','goodFirstMei']]){
  const flags={goodMedicineCured:true,goodMedicineFarewellReady:true,goodMedicineFirstTalk:true,[flag]:true};
@@ -57,7 +57,7 @@ for(const [id,flag] of [['g23_pickup','goodFirstZi'],['g23_farewell','goodFirstM
 assert.deepEqual(path('m17','m70','g23',{goodMedicineFarewellReady:true}),[],'first conversation cannot open final battlefield');
 assert.deepEqual(path('m49','m70','g24',{goodMedicineCured:true,goodMedicineFarewellReady:true,goodMedicineHutComplete:true,goodMedicineReunited:true,goodMedicineChallenged:true}),['m49','m70']);
 assert.deepEqual(path('m49','m70','g23_recruitment',{goodMedicineFarewellReady:true,goodMedicineHutComplete:true,goodMedicineReunited:true}),[],'reunion alone cannot skip final invitation');
-assert.deepEqual(path('r_good_hanbo_road','m49','g23_reunion',{goodMedicineFarewellReady:true,goodMedicineHutComplete:true}),['r_good_hanbo_road','m41','m49']);
+assert.deepEqual(path('r_good_hanbo_road','m49','g23_reunion',{goodMedicineFarewellReady:true,goodMedicineHutComplete:true}),['r_good_hanbo_road','m41','r_good_huian_pass','r_good_manor_outer','m49']);
 assert.deepEqual(path('r_good_hanbo_road','m17','g23_reunion',{goodMedicineFarewellReady:true,goodMedicineHutComplete:true}),[],'post-hut transfer cannot turn back into the valley');
 for(const to of ['m17','m50','m70','m51'])assert.deepEqual(path('m49',to,'g23_reunion',{goodMedicineFarewellReady:true,goodMedicineHutComplete:true}),[],'arriving reunion seals manor until its actual event');
 for(const id of ['r_good_manor_infirmary','r_good_manor_zhen_room'])assert.deepEqual(path(id,'m49','g24',{goodMedicineLegacy:true}),[id,'m50','m49'],'historical room save is not stranded');

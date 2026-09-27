@@ -4,6 +4,9 @@
  * They do not certify every adjacency or coordinate in the original game.
  */
 export const ROUTE_MAPS = {
+ r_good_manor_outer:{name:'悲魔山庄外岭',area:'庄门与松岭之间',art:'beimo-ridge-road',weather:'辰时 · 山风过岭',poem:'庄门留身后，岭外有人行',shop:false,obstacles:[],routeOnly:true},
+ r_good_huian_pass:{name:'惠安道松坡',area:'通往镇郊的山道',art:'huian-pine-road',weather:'辰时 · 松风渐起',poem:'石路穿松去，镇声入远风',shop:false,obstacles:[],routeOnly:true},
+ r_good_medicine_edge:{name:'药王谷外缘',area:'药谷山径与诊院门前',art:'yaowang-outer-valley',weather:'辰时 · 谷风携药香',poem:'鹰影过山径，药香指院门',shop:false,obstacles:[],routeOnly:true},
  r_evil_final_room:{name:'悲魔山庄静养卧房',area:'窗前与床侧',art:'beimo-hero-room',weather:'辰时 · 一窗清光',poem:'归来灯犹在，旧事入深帘',shop:false,obstacles:[],routeOnly:true},
  r_evil_final_graves:{name:'庄外双冢',area:'山庄外静地',art:'leaf-memorial',weather:'酉时 · 草木无言',poem:'两冢留残照，归人独听风',shop:false,obstacles:[],routeOnly:true},
  r_evil_family_shore:{name:'五年后海岸',area:'临海沙地',art:'evil-family-shore',weather:'辰时 · 海风晴和',poem:'海风吹旧事，童语唤归人',shop:false,obstacles:[],routeOnly:true},
@@ -160,7 +163,8 @@ const GOOD_GRIEF_PAIRS=new Set(GOOD_GRIEF_ROUTES.map(([a,b])=>pairKey(a,b)));
 const GOOD_GRIEF_MAPS=new Set(GOOD_GRIEF_ROUTES.flat());
 const GOOD_MEDICINE_ROOMS=['r_good_manor_infirmary','r_good_manor_zhen_room'];
 const GOOD_MEDICINE_MANOR=new Set(['m49','m50',...GOOD_MEDICINE_ROOMS]);
-const GOOD_MEDICINE_ROUTES=[['m49','m50'],['m50','r_good_manor_infirmary'],['m50','r_good_manor_zhen_room'],['m49','m41'],['m41','r_good_hanbo_road'],['r_good_hanbo_road','m17'],['m17','m16'],['m49','m70']];
+const GOOD_MEDICINE_ROADS=['r_good_manor_outer','r_good_huian_pass'];
+const GOOD_MEDICINE_ROUTES=[['m49','m50'],['m50','r_good_manor_infirmary'],['m50','r_good_manor_zhen_room'],['m49','r_good_manor_outer'],['r_good_manor_outer','r_good_huian_pass'],['r_good_huian_pass','m41'],['m41','r_good_hanbo_road'],['r_good_hanbo_road','m17'],['m17','m16'],['m49','m70'],['r_good_medicine_edge','m23']];
 const GOOD_MEDICINE_PAIRS=new Set(GOOD_MEDICINE_ROUTES.map(([a,b])=>pairKey(a,b)));
 const GOOD_MEDICINE_QUESTS=new Set(['g21','g21_return','g21_visit','g22','g22_rest','g22_dawn','g23','g23_pickup','g23_farewell','g23_reunion','g23_recruitment','g24','g24_aftermath','g24_departure']);
 const GOOD_VALLEY_ROUTES=[['m51','r_leaf_memorial'],['m51','r_leaf_hero_room'],['m51','r_leaf_rose_room']];
@@ -186,6 +190,7 @@ function matches(when,state){
 }
 function inferredPairAllowed(before,next,route){
  return before.map!==next.map&&
+  ![...GOOD_MEDICINE_ROADS,'r_good_medicine_edge'].some(id=>before.map===id||next.map===id)&&
   !EVIL_FINAL_MAPS.has(before.map)&&!EVIL_FINAL_MAPS.has(next.map)&&
   !((GOOD_MEDICINE_ROOMS.includes(before.map)||GOOD_MEDICINE_ROOMS.includes(next.map))&&before.map!=='m50'&&next.map!=='m50')&&
   !((before.map==='r_leaf_memorial'||next.map==='r_leaf_memorial')&&before.map!=='m51'&&next.map!=='m51')&&
@@ -494,15 +499,20 @@ export function routeEdges(state={},quests=[]){
   for(const [from,to] of GOOD_MEDICINE_ROUTES){
    let ready=arrivedManor;
    if(GOOD_MEDICINE_ROOMS.includes(to))ready=legacy||!!flags.goodMedicineCured;
-   if(['m41','r_good_hanbo_road','m17'].includes(to))ready=legacy||!!flags.goodMedicineFarewellReady;
+   if([...GOOD_MEDICINE_ROADS,'m41','r_good_hanbo_road','m17'].includes(to))ready=legacy||!!flags.goodMedicineFarewellReady;
    if(to==='m16')ready=legacy||!!flags.goodMedicineFirstTalk;
    if(to==='m70')ready=legacy||!!flags.goodMedicineChallenged;
+   if(from==='r_good_medicine_edge')ready=current==='g21';
    edges.set(pairKey(from,to),{from,to,locked:false,...(!ready?{lockedFrom:[from],departureReason:'先办妥眼前的探视与交谈，再沿相邻的房门和谷路前行。'}:{}),inferred:true,design:'authored-good-medicine'});
+   if(from==='r_good_medicine_edge'&&current!=='g21')edges.get(pairKey(from,to)).lockedFrom=[from,to];
   }
   for(const edge of edges.values()){
    const key=pairKey(edge.from,edge.to);
    if(key===pairKey('m17','m70'))Object.assign(edge,{locked:true,reason:'须先回小筑办完邀约，再回山庄与众人会合。',design:'good-medicine-physical-boundary'});
-   for(const inside of ['m49','m50','m16','m17','m41','r_good_hanbo_road','m70'])if((edge.from===inside||edge.to===inside)&&!GOOD_MEDICINE_PAIRS.has(key))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'沿本次返庄与回谷的实际相邻道路前行。'});
+   for(const inside of ['m49','m50','m16','m17','m41','r_good_hanbo_road','m70','m23','r_good_medicine_edge',...GOOD_MEDICINE_ROADS])if((edge.from===inside||edge.to===inside)&&!GOOD_MEDICINE_PAIRS.has(key))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside])],departureReason:'沿本次返庄与回谷的实际相邻道路前行。'});
+   // Event2034 closes the manorward exit, while Event2040 reopens it after
+   // the actual hut conversation. Enemy survival never enters this condition.
+   if(key===pairKey('m49','r_good_manor_outer')&&!legacy&&!flags.goodMedicineHutComplete)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'r_good_manor_outer'])],departureReason:'辞行的话已说定，先到寒波谷接人或道别，再回庄会合。'});
    if(arrivedManor&&!legacy&&!flags.goodMedicineFarewellReady){
     const inside=[edge.from,edge.to].filter(id=>GOOD_MEDICINE_MANOR.has(id));
     if(inside.length===1)Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),inside[0]])],departureReason:'先在庄中探望、歇息并把辞行的话说清。'});
@@ -514,7 +524,7 @@ export function routeEdges(state={},quests=[]){
    }
    if(['g23_reunion','g23_recruitment'].includes(current)&&!legacy&&(edge.from==='m49'||edge.to==='m49'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m49'])],departureReason:'众人已经在庄中等候，先会合并回应来人的话。'});
    if(['g24','g24_aftermath'].includes(current)&&(edge.from==='m70'||edge.to==='m70'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m70'])],departureReason:'眼前的对峙与后事尚未了结。'});
-   if((current==='g21'&&(edge.from==='m23'||edge.to==='m23'))||(current==='g24_departure'&&(edge.from==='m34'||edge.to==='m34')))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),current==='g21'?'m23':'m34'])],departureReason:'先完成这里的交谈，再一同启程。'});
+   if(current==='g24_departure'&&(edge.from==='m34'||edge.to==='m34'))Object.assign(edge,{lockedFrom:[...new Set([...(edge.lockedFrom||[]),'m34'])],departureReason:'先完成这里的交谈，再一同启程。'});
   }
  }
  // R17 independently authored physical journey. Scripted hut/burial and island

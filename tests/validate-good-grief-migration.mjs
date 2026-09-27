@@ -10,7 +10,7 @@ const tables=[campaign.LEGACY_QUEST_IDS,...['TWO','THREE','FOUR','FIVE','SIX','S
 const funds=s=>copy({coins:s.coins,potions:s.potions,elixirs:s.elixirs,kills:s.kills,level:s.hero.level,exp:s.hero.exp,inventory:s.inventory,skills:s.skills,affection:s.affection,done:s.done,claimedRewards:s.claimedRewards,combatClaims:s.combatClaims});
 const snapshot=g=>copy({...g.s,questId:g.q.id});
 let identityCases=0,migrationCases=0,combatCases=0;
-assert.equal(freshState().campaignRevision,18);
+assert.equal(freshState().campaignRevision,19);
 assert.equal(campaign.REVISION_SIXTEEN_QUEST_IDS.length,238);
 assert.equal(crypto.createHash('sha256').update(JSON.stringify(campaign.REVISION_SIXTEEN_QUEST_IDS.map(id=>[id,QUESTS[idx(id)].encounterTier]))).digest('hex'),'ffa9a8cd1b7cd4b04b5149721f70cc137d6155109550311d21b3340ee99d8e52');identityCases++;
 function fixture(id){

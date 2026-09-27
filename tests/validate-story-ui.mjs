@@ -345,14 +345,19 @@ console.log(JSON.stringify({result:'PASS',checks,
 },null,2));
 
 
-// First conversation is an actual actor interaction; storage commits before dialogue.
+// First conversation commits before its saved staged movement and dialogue.
 for(const answer of [0,1]){
- await preset('g23');ui.engine.s.flags.goodMedicineFarewellReady=true;nodes.get('track-button').click();assert.equal(ui.engine.s.choices.g23,undefined,'tracking never chooses a person for the player');assert.equal(ui.engine.autoInteract,null);const actor=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);assert.ok(actor);
- Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(actor.x-15,actor.y+10));assert.equal(ui.engine.interact(actor),true);assert.equal(nodes.get('dialogue').hidden,false);assert.equal(nodes.get('choices').children.length,0,'no first-person selection menu');
- const saved=[...local.values()].map(value=>{try{return JSON.parse(value)}catch{return null}}).find(s=>s?.questId==='g23');assert.ok(saved);assert.equal(saved.choices.g23,answer,'selected person saved before first result line');assert.equal(saved.done.includes('g23'),false);assert.equal(ui.engine.q.id,'g23');
- ui.loadState(saved);await finishSceneLoad();nodes.get('dialogue').hidden=true;ui.engine.paused=false;const resumed=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);const other=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index!==answer);assert.equal(other.interactive,false);Object.assign(ui.engine.s.hero,resumed);ui.engine.interact(resumed);drain();assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);checks++;
+ await preset('g23');ui.engine.s.flags.goodMedicineFarewellReady=true;nodes.get('track-button').click();assert.equal(ui.engine.s.choices.g23,undefined,'tracking never chooses a person');assert.equal(ui.engine.autoInteract,null);const actor=ui.engine.markers.find(m=>m.kind==='firstMeeting'&&m.index===answer);assert(actor);
+ Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(actor.x-15,actor.y+10));assert.equal(ui.engine.interact(actor),true);assert(ui.engine.s.sequence);assert.equal(nodes.get('choices').children.length,0);
+ const saved=JSON.parse(local.get('moonshadow-journey-v3'));assert.equal(saved.questId,'g23');assert.equal(saved.choices.g23,answer);assert.equal(saved.done.includes('g23'),false);assert.equal(saved.sequence.firstMeetingIndex,answer);
+ ui.loadState(saved);await finishSceneLoad();assert.equal(ui.engine.s.sequence.firstMeetingIndex,answer);let spoken=[];
+ for(let ticks=0;ticks<12000&&ui.engine.q.id==='g23';ticks++){
+  if(!nodes.get('dialogue').hidden)spoken.push(...drain());else ui.engine.tick(.05);
+  await finishSceneLoad();
+ }
+ assert.equal(ui.engine.q.id,answer?'g23_farewell':'g23_pickup');assert.equal(ui.engine.s.choices.g23,answer);assert.equal(ui.engine.s.claimedRewards.filter(id=>id==='g23').length,1);assert(spoken.length>=5,'actual saved movement and each speech finish through UI');checks++;
 }
-console.log(JSON.stringify({firstMeetingUI:'PASS',cases:2,scope:'production journey with DOM stub: actor click, save before lines, reload resume; not browser visual verification'}));
+console.log(JSON.stringify({firstMeetingUI:'PASS',cases:2,scope:'production journey with DOM stub: actor click, save before lines, movement and reload resume; not browser visual verification'}));
 
 // Use the real visibility predicate with the actual canvas pointer handler.
 // A surviving guard occupying the after-battle marker must not intercept it.
@@ -388,3 +393,11 @@ for(const [id,prepare] of [
  pointerAt(enemy);assert.equal(ui.engine.attackTarget,enemy,id+' visible enemy still receives pointer targeting');
 }
 console.log(JSON.stringify({canvasTargeting:'PASS',cases:5,scope:'real pointer handler and renderer visibility; boss-only victory receipt retained and ground aftermath clickable'}));
+
+// A visibly fallen final boss is an explicitly authored inspect target. Other
+// fallen actors remain inert. Walk through the real UI handoff into the scene.
+await preset('g24');ui.engine.s.flags.goodMedicineChallenged=true;ui.engine.s.choices.g23=0;Object.assign(ui.engine.s.flags,{goodFirstZi:true,goodFirstMei:false,firstWoman:'zi'});await finishSceneLoad();ui.engine.startBattle();
+const inspectBoss=ui.engine.s.enemies[0];Object.assign(ui.engine.s.hero,ui.engine.nearestOpen(inspectBoss.x,inspectBoss.y));inspectBoss.hp=1;ui.engine.s.cooldowns[0]=0;ui.engine.cast(0);assert.equal(ui.engine.s.phase,'after');const inspectTarget=ui.engine.markers.find(m=>m.main);assert.equal(inspectTarget.pose,'fallen');assert.equal(inspectTarget.inspectFallen,true);
+assert.equal(ui.engine.interact({...inspectTarget,inspectFallen:false}),false);assert.equal(ui.engine.interact({...inspectTarget,id:'unrelated-fallen',kind:'stagingActor'}),false);
+ui.track();for(let ticks=0;ticks<6000&&ui.engine.q.id==='g24';ticks++){if(!nodes.get('dialogue').hidden)drain();else ui.engine.tick(.05);await finishSceneLoad();}assert.equal(ui.engine.q.id,'g24_aftermath','normal track/approach/inspect leaves final battle');ui.engine.tick(.05);assert(ui.engine.s.sequence,'the next real scene, not an early narration, begins');assert.equal(ui.engine.stagingActors().find(a=>a.name==='纳兰潜凛').pose,'fallen');
+console.log(JSON.stringify({finalBossInspection:'PASS',scope:'actual UI track and walking from validated victory; inert fallen actors remain blocked'}));

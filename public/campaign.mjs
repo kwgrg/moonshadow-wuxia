@@ -1,3 +1,4 @@
+import {GOOD_ROAD_REVISIONS} from './good-road-revisions.mjs';
 import {EVIL_ENDING_REVISIONS,EVIL_ENDING_ADDITIONS} from './evil-ending-revisions.mjs';
 import {GOOD_GRIEF_REVISIONS,GOOD_GRIEF_ADDITIONS} from './good-grief-revisions.mjs';
 import {GOOD_MEDICINE_REUNION_REVISIONS,GOOD_MEDICINE_REUNION_ADDITIONS} from './good-medicine-reunion-revisions.mjs';
@@ -134,3 +135,7 @@ export const REVISION_SEVENTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
 QUESTS.forEach((q,index)=>q.encounterTier??=Math.floor(index/9)+1);
 for(const q of QUESTS)Object.assign(q,EVIL_ENDING_REVISIONS[q.id]||{});
 for(const insertion of EVIL_ENDING_ADDITIONS){const anchor=insertion.beforeId||insertion.afterId,index=QUESTS.findIndex(q=>q.id===anchor);if(index<0)throw Error('Unknown evil-ending insertion');QUESTS.splice(index+(insertion.afterId?1:0),0,...insertion.quests);}
+
+// Freeze R18 identities before independent roadside encounters and first-meeting staging.
+export const REVISION_EIGHTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
+for(const q of QUESTS)Object.assign(q,GOOD_ROAD_REVISIONS[q.id]||{});
