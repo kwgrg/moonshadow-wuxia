@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-09-27",
+  "reviewedAt": "2026-10-01",
   "scope": "All public PNG files; public/assets currently accepts PNG only.",
   "statusMeaning": {
     "documented": "具有对应交付文件、制作方法和完整提示词的制作记录；仅表示文档状态，不是法律原创、授权或所有上游来源已确认。",
@@ -70,6 +70,21 @@
       "notes": [
         "内置 image_gen 独立文生图，无输入图；完整提示词、生成源和交付哈希见制作记录。",
         "documented仅表示制作记录存在，不代表原版相似度或法律认证。"
+      ]
+    },
+    {
+      "path": "public/assets/beimo-ridge-road.png",
+      "sha256": "019ad2a12c1234be8162e1d7dfafed41d4072876a96b7f2a8e4ecd0cbd8bbe5f",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
       ]
     },
     {
@@ -149,6 +164,21 @@
       ]
     },
     {
+      "path": "public/assets/eagle-original.png",
+      "sha256": "a418e40c937b3417e0e29506185e74e0d06ca4f5a1e1f1609eabd72fc12f4d45",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成的透明苍鹰；未输入原版或其他参考图片。记录不是权属认证。"
+      ]
+    },
+    {
       "path": "public/assets/evil-family-shore.png",
       "sha256": "633c61cf78bf143ed0291b84342e9cb18b3798dcd35c14c520e14f8fa813b073",
       "status": "documented",
@@ -176,6 +206,22 @@
       "referenceAssets": [],
       "notes": [
         "内置image_gen纯文字独立生成，无图像输入；完整提示词与源文件记录见文档。"
+      ]
+    },
+    {
+      "path": "public/assets/fire-hut-courtyard.png",
+      "sha256": "bc82584c920d2cbde537257f459b9e5a9d1739c70afafc227344af117a10673c",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/early-fire-thunder-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 纯文字独立生成，未输入参考图，未读取原版目录；完整提示词、生成源、真实尺寸与交付哈希见制作记录。",
+        "交付 PNG 与所记录生成源原字节一致；documented 只表示记录存在，不表示原版外观相似度或法律认证。"
       ]
     },
     {
@@ -284,6 +330,21 @@
       "notes": [
         "内置 image_gen 独立文生图，无输入图；制作记录含完整提示词、生成源路径、尺寸和交付哈希。",
         "产品 PNG 与所记录生成源原字节一致；documented仅表示记录状态，不表示法律原创或授权结论。"
+      ]
+    },
+    {
+      "path": "public/assets/huian-pine-road.png",
+      "sha256": "3a7b2221804fe83a13d5942968df0a2c45e6bb1cb7769026611adbe1b26b1bac",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/medicine-road-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
       ]
     },
     {
@@ -585,6 +646,22 @@
       ]
     },
     {
+      "path": "public/assets/thunder-inner-court-night.png",
+      "sha256": "14e6cd8209ad7775459225af65069c9e1e029ed33188ab14efa1e06aab1f06f5",
+      "status": "documented",
+      "documents": [
+        {
+          "path": "docs/early-fire-thunder-art.md",
+          "kind": "creation-record"
+        }
+      ],
+      "referenceAssets": [],
+      "notes": [
+        "内置 image_gen 首次纯文字独立生成，再只输入本轮自身原创生成源进行闭门编辑；未读取原版目录。完整初始和编辑提示词、唯一输入源及哈希、最终生成源与交付哈希见制作记录。",
+        "编辑后的交付 PNG 与所记录最终生成源原字节一致；referenceAssets 为空表示没有仓库公开 PNG 上游，本文记录不省略自身原创本机输入链。documented 仅表示有记录，不表示原版外观相似度或法律认证。"
+      ]
+    },
+    {
       "path": "public/assets/tianchi-islet.png",
       "sha256": "cabd4e81088a5078b622e0f029f8c61ca414adf3fe968380db9b3e9a14019a28",
       "status": "documented",
@@ -692,51 +769,6 @@
       ]
     },
     {
-      "path": "public/assets/zhen-chamber.png",
-      "sha256": "6f94481784ef53728b1ec3bac7a0726ff78fe0c0ad62e04e4e7b90adbdb9e54b",
-      "status": "documented",
-      "documents": [
-        {
-          "path": "docs/night-dream-art.md",
-          "kind": "creation-record"
-        }
-      ],
-      "referenceAssets": [],
-      "notes": [
-        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
-      ]
-    },
-    {
-      "path": "public/assets/beimo-ridge-road.png",
-      "sha256": "019ad2a12c1234be8162e1d7dfafed41d4072876a96b7f2a8e4ecd0cbd8bbe5f",
-      "status": "documented",
-      "documents": [
-        {
-          "path": "docs/medicine-road-art.md",
-          "kind": "creation-record"
-        }
-      ],
-      "referenceAssets": [],
-      "notes": [
-        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
-      ]
-    },
-    {
-      "path": "public/assets/huian-pine-road.png",
-      "sha256": "3a7b2221804fe83a13d5942968df0a2c45e6bb1cb7769026611adbe1b26b1bac",
-      "status": "documented",
-      "documents": [
-        {
-          "path": "docs/medicine-road-art.md",
-          "kind": "creation-record"
-        }
-      ],
-      "referenceAssets": [],
-      "notes": [
-        "纯文字生成并保留提示词、生成源与交付哈希；无原版资源或参考图输入。documented仅表示记录完整，不是法律权属或授权认证。"
-      ]
-    },
-    {
       "path": "public/assets/yaowang-outer-valley.png",
       "sha256": "d3f24019236acedef1e09cf18af9328431199962084594aed7b5cee7163b5d88",
       "status": "documented",
@@ -752,18 +784,18 @@
       ]
     },
     {
-      "path": "public/assets/eagle-original.png",
-      "sha256": "a418e40c937b3417e0e29506185e74e0d06ca4f5a1e1f1609eabd72fc12f4d45",
+      "path": "public/assets/zhen-chamber.png",
+      "sha256": "6f94481784ef53728b1ec3bac7a0726ff78fe0c0ad62e04e4e7b90adbdb9e54b",
       "status": "documented",
       "documents": [
         {
-          "path": "docs/medicine-road-art.md",
+          "path": "docs/night-dream-art.md",
           "kind": "creation-record"
         }
       ],
       "referenceAssets": [],
       "notes": [
-        "纯文字生成的透明苍鹰；未输入原版或其他参考图片。记录不是权属认证。"
+        "记录含具体交付文件、制作方法与完整提示词；documented不表示原版图像相似性、法律原创或授权已核定。"
       ]
     }
   ]

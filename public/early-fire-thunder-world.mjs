@@ -1,0 +1,17 @@
+// Footprints are authored against our own paintings; no native coordinates.
+const point=(id,name,x,y,text)=>({id,name,x,y,text,kind:'inspect',paintOnly:true,appearance:'trace'});
+const portal=(x,y,ex,ey)=>[[x,y],[ex,ey]];
+export function applyEarlyFireThunderScene(scene){
+ const common={variant:'earlyFireThunder',suppressShop:true,drawRoads:false,props:[],paths:[],points:[]};
+ const variants={
+  m16:{kind:'garden',art:'fire-hut-courtyard',bounds:[150,330,1400,965],spawn:{x:580,y:910},objective:{x:1000,y:535},obstacles:[[150,330,305,475],[1200,330,1400,650],[150,650,440,775],[440,720,475,835],[725,785,1040,905],[1040,790,1400,930]],allowedPortalTargets:['m19','m22'],portalCoordinates:{m19:portal(565,925,580,795),m22:portal(610,865,655,755)},atmosphere:{light:'night',weather:'clear',indoor:false,particles:'dust'},points:[point('fire-yard-stones','散落碎瓦',530,390,'碎瓦落在墙边，院中的石地仍可通行。'),point('fire-yard-gate','院门退路',580,865,'院门还未堵死，从这里能离开火场。')]},
+  m22:{kind:'room',art:'leaf-infirmary',objective:{x:970,y:580},allowedPortalTargets:['m23'],portalCoordinates:{m23:portal(820,935,820,810)},points:[point('local-doctor-shelf','药铺木架',1120,680,'药瓶与布包整齐摆着，大夫已经查看过紫轩的毒伤。'),point('local-doctor-door','药铺门边',810,830,'出了药铺便要赶去药王谷，胡神医也许识得这种毒。')]},
+  m23:{kind:'garden',art:'medicine-courtyard',objective:{x:1020,y:560},allowedPortalTargets:['m22','m24'],portalCoordinates:{m22:portal(790,930,735,810),m24:portal(790,930,845,810)},atmosphere:{light:'day',weather:'clear',indoor:false,particles:'leaves'},points:[point('early-medicine-stone','诊院石地',780,725,'石地从门前延到诊处，紫轩暂时留在胡神医身边。'),point('early-medicine-herbs','晒药木架',1130,685,'木架上有晒干的草药；此时最要紧的仍是兑现救人的约定。')]},
+  m24:{objective:{x:765,y:660},allowedPortalTargets:['m23','m25'],portalCoordinates:{m23:portal(500,850,615,790),m25:portal(1270,820,1170,760)},points:[point('thunder-temple-bell','破庙旧钟',510,525,'钟身已经锈蚀，庙里暂时可以歇脚。'),point('thunder-temple-lantern','远处堂灯',1180,660,'右边石路通往霹雳堂围墙，回程也能从这条路退回。')]},
+  m25:{kind:'garden',art:'thunder-inner-court-night',bounds:[130,320,1470,965],spawn:{x:1420,y:855},objective:{x:1090,y:575},obstacles:[[130,320,205,760],[190,670,405,790],[405,740,750,900],[750,760,1000,855],[1000,690,1195,805],[1195,625,1365,740],[1365,545,1470,665],[230,320,370,390],[540,320,1020,350],[1330,320,1470,410]],allowedPortalTargets:['m24','m26'],portalCoordinates:{m24:portal(1400,825,1410,910),m26:portal(1250,430,1145,500)},atmosphere:{light:'night',weather:'clear',indoor:false,particles:'dust'},jumps:[{id:'thunder-wall',a:{x:1430,y:725},b:{x:1330,y:515},aLabel:'翻入围墙 · Space',bLabel:'翻出围墙 · Space',blockedText:'院门已闭。走到右墙的石地标记，按空格或交互翻过矮墙。'}],points:[point('thunder-closed-door','紧闭的院门',1385,785,'院门已经反锁，右门旁的平顶矮墙仍有落脚处。'),point('thunder-right-room','右房灯火',1170,510,'石阶上方的侧房亮着灯，段峥在那里看守宝物。')]},
+  m26:{kind:'hall',art:'hall',objective:{x:970,y:610},allowedPortalTargets:['m25'],portalCoordinates:{m25:portal(765,915,765,800)},points:[point('thunder-item-rack','火器物架',1050,675,'物架与房门之间留着通路；取物后应当立即撤回内院。'),point('thunder-room-door','内院门槛',800,825,'这扇门通向刚才经过的内院，右墙是撤退的方向。')]},
+  m28:{kind:'room',art:'beimo-hero-room',objective:{x:1080,y:570},allowedPortalTargets:['m13','m29'],portalCoordinates:{m13:portal(760,935,760,810),m29:portal(1140,650,1025,685)},points:[point('investigation-window','书房窗下',1120,770,'窗下只听得远处脚步，没有旁人应声。'),point('investigation-desk','书案角落',960,660,'案边留有细小的反光，需走近辨认。')]},
+ };
+ if(variants[scene.id])Object.assign(scene,common,variants[scene.id]);
+ return scene;
+}

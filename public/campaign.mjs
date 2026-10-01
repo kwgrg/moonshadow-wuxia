@@ -139,3 +139,6 @@ for(const insertion of EVIL_ENDING_ADDITIONS){const anchor=insertion.beforeId||i
 // Freeze R18 identities before independent roadside encounters and first-meeting staging.
 export const REVISION_EIGHTEEN_QUEST_IDS=QUESTS.map(q=>q.id);
 for(const q of QUESTS)Object.assign(q,GOOD_ROAD_REVISIONS[q.id]||{});
+
+// Freeze R19 identity and strength before the independently authored early rescue/escape chain.
+export const REVISION_NINETEEN_QUEST_IDS=QUESTS.map(q=>q.id);

@@ -99,7 +99,7 @@ Wrangler 固定为 4.130.0。其本地运行工具 Miniflare 的 `sharp` 依赖�
 
 `D:\Game\Monthly Shadow Legend` 仅用于本机只读对照。按用户要求，不导入其中的图片、地图、音频、动画、脚本或台词；游戏继续使用独立实现与独立制作的资源。已停止并清除了原资源直接接入的试验文件。
 
-发布入口已固定为 `scripts/deploy.mjs`：先检查当前Git受控与未忽略文件的格式、完整 `public/` 文件树和49项图片来源记录，再调用项目锁定的Wrangler。未确认来源会阻断发布；额外的目录、配置或环境覆盖参数会被拒绝。新增媒体格式须先扩展来源检查，不能直接放入其他发布子目录。检查只核对文件边界与记录一致性，不判断全文表达相似性或证明授权；人工审查仍遵循 [项目约束](AGENTS.md)。门禁设计与检查局限见 [来源门禁记录](docs/reference-publication-guard.md)，R19最新结果见 [全流程进度](docs/fullflow-completion.md)。
+发布入口已固定为 `scripts/deploy.mjs`：先检查当前Git受控与未忽略文件的格式、完整 `public/` 文件树和资源来源清单，再调用项目锁定的Wrangler。未确认来源会阻断发布；额外的目录、配置或环境覆盖参数会被拒绝。新增媒体格式须先扩展来源检查，不能直接放入其他发布子目录。检查只核对文件边界与记录一致性，不判断全文表达相似性或证明授权；人工审查仍遵循 [项目约束](AGENTS.md)。门禁设计与检查局限见 [来源门禁记录](docs/reference-publication-guard.md)，2026-10-01工作目录复核见 [本次参考边界记录](docs/reference-boundary-2026-10-01.md)，已提交R19进度见 [全流程进度](docs/fullflow-completion.md)。
 
 2026-09-22 根据机制核验独立修正武当试剑：十名弟子分别选择、一对一切磋，胜五名后可挑战张惟宜；普通失败与剧情败北分开处理。参见 [原版机制参考记录](docs/original-story-evidence.md) 及 [项目约束](AGENTS.md)。
 
